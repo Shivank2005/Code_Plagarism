@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@500;600;700;800&display=swap');
+@import "tailwindcss";
+
+:root {
+  font-family: 'Space Grotesk', sans-serif;
+  color: #e5f7ff;
+  background: #04141f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(15, 112, 162, 0.28), transparent 32%),
+    radial-gradient(circle at 90% 0%, rgba(243, 133, 36, 0.24), transparent 30%),
+    linear-gradient(180deg, #031119 0%, #04111b 48%, #051421 100%);
+  color: #e5f7ff;
+}
+
+.font-display {
+  font-family: 'Sora', sans-serif;
+}
+
+.glass-card {
+  background: linear-gradient(145deg, rgba(8, 34, 48, 0.86), rgba(4, 20, 31, 0.74));
+  border: 1px solid rgba(119, 181, 212, 0.24);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+.soft-grid {
+  background-image:
+    linear-gradient(rgba(92, 152, 181, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(92, 152, 181, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
+}
