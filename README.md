@@ -1,0 +1,224 @@
+# Multi-Language Code Plagiarism Detection and Visualization System
+
+An AI-powered multi-language code plagiarism detection platform that combines token-based similarity analysis, AST structural comparison, cross-language normalization, semantic embeddings, and interactive visual analytics to identify copied or obfuscated source code submissions.
+
+---
+
+## About The Project
+
+The **Multi-Language Code Plagiarism Detection and Visualization System** is designed to detect plagiarized source code across multiple programming languages using both traditional and AI-based approaches.
+
+Traditional plagiarism detection systems mainly rely on token matching techniques and often fail against advanced obfuscation methods such as:
+
+- Variable renaming
+- Code restructuring
+- Loop transformations
+- Cross-language translation
+- Semantic modifications
+
+This project addresses these limitations by integrating:
+
+- Token-based similarity analysis using **JPlag**
+- Structural comparison using **Abstract Syntax Trees (AST)**
+- Cross-language normalization
+- AI semantic similarity using **CodeBERT**
+- Machine learning-based plagiarism risk scoring
+- Interactive visualization dashboard
+
+The system supports multiple programming languages including:
+
+- Java
+- Python
+- C/C++
+- JavaScript
+
+It is designed for:
+
+- Academic institutions
+- Competitive programming platforms
+- Recruitment assessment systems
+- Software quality analysis environments
+
+---
+
+# Features
+
+- Multi-language plagiarism detection
+- Token-based similarity analysis
+- AST-based structural comparison
+- Cross-language code normalization
+- AI semantic similarity detection using CodeBERT
+- Machine learning-based risk scoring
+- Anomaly and collusion detection
+- Interactive visualization dashboard
+- Similarity heatmaps and network graphs
+- Side-by-side code diff viewer
+- Exportable PDF and CSV reports
+- Batch processing support
+
+---
+
+# System Architecture
+
+```text
+Input Code Files
+        ↓
+Preprocessing Module
+        ↓
+Token-Based Analysis (JPlag)
+        ↓
+AST Structural Analysis
+        ↓
+Cross-Language Normalization
+        ↓
+AI Semantic Embeddings (CodeBERT)
+        ↓
+ML Risk Classification
+        ↓
+Clustering & Anomaly Detection
+        ↓
+Visualization Dashboard & Reports
+```
+
+---
+
+# Modules
+
+## 1. Input Module
+Handles batch upload and language identification of source code submissions.
+
+## 2. Preprocessing Module
+Performs:
+- Comment removal
+- Whitespace normalization
+- Identifier anonymization
+- Constant normalization
+
+## 3. Token Similarity Module
+Uses JPlag’s Greedy String Tiling (GST) algorithm for token-based similarity detection.
+
+## 4. AST Structural Analysis Module
+Analyzes Abstract Syntax Trees to detect structural similarities and obfuscation techniques.
+
+## 5. Cross-Language Normalization Module
+Maps language-specific constructs into a unified intermediate representation.
+
+## 6. AI Embedding Module
+Uses CodeBERT embeddings for semantic similarity analysis between code fragments.
+
+## 7. ML Classifier & Risk Scoring Module
+Combines all similarity features into a unified plagiarism risk score.
+
+## 8. Clustering Module
+Detects collusion groups and suspicious submission clusters.
+
+## 9. Visualization Dashboard
+Provides:
+- Similarity heatmaps
+- Network graphs
+- Risk-ranked tables
+- Code diff viewers
+
+## 10. Report Generation Module
+Generates:
+- PDF reports
+- CSV exports
+- Statistical summaries
+
+---
+
+# Tech Stack
+
+## Frontend
+- React.js
+- D3.js
+- HTML
+- CSS
+- JavaScript
+
+## Backend
+- Python
+- Flask / FastAPI
+
+## AI & Machine Learning
+- CodeBERT
+- Transformers
+- Scikit-learn
+
+## Database
+- MongoDB / MySQL
+
+## Tools & Frameworks
+- JPlag
+- Git & GitHub
+
+---
+
+# Installation
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/Shivank2005/Code_Plagarism.git
+cd Code_Plagarism
+```
+
+## Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+## Run the Application
+
+```bash
+python app.py
+```
+
+---
+
+# Usage
+
+1. Upload source code submissions
+2. Select supported programming languages
+3. Run plagiarism analysis
+4. View similarity scores and visual reports
+5. Export plagiarism reports
+
+---
+
+# Visualization Features
+
+The dashboard includes:
+
+- Similarity Heatmaps
+- Submission Network Graphs
+- Risk-Ranked Submission Lists
+- Cluster Visualization
+- Side-by-Side Code Diff Viewer
+
+---
+
+---
+
+# Contributors
+
+- Shivank
+
+---
+
+# License
+
+This project is developed for academic and research purposes.
+
+---
+
+# References
+
+- JPlag
+- CodeBERT
+- GraphCodeBERT
+- CodeXGLUE
+- AST-based clone detection research papers
+
+---
