@@ -1,43 +1,44 @@
-# Multi-Language Code Plagiarism Detection and Visualization System
+# PlagShield — Multi-Language Code Plagiarism Detection System
 
-An AI-powered multi-language code plagiarism detection platform that combines token-based similarity analysis, AST structural comparison, cross-language normalization, semantic embeddings, and interactive visual analytics to identify copied or obfuscated source code submissions.
+An AI-powered multi-language code plagiarism detection and visualization platform that combines token-based similarity analysis, AST structural comparison, semantic embeddings, and interactive visual analytics to identify copied, modified, or obfuscated source code submissions.
 
 ---
 
 ## About The Project
 
-The **Multi-Language Code Plagiarism Detection and Visualization System** is designed to detect plagiarized source code across multiple programming languages using both traditional and AI-based approaches.
+**PlagShield** is an intelligent plagiarism detection platform designed to detect source code similarity across multiple programming languages using both traditional and AI-powered approaches.
 
-Traditional plagiarism detection systems mainly rely on token matching techniques and often fail against advanced obfuscation methods such as:
+Traditional plagiarism detection systems primarily rely on token matching techniques and often fail against advanced obfuscation strategies such as:
 
 - Variable renaming
 - Code restructuring
-- Loop transformations
+- Loop and control-flow transformations
 - Cross-language translation
 - Semantic modifications
 
-This project addresses these limitations by integrating:
+PlagShield addresses these limitations by integrating:
 
-- Token-based similarity analysis using **JPlag**
-- Structural comparison using **Abstract Syntax Trees (AST)**
+- **JPlag** token-based similarity analysis
+- **AST (Abstract Syntax Tree)** structural comparison
 - Cross-language normalization
-- AI semantic similarity using **CodeBERT**
+- **CodeBERT** semantic embeddings
 - Machine learning-based plagiarism risk scoring
-- Interactive visualization dashboard
+- Interactive visualization dashboards
 
-The system supports multiple programming languages including:
+The platform supports multiple programming languages including:
 
 - Java
 - Python
 - C/C++
 - JavaScript
 
-It is designed for:
+PlagShield is designed for:
 
 - Academic institutions
 - Competitive programming platforms
-- Recruitment assessment systems
-- Software quality analysis environments
+- Technical assessment systems
+- Software quality analysis
+- Research environments
 
 ---
 
@@ -55,7 +56,9 @@ It is designed for:
 - Side-by-side code diff viewer
 - Exportable PDF and CSV reports
 - Batch processing support
+- Modular multi-service architecture
 
+---
 ---
 
 # System Architecture
