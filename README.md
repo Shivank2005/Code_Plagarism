@@ -153,28 +153,137 @@ Generates:
 - Git & GitHub
 
 ---
-
 # Installation
 
-## Clone the Repository
+## Prerequisites
+
+Make sure the following tools are installed on your system:
+
+- Git
+- Python 3.10 or newer
+- Node.js 20 or newer (npm included)
+- Windows PowerShell
+
+### Optional (Only for Spring Backend)
+
+- Java 17
+- Maven 3.9+
+
+---
+
+## 1. Clone the Repository
 
 ```bash
 git clone https://github.com/Shivank2005/Code_Plagarism.git
 cd Code_Plagarism
 ```
 
-## Install Dependencies
+---
+
+## 2. Create and Activate a Python Virtual Environment
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+### If PowerShell Blocks Activation
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+---
+
+## 3. Install Python Dependencies
 
 ```bash
 pip install -r requirements.txt
+pip install flask flask-cors
 ```
 
-## Run the Application
+---
+
+## 4. Install Frontend Dependencies
 
 ```bash
+cd frontend
+npm install
+cd ..
+```
+
+---
+
+## 5. Start the Full Application Stack
+
+```powershell
+.\start-all.ps1
+```
+
+This starts:
+
+- CodeBERT Service → Port `8090`
+- Backend API → Port `8082`
+- Frontend → Port `5173`
+
+Open in browser:
+
+```text
+http://localhost:5173/
+```
+
+---
+
+# Manual Start (Alternative)
+
+If you prefer running services separately:
+
+## Terminal 1 — CodeBERT Service
+
+```bash
+cd codebert-service
 python app.py
 ```
 
+---
+
+## Terminal 2 — Backend API
+
+```bash
+cd backend
+python mock_app.py
+```
+
+---
+
+## Terminal 3 — Frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+---
+
+# Quick Health Checks
+
+## Frontend
+
+```text
+http://localhost:5173/
+```
+
+## Backend Health
+
+```text
+http://localhost:8082/health
+```
+
+## CodeBERT Service
+
+```text
+http://localhost:8090/
+```
 ---
 
 # Usage
