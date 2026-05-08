@@ -36,6 +36,10 @@ replay_pid*.log
 storage/
 backend/storage/
 
+# === Python ===
+**/__pycache__/
+*.pyc
+
 # === OS ===
 Thumbs.db
 desktop.ini

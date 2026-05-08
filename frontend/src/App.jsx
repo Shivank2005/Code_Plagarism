@@ -8,10 +8,12 @@ import {
   ChevronRight,
   Download,
   Filter,
+  GitCompareArrows,
   History,
   LayoutDashboard,
   Loader2,
   Menu,
+  Network,
   Search,
   Settings,
   ShieldAlert,
@@ -22,8 +24,12 @@ import {
 } from 'lucide-react';
 import UploadZone from './components/UploadZone';
 import SimilarityHeatmap from './components/SimilarityHeatmap';
+import SuspiciousPairsList from './components/SuspiciousPairsList';
+import SimilarityGraph from './components/SimilarityGraph';
+import DiffViewer from './components/DiffViewer';
 
 const API_BASE = 'http://localhost:8082/api';
+const CODEBERT_API = 'http://localhost:8090/api/embeddings';
 const DEFAULT_PREFERENCES = {
   highRiskThreshold: 75,
   suspiciousThreshold: 40,
@@ -35,8 +41,11 @@ const DEFAULT_PREFERENCES = {
 function App() {
   const [activeBatch, setActiveBatch] = useState('');
   const [results, setResults] = useState(null);
+  const [semanticResults, setSemanticResults] = useState(null);
+  const [batchFiles, setBatchFiles] = useState([]);
   const [history, setHistory] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSemanticLoading, setIsSemanticLoading] = useState(false);
   const [view, setView] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -44,6 +53,7 @@ function App() {
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [preferenceProfile, setPreferenceProfile] = useState('default');
+  const [selectedSuspiciousPair, setSelectedSuspiciousPair] = useState(null);
 
   useEffect(() => {
     fetchHistory();
@@ -103,6 +113,11 @@ function App() {
 
   const handleUploadSuccess = async (data) => {
     setActiveBatch(data.batchId);
+    if (Array.isArray(data.files) && data.files.length > 0) {
+      setBatchFiles(data.files);
+      await fetchSemanticEmbeddings(data.files);
+      setResults(buildLocalResults(data.files, preferences));
+    }
     setIsAnalyzing(true);
     startAnalysis(data.batchId);
   };
@@ -142,7 +157,12 @@ function App() {
   const fetchResults = async (batchId) => {
     try {
       const res = await axios.get(`${API_BASE}/analysis/${batchId}/results`);
-      setResults(res.data);
+      if (res.data && Array.isArray(res.data.students) && res.data.students.length > 0) {
+        setResults(res.data);
+      } else if (batchFiles.length > 0) {
+        setResults(buildLocalResults(batchFiles, preferences));
+      }
+      await fetchBatchFiles(batchId);
       setIsAnalyzing(false);
       if (preferences.autoRefreshHistory) {
         fetchHistory();
@@ -150,12 +170,125 @@ function App() {
       showToast('Analysis completed and matrix generated.', 'success');
     } catch (err) {
       console.error('Error fetching results:', err);
+      if (batchFiles.length > 0) {
+        setResults(buildLocalResults(batchFiles, preferences));
+      }
       setIsAnalyzing(false);
     }
   };
 
+  const fetchBatchFiles = async (batchId) => {
+    try {
+      const res = await axios.get(`${API_BASE}/analysis/${batchId}/files`);
+      const files = Array.isArray(res.data.files) ? res.data.files : [];
+      setBatchFiles(files);
+
+      if (files.length >= 2) {
+        await fetchSemanticEmbeddings(files);
+      } else {
+        setSemanticResults(null);
+      }
+    } catch (err) {
+      console.error('Error fetching batch files:', err);
+      setBatchFiles([]);
+      setSemanticResults(null);
+    }
+  };
+
+  const fetchSemanticEmbeddings = async (files) => {
+    setIsSemanticLoading(true);
+    try {
+      const res = await axios.post(`${CODEBERT_API}/similarity-matrix`, {
+        submissions: files,
+      });
+      setSemanticResults(res.data);
+    } catch (err) {
+      console.error('Error fetching CodeBERT similarity matrix:', err);
+      setSemanticResults(null);
+      showToast('CodeBERT service not reachable on port 8090. Graph and diff views are offline.', 'error');
+    } finally {
+      setIsSemanticLoading(false);
+    }
+  };
+
+  const buildLocalResults = (files, currentPreferences) => {
+    const students = files.map((file) => file.id);
+    const matrix = files.map((leftFile, leftIndex) => {
+      return files.map((rightFile, rightIndex) => {
+        if (leftIndex === rightIndex) {
+          return 100;
+        }
+
+        const leftText = (leftFile.code || '').replace(/\s+/g, ' ').trim();
+        const rightText = (rightFile.code || '').replace(/\s+/g, ' ').trim();
+        if (!leftText || !rightText) {
+          return 0;
+        }
+
+        const leftTokens = new Set(leftText.split(/\W+/).filter(Boolean));
+        const rightTokens = new Set(rightText.split(/\W+/).filter(Boolean));
+        const intersection = [...leftTokens].filter((token) => rightTokens.has(token)).length;
+        const union = new Set([...leftTokens, ...rightTokens]).size || 1;
+        const tokenScore = (intersection / union) * 100;
+
+        const maxLength = Math.max(leftText.length, rightText.length) || 1;
+        const charScore = (1 - Math.abs(leftText.length - rightText.length) / maxLength) * 100;
+
+        return Math.max(0, Math.round((tokenScore * 0.7 + charScore * 0.3) * 100) / 100);
+      });
+    });
+
+    const riskThreshold = currentPreferences.highRiskThreshold ?? DEFAULT_PREFERENCES.highRiskThreshold;
+    const adjacency = new Map(students.map((student) => [student, new Set()]));
+
+    for (let i = 0; i < students.length; i += 1) {
+      for (let j = i + 1; j < students.length; j += 1) {
+        if (matrix[i][j] >= riskThreshold) {
+          adjacency.get(students[i]).add(students[j]);
+          adjacency.get(students[j]).add(students[i]);
+        }
+      }
+    }
+
+    const rings = [];
+    const visited = new Set();
+    students.forEach((student) => {
+      if (visited.has(student) || adjacency.get(student).size === 0) {
+        return;
+      }
+      const stack = [student];
+      const cluster = [];
+      visited.add(student);
+      while (stack.length > 0) {
+        const current = stack.pop();
+        cluster.push(current);
+        adjacency.get(current).forEach((neighbor) => {
+          if (!visited.has(neighbor)) {
+            visited.add(neighbor);
+            stack.push(neighbor);
+          }
+        });
+      }
+      if (cluster.length > 1) {
+        rings.push(cluster);
+      }
+    });
+
+    return {
+      students,
+      matrix,
+      rings,
+      status: 'COMPLETED',
+    };
+  };
+
   const updatePreference = (key, value) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handlePairSelection = (pair) => {
+    setSelectedSuspiciousPair(pair);
+    setView('diff');
   };
 
   const filteredHistory = useMemo(() => {
@@ -225,6 +358,8 @@ function App() {
       await axios.delete(`${API_BASE}/analysis/history`);
       setHistory([]);
       setResults(null);
+      setSemanticResults(null);
+      setBatchFiles([]);
       setActiveBatch('');
       showToast('History cleared from backend and dashboard.', 'success');
     } catch (err) {
@@ -280,6 +415,12 @@ function App() {
     }
     if (view === 'preferences') {
       return 'Tune scoring thresholds and dashboard behavior.';
+    }
+    if (view === 'graph') {
+      return 'Explore semantic clusters generated from CodeBERT embeddings.';
+    }
+    if (view === 'diff') {
+      return 'Inspect suspicious pairs in a side-by-side semantic diff viewer.';
     }
     return 'Upload source bundles, compute fingerprints, and reveal structural similarities.';
   };
@@ -541,6 +682,40 @@ function App() {
       );
     }
 
+    if (view === 'graph') {
+      return (
+        <motion.div
+          key="graph"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          className="space-y-4"
+        >
+          {isSemanticLoading && (
+            <div className="glass-card rounded-2xl border-cyan-300/30 p-4 text-sm text-cyan-100">
+              <div className="flex items-center gap-2">
+                <Loader2 className="animate-spin text-cyan-300" size={16} /> Generating CodeBERT embeddings and graph topology...
+              </div>
+            </div>
+          )}
+          <SimilarityGraph data={semanticResults} />
+        </motion.div>
+      );
+    }
+
+    if (view === 'diff') {
+      return (
+        <motion.div
+          key="diff"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+        >
+          <DiffViewer files={batchFiles} semanticData={semanticResults} selectedPair={selectedSuspiciousPair} />
+        </motion.div>
+      );
+    }
+
     return (
       <motion.div
         key="dashboard"
@@ -551,6 +726,19 @@ function App() {
       >
         <div className="xl:col-span-5 flex flex-col gap-6">
           <UploadZone onUploadSuccess={handleUploadSuccess} />
+
+          {batchFiles.length > 0 && (
+            <div className="glass-card rounded-[2rem] border-cyan-200/20 p-5">
+              <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/60">Uploaded Files</p>
+              <div className="mt-3 max-h-52 space-y-2 overflow-auto pr-1">
+                {batchFiles.map((file) => (
+                  <div key={file.id} className="rounded-xl border border-cyan-100/10 bg-cyan-950/50 px-3 py-2 text-sm text-cyan-50">
+                    {file.id}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {isAnalyzing && (
             <div className="glass-card rounded-[2rem] border-cyan-300/30 p-8 text-center">
@@ -593,6 +781,14 @@ function App() {
               </div>
             </motion.div>
           )}
+
+          {results && (
+            <SuspiciousPairsList
+              data={results}
+              thresholds={{ highRisk: riskThreshold, suspicious: suspiciousThreshold }}
+              onPairClick={handlePairSelection}
+            />
+          )}
         </div>
 
         <div className="xl:col-span-7">
@@ -600,6 +796,10 @@ function App() {
             data={results}
             thresholds={{ highRisk: riskThreshold, suspicious: suspiciousThreshold }}
             animateCells={preferences.animateHeatmap}
+            onPairSelect={(pair) => {
+              setSelectedSuspiciousPair(pair);
+              setView('diff');
+            }}
           />
         </div>
       </motion.div>
@@ -627,6 +827,8 @@ function App() {
             <NavItem icon={<LayoutDashboard />} label="Overview" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
             <NavItem icon={<History />} label="Analytics History" active={view === 'history'} onClick={() => setView('history')} />
             <NavItem icon={<Users />} label="Plagiarism Rings" active={view === 'rings'} onClick={() => setView('rings')} />
+            <NavItem icon={<Network />} label="Embedding Graph" active={view === 'graph'} onClick={() => setView('graph')} />
+            <NavItem icon={<GitCompareArrows />} label="Diff View" active={view === 'diff'} onClick={() => setView('diff')} />
             <div className="my-3 border-t border-cyan-100/10" />
             <NavItem icon={<Settings />} label="Preferences" active={view === 'preferences'} onClick={() => setView('preferences')} />
           </nav>
@@ -728,6 +930,8 @@ function App() {
                   <NavItem icon={<LayoutDashboard />} label="Overview" compact active={view === 'dashboard'} onClick={() => { setView('dashboard'); setIsMobileNavOpen(false); }} />
                   <NavItem icon={<History />} label="History" compact active={view === 'history'} onClick={() => { setView('history'); setIsMobileNavOpen(false); }} />
                   <NavItem icon={<Users />} label="Rings" compact active={view === 'rings'} onClick={() => { setView('rings'); setIsMobileNavOpen(false); }} />
+                  <NavItem icon={<Network />} label="Graph" compact active={view === 'graph'} onClick={() => { setView('graph'); setIsMobileNavOpen(false); }} />
+                  <NavItem icon={<GitCompareArrows />} label="Diff" compact active={view === 'diff'} onClick={() => { setView('diff'); setIsMobileNavOpen(false); }} />
                   <NavItem icon={<Settings />} label="Settings" compact active={view === 'preferences'} onClick={() => { setView('preferences'); setIsMobileNavOpen(false); }} />
                 </div>
               </div>
@@ -737,6 +941,8 @@ function App() {
               <NavItem icon={<LayoutDashboard />} label="Overview" compact active={view === 'dashboard'} onClick={() => setView('dashboard')} />
               <NavItem icon={<History />} label="History" compact active={view === 'history'} onClick={() => setView('history')} />
               <NavItem icon={<Users />} label="Rings" compact active={view === 'rings'} onClick={() => setView('rings')} />
+              <NavItem icon={<Network />} label="Graph" compact active={view === 'graph'} onClick={() => setView('graph')} />
+              <NavItem icon={<GitCompareArrows />} label="Diff" compact active={view === 'diff'} onClick={() => setView('diff')} />
               <NavItem icon={<Settings />} label="Settings" compact active={view === 'preferences'} onClick={() => setView('preferences')} />
             </div>
 
