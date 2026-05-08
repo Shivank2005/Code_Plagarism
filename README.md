@@ -58,7 +58,7 @@ PlagShield is designed for:
 - Batch processing support
 - Modular multi-service architecture
 
----
+
 ---
 
 # System Architecture
