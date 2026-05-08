@@ -10,7 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api/analysis")
@@ -79,6 +84,41 @@ public class AnalysisController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/{batchId}/files")
+    public ResponseEntity<?> getBatchFiles(@PathVariable String batchId) {
+        return batchRepository.findById(batchId)
+                .map(batch -> {
+                    Path batchPath = Paths.get(batch.getStoragePath());
+                    if (!Files.exists(batchPath)) {
+                        return ResponseEntity.ok(Map.of("files", Collections.emptyList()));
+                    }
+
+                    List<Map<String, String>> files = new ArrayList<>();
+                    try (Stream<Path> pathStream = Files.walk(batchPath)) {
+                        pathStream
+                                .filter(Files::isRegularFile)
+                                .filter(this::isLikelyCodeFile)
+                                .forEach(path -> {
+                                    try {
+                                        long size = Files.size(path);
+                                        if (size > 300_000) {
+                                            return;
+                                        }
+                                        String relativeId = batchPath.relativize(path).toString().replace('\\', '/');
+                                        String content = Files.readString(path);
+                                        files.add(Map.of("id", relativeId, "code", content));
+                                    } catch (Exception ignored) {
+                                    }
+                                });
+                    } catch (IOException e) {
+                        return ResponseEntity.internalServerError().body(Map.of("error", "Failed to read batch files"));
+                    }
+
+                    return ResponseEntity.ok(Map.of("files", files));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/history")
     public ResponseEntity<List<AnalysisBatch>> getHistory() {
         return ResponseEntity.ok(batchRepository.findAll());
@@ -89,5 +129,24 @@ public class AnalysisController {
         resultRepository.deleteAll();
         batchRepository.deleteAll();
         return ResponseEntity.ok(Map.of("message", "History cleared"));
+    }
+
+    private boolean isLikelyCodeFile(Path path) {
+        String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
+        return name.endsWith(".java") ||
+                name.endsWith(".py") ||
+                name.endsWith(".js") ||
+                name.endsWith(".jsx") ||
+                name.endsWith(".ts") ||
+                name.endsWith(".tsx") ||
+                name.endsWith(".cpp") ||
+                name.endsWith(".c") ||
+                name.endsWith(".h") ||
+                name.endsWith(".cs") ||
+                name.endsWith(".kt") ||
+                name.endsWith(".go") ||
+                name.endsWith(".rs") ||
+                name.endsWith(".swift") ||
+                name.endsWith(".scala");
     }
 }

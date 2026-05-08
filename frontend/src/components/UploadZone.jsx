@@ -17,20 +17,29 @@ const UploadZone = ({ onUploadSuccess }) => {
     e.preventDefault();
     setIsDragging(false);
     const files = e.dataTransfer.files;
-    if (files.length > 0) uploadFile(files[0]);
+    if (files.length > 0) uploadFiles(Array.from(files));
   };
 
-  const uploadFile = async (file) => {
+  const uploadFiles = async (fileList) => {
     setUploading(true);
     setError(null);
     const formData = new FormData();
-    formData.append('file', file);
+    fileList.forEach((file) => {
+      const relativeName = file.webkitRelativePath || file.name;
+      formData.append('file', file, relativeName);
+    });
 
     try {
       const res = await axios.post('http://localhost:8082/api/submissions/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      onUploadSuccess(res.data);
+      const files = await Promise.all(
+        fileList.map(async (file) => ({
+          id: file.webkitRelativePath || file.name,
+          code: await file.text(),
+        })),
+      );
+      onUploadSuccess({ ...res.data, files });
     } catch (err) {
       setError('Upload failed. Please check the backend connection.');
     } finally {
@@ -52,8 +61,10 @@ const UploadZone = ({ onUploadSuccess }) => {
       >
         <input 
           type="file" 
+          multiple
+          webkitdirectory="true"
           className="absolute inset-0 opacity-0 cursor-pointer" 
-          onChange={(e) => e.target.files[0] && uploadFile(e.target.files[0])}
+          onChange={(e) => e.target.files?.length && uploadFiles(Array.from(e.target.files))}
         />
 
         <div className={`mb-6 flex h-20 w-20 items-center justify-center rounded-3xl transition-all duration-500 ${
@@ -67,7 +78,7 @@ const UploadZone = ({ onUploadSuccess }) => {
             {uploading ? 'Processing Data...' : isDragging ? 'Release to Start' : 'Initialize Analysis'}
           </h4>
           <p className="mx-auto max-w-[260px] text-sm leading-relaxed text-cyan-100/70">
-            Drag and drop your ZIP archive or code files to begin structural verification.
+            Drag and drop a folder, ZIP archive, or multiple code files to begin structural verification.
           </p>
         </div>
 
