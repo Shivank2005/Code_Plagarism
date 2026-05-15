@@ -55,7 +55,7 @@ const UploadZone = ({ onUploadSuccess }) => {
         onDrop={handleDrop}
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
-        className={`glass-card relative flex h-72 cursor-pointer flex-col items-center justify-center rounded-[2rem] border-2 border-dashed p-8 transition-all duration-500 ${
+        className={`glass-card relative flex min-h-[22rem] cursor-pointer flex-col items-center justify-center gap-6 rounded-[2rem] border-2 border-dashed p-6 transition-all duration-500 sm:p-8 ${
           isDragging ? 'scale-[1.02] border-cyan-300/80 bg-cyan-500/20' : 'border-cyan-100/25 hover:border-cyan-100/45'
         }`}
       >
@@ -67,13 +67,13 @@ const UploadZone = ({ onUploadSuccess }) => {
           onChange={(e) => e.target.files?.length && uploadFiles(Array.from(e.target.files))}
         />
 
-        <div className={`mb-6 flex h-20 w-20 items-center justify-center rounded-3xl transition-all duration-500 ${
+        <div className={`flex h-20 w-20 items-center justify-center rounded-3xl transition-all duration-500 ${
           isDragging ? 'rotate-6 bg-cyan-500 text-white' : 'bg-cyan-900/50 text-cyan-100/70 group-hover:bg-cyan-800/60 group-hover:text-cyan-100'
         }`}>
           {uploading ? <Loader2 className="animate-spin" size={32} /> : <Upload size={32} />}
         </div>
 
-        <div className="text-center">
+        <div className="max-w-[18rem] text-center">
           <h4 className="font-display mb-2 text-xl font-bold text-white">
             {uploading ? 'Processing Data...' : isDragging ? 'Release to Start' : 'Initialize Analysis'}
           </h4>
@@ -82,8 +82,7 @@ const UploadZone = ({ onUploadSuccess }) => {
           </p>
         </div>
 
-        {/* Floating Badges */}
-        <div className="absolute bottom-6 flex gap-3">
+        <div className="flex flex-wrap justify-center gap-3">
           <Badge icon={<FileCode size={12}/>} label="JAVA" />
           <Badge icon={<FileCode size={12}/>} label="PYTHON" />
           <Badge icon={<FileCode size={12}/>} label="ZIP" />

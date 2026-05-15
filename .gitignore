@@ -43,3 +43,6 @@ backend/storage/
 # === OS ===
 Thumbs.db
 desktop.ini
+
+# === DB ===
+backend/data/
