@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.List;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -24,15 +25,27 @@ public class FileStorageService {
     }
 
     public String storeSubmissions(MultipartFile file, String batchId) {
+        return storeSubmissions(List.of(file), batchId);
+    }
+
+    public String storeSubmissions(List<MultipartFile> files, String batchId) {
         try {
             Path batchPath = this.root.resolve(batchId);
             Files.createDirectories(batchPath);
 
-            String extension = FilenameUtils.getExtension(file.getOriginalFilename());
-            if ("zip".equalsIgnoreCase(extension)) {
-                extractZip(file.getInputStream(), batchPath);
-            } else {
-                Files.copy(file.getInputStream(), batchPath.resolve(file.getOriginalFilename()));
+            for (MultipartFile file : files) {
+                if (file == null || file.isEmpty()) {
+                    continue;
+                }
+
+                String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+                if ("zip".equalsIgnoreCase(extension)) {
+                    extractZip(file.getInputStream(), batchPath);
+                } else {
+                    Path targetFile = batchPath.resolve(file.getOriginalFilename());
+                    Files.createDirectories(targetFile.getParent());
+                    Files.copy(file.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
+                }
             }
             return batchPath.toString();
         } catch (Exception e) {

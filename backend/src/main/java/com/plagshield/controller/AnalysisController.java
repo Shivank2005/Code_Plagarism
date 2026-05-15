@@ -143,6 +143,8 @@ public class AnalysisController {
                 name.endsWith(".c") ||
                 name.endsWith(".h") ||
                 name.endsWith(".cs") ||
+            name.endsWith(".rb") ||
+            name.endsWith(".php") ||
                 name.endsWith(".kt") ||
                 name.endsWith(".go") ||
                 name.endsWith(".rs") ||

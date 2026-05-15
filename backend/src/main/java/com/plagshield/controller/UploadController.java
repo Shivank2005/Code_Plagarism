@@ -8,9 +8,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api/submissions")
@@ -24,9 +31,9 @@ public class UploadController {
     private AnalysisBatchRepository batchRepository;
 
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, String>> uploadSubmissions(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadSubmissions(@RequestParam("file") List<MultipartFile> files) {
         String batchId = UUID.randomUUID().toString();
-        String path = fileStorageService.storeSubmissions(file, batchId);
+        String path = fileStorageService.storeSubmissions(files, batchId);
 
         AnalysisBatch batch = new AnalysisBatch();
         batch.setId(batchId);
@@ -35,11 +42,36 @@ public class UploadController {
         batch.setLanguage("JAVA"); // Default for now
         batchRepository.save(batch);
 
-        Map<String, String> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         response.put("batchId", batchId);
         response.put("status", "success");
         response.put("message", "Submissions uploaded successfully.");
+        response.put("files", collectFiles(path));
 
         return ResponseEntity.ok(response);
+    }
+
+    private List<Map<String, String>> collectFiles(String storagePath) {
+        List<Map<String, String>> files = new ArrayList<>();
+        Path batchPath = Paths.get(storagePath);
+        if (!Files.exists(batchPath)) {
+            return files;
+        }
+
+        try (Stream<Path> pathStream = Files.walk(batchPath)) {
+            pathStream
+                    .filter(Files::isRegularFile)
+                    .forEach(path -> {
+                        try {
+                            String relativeId = batchPath.relativize(path).toString().replace('\\', '/');
+                            String content = Files.readString(path);
+                            files.add(Map.of("id", relativeId, "code", content));
+                        } catch (IOException ignored) {
+                        }
+                    });
+        } catch (IOException ignored) {
+        }
+
+        return files;
     }
 }

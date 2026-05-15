@@ -5,6 +5,7 @@ This provides mock endpoints compatible with the React frontend.
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from difflib import SequenceMatcher
+import re
 import io
 import os
 import uuid
@@ -23,7 +24,7 @@ def _is_code_file(filename):
     name = filename.lower()
     return name.endswith((
         '.java', '.py', '.js', '.jsx', '.ts', '.tsx', '.c', '.cpp', '.h',
-        '.cs', '.kt', '.go', '.rs', '.swift', '.scala', '.json', '.md'
+        '.cs', '.rb', '.php', '.kt', '.go', '.rs', '.swift', '.scala', '.json', '.md'
     ))
 
 
@@ -80,7 +81,76 @@ def _collect_files(batch_id):
 def _pair_similarity(text_a, text_b):
     if not text_a and not text_b:
         return 100.0
-    return round(SequenceMatcher(None, text_a, text_b).ratio() * 100.0, 2)
+
+    normalized_a = _normalize_code(text_a)
+    normalized_b = _normalize_code(text_b)
+
+    if not normalized_a and not normalized_b:
+        return 100.0
+
+    token_a = _token_set(normalized_a)
+    token_b = _token_set(normalized_b)
+    structural_a = _structural_fingerprint(normalized_a)
+    structural_b = _structural_fingerprint(normalized_b)
+
+    token_score = _jaccard_score(token_a, token_b)
+    structural_score = _jaccard_score(structural_a, structural_b)
+    sequence_score = SequenceMatcher(None, normalized_a, normalized_b).ratio() * 100.0
+
+    length_penalty = _length_penalty(normalized_a, normalized_b)
+
+    raw_score = (
+        token_score * 0.45
+        + structural_score * 0.35
+        + sequence_score * 0.20
+    ) * length_penalty
+
+    return round(max(0.0, min(raw_score, 100.0)), 2)
+
+
+def _normalize_code(code):
+    if not code:
+        return ''
+
+    text = re.sub(r'//.*?$', ' ', code, flags=re.MULTILINE)
+    text = re.sub(r'/\*.*?\*/', ' ', text, flags=re.DOTALL)
+    text = re.sub(r'"(?:\\.|[^"\\])*"', ' STR ', text)
+    text = re.sub(r"'(?:\\.|[^'\\])*'", ' CHR ', text)
+    text = re.sub(r'\s+', ' ', text)
+    return text.lower().strip()
+
+
+def _token_set(code):
+    return set(token for token in re.split(r'[^a-zA-Z0-9_]+', code) if token and not token.isdigit())
+
+
+def _structural_fingerprint(code):
+    keywords = {
+        'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'try', 'catch', 'finally',
+        'class', 'interface', 'enum', 'function', 'def', 'return', 'public', 'private',
+        'protected', 'static', 'async', 'await', 'import', 'from', 'extends', 'implements'
+    }
+    return [token for token in re.split(r'[^a-zA-Z0-9_]+', code) if token in keywords]
+
+
+def _jaccard_score(values_a, values_b):
+    if not values_a and not values_b:
+        return 100.0
+    if not values_a or not values_b:
+        return 0.0
+    intersection = len(values_a.intersection(values_b))
+    union = len(values_a.union(values_b)) or 1
+    return (intersection / union) * 100.0
+
+
+def _length_penalty(text_a, text_b):
+    length_a = len(text_a)
+    length_b = len(text_b)
+    if length_a == 0 or length_b == 0:
+        return 0.5
+    max_length = max(length_a, length_b)
+    diff_ratio = abs(length_a - length_b) / max_length
+    return max(0.55, 1.0 - (diff_ratio * 0.25))
 
 
 def _detect_rings(students, matrix, threshold=70.0):
