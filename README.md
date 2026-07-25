@@ -254,7 +254,7 @@ python app.py
 
 ```bash
 cd backend
-python mock_app.py
+mvn spring-boot:run
 ```
 
 ---

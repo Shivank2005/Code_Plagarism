@@ -32,7 +32,7 @@ public class SystemTestHarness {
 
         // 3. Test Risk Scoring
         RiskScoringService rss = new RiskScoringService();
-        double finalScore = rss.calculateFinalRiskScore(80.0, structScore, 75.0);
+        double finalScore = rss.calculateFinalRiskScore(structScore, structScore, 75.0);
         System.out.println("[RISK SCORE] Final: " + finalScore + " (" + rss.classifyRisk(finalScore) + ")");
     }
 

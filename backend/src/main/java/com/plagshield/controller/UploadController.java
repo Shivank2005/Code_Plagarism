@@ -21,7 +21,6 @@ import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api/submissions")
-@CrossOrigin(origins = "*")
 public class UploadController {
 
     @Autowired

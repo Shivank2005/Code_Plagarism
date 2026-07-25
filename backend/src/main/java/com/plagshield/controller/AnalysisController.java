@@ -2,10 +2,12 @@ package com.plagshield.controller;
 
 import com.plagshield.model.AnalysisBatch;
 import com.plagshield.model.PlagiarismResult;
+import com.plagshield.model.EvaluationResult;
 import com.plagshield.repository.AnalysisBatchRepository;
 import com.plagshield.repository.PlagiarismResultRepository;
 import com.plagshield.service.AnalysisService;
 import com.plagshield.service.ClusteringService;
+import com.plagshield.service.EvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +21,6 @@ import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api/analysis")
-@CrossOrigin(origins = "*")
 public class AnalysisController {
 
     @Autowired
@@ -33,6 +34,25 @@ public class AnalysisController {
 
     @Autowired
     private PlagiarismResultRepository resultRepository;
+
+    @Autowired
+    private EvaluationService evaluationService;
+
+    @PostMapping("/{batchId}/evaluate")
+    public ResponseEntity<?> evaluateBatch(@PathVariable String batchId, @RequestBody Map<String, Object> payload) {
+        return batchRepository.findById(batchId)
+                .map(batch -> {
+                    List<PlagiarismResult> results = batch.getResults();
+                    double threshold = Double.parseDouble(payload.getOrDefault("threshold", "70.0").toString());
+                    List<String> groundTruthList = (List<String>) payload.getOrDefault("groundTruth", Collections.emptyList());
+                    Set<String> groundTruthPairs = new HashSet<>(groundTruthList);
+                    int totalPossiblePairs = results.size();
+                    
+                    EvaluationResult eval = evaluationService.evaluateModel(results, threshold, groundTruthPairs, totalPossiblePairs);
+                    return ResponseEntity.ok(eval);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
 
     @PostMapping("/{batchId}/start")
     public ResponseEntity<?> startAnalysis(@PathVariable String batchId) {

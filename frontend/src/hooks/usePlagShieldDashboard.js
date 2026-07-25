@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
+import { useAuth } from './AuthContext';
 
 const API_BASE = 'http://localhost:8082/api';
 const CODEBERT_API = 'http://localhost:8090/api/embeddings';
@@ -13,7 +14,9 @@ const DEFAULT_PREFERENCES = {
 };
 
 export function usePlagShieldDashboard() {
+  const { token } = useAuth();
   const [activeBatch, setActiveBatch] = useState('');
+  const [evaluationResults, setEvaluationResults] = useState(null);
   const [results, setResults] = useState(null);
   const [semanticResults, setSemanticResults] = useState(null);
   const [batchFiles, setBatchFiles] = useState([]);
@@ -476,6 +479,22 @@ export function usePlagShieldDashboard() {
     return 'Upload source bundles, compute fingerprints, and reveal structural similarities.';
   }, [view]);
 
+  const evaluateModel = useCallback(async (batchId, threshold, groundTruthList) => {
+    try {
+      const res = await axios.post(`${API_BASE}/analysis/${batchId}/evaluate`, {
+        threshold: threshold,
+        groundTruth: groundTruthList
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEvaluationResults(res.data);
+      showToast('Evaluation completed successfully.', 'success');
+    } catch (err) {
+      console.error('Evaluation error:', err);
+      showToast('Evaluation failed.', 'error');
+    }
+  }, [token, showToast]);
+
   return {
     activeBatch,
     results,
@@ -513,5 +532,7 @@ export function usePlagShieldDashboard() {
     suspiciousPairs,
     summaryTiles,
     renderHeaderSubtitle,
+    evaluationResults,
+    evaluateModel,
   };
 }

@@ -32,6 +32,15 @@ public class AnalysisService {
     @Autowired
     private PlagiarismResultRepository resultRepository;
 
+    @Autowired
+    private StructuralAnalyzer structuralAnalyzer;
+
+    @Autowired
+    private RiskScoringService riskScoringService;
+
+    @Autowired
+    private JPlagService jPlagService;
+
     @Async
     public void startAnalysis(String batchId) {
         AnalysisBatch batch = batchRepository.findById(batchId).orElseThrow();
@@ -46,13 +55,19 @@ public class AnalysisService {
             }
 
             List<Map<String, String>> submissions = new ArrayList<>();
+            Map<String, String> originalCodes = new HashMap<>();
+            
             for (Path file : files) {
                 String content = Files.readString(file);
                 String fileName = file.getFileName().toString();
+                String normalizedContent = structuralAnalyzer.normalizeCode(content);
+                
                 Map<String, String> sub = new HashMap<>();
                 sub.put("id", fileName);
-                sub.put("code", content);
+                sub.put("code", normalizedContent);
                 submissions.add(sub);
+                
+                originalCodes.put(fileName, content);
             }
 
             Map<String, Object> payload = new HashMap<>();
@@ -72,11 +87,26 @@ public class AnalysisService {
 
                 for (int i = 0; i < students.size(); i++) {
                     for (int j = i + 1; j < students.size(); j++) {
-                        double score = matrix.get(i).get(j).doubleValue();
+                        double semanticScore = matrix.get(i).get(j).doubleValue();
+                        String studentA = students.get(i);
+                        String studentB = students.get(j);
+                        
+                        double structuralScore = structuralAnalyzer.calculateStructuralSimilarity(
+                            originalCodes.get(studentA), 
+                            originalCodes.get(studentB)
+                        );
+                        
+                        double tokenScore = jPlagService.calculateTokenSimilarity(
+                            originalCodes.get(studentA), 
+                            originalCodes.get(studentB)
+                        );
+                        
+                        double finalScore = riskScoringService.calculateFinalRiskScore(tokenScore, structuralScore, semanticScore);
+                        
                         PlagiarismResult result = new PlagiarismResult();
-                        result.setSubmissionA(students.get(i));
-                        result.setSubmissionB(students.get(j));
-                        result.setSimilarityScore(score);
+                        result.setSubmissionA(studentA);
+                        result.setSubmissionB(studentB);
+                        result.setSimilarityScore(finalScore);
                         result.setBatch(batch);
                         results.add(result);
                     }

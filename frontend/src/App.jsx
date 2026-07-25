@@ -1,16 +1,15 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  BarChart3,
-  ChevronRight,
+  FileCheck2,
   FileUp,
-  Filter,
   GitCompareArrows,
   History,
   LayoutDashboard,
+  LogOut,
   Network,
   Settings,
-  Sparkles,
+  ShieldCheck,
   UserCircle2,
   Users,
 } from 'lucide-react';
@@ -21,8 +20,23 @@ import GraphView from './components/views/GraphView';
 import HistoryView from './components/views/HistoryView';
 import PreferencesView from './components/views/PreferencesView';
 import RingsView from './components/views/RingsView';
+import EvaluationView from './components/views/EvaluationView';
+import { useAuth } from './hooks/AuthContext';
+import LoginView from './components/LoginView';
+
+const NAV_ITEMS = [
+  { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { id: 'graph', icon: Network, label: 'Reports' },
+  { id: 'diff', icon: GitCompareArrows, label: 'Diff Viewer' },
+  { id: 'rings', icon: Users, label: 'Rings' },
+  { id: 'evaluation', icon: FileCheck2, label: 'Evaluation' },
+  { id: 'history', icon: History, label: 'History' },
+  { id: 'preferences', icon: Settings, label: 'Settings' },
+];
 
 function App() {
+  const { token, username, logout } = useAuth();
+
   const {
     activeBatch,
     results,
@@ -60,6 +74,8 @@ function App() {
     suspiciousPairs,
     summaryTiles,
     renderHeaderSubtitle,
+    evaluationResults,
+    evaluateModel,
   } = usePlagShieldDashboard();
 
   const renderView = () => {
@@ -98,6 +114,8 @@ function App() {
         );
       case 'graph':
         return <GraphView semanticResults={semanticResults} isSemanticLoading={isSemanticLoading} />;
+      case 'evaluation':
+        return <EvaluationView activeBatch={activeBatch} evaluateModel={evaluateModel} evaluationResults={evaluationResults} />;
       case 'diff':
         return <DiffView batchFiles={batchFiles} semanticResults={semanticResults} selectedSuspiciousPair={selectedSuspiciousPair} />;
       default:
@@ -121,94 +139,137 @@ function App() {
     }
   };
 
+  if (!token) {
+    return <LoginView />;
+  }
+
+  const currentNav = NAV_ITEMS.find((n) => n.id === view) || NAV_ITEMS[0];
+
   return (
-    <div className="min-h-screen bg-[#0f172a] text-[#e5e7eb] selection:bg-[#3b82f6]/30 selection:text-white">
-      <div className="border-b border-[#1f2937] bg-[#0f172a]/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[1800px] items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#1f2937] bg-[#111827] text-[#3b82f6]">
-              <BarChart3 size={20} />
-            </div>
+    <div className="flex min-h-screen bg-[var(--bg-primary)]">
+      {/* ─── Sidebar ─── */}
+      <aside className="hidden lg:flex flex-col w-[240px] border-r border-[var(--border-default)] bg-[var(--bg-secondary)] fixed inset-y-0 left-0 z-40">
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-[var(--border-subtle)]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-white">
+            <ShieldCheck size={18} />
+          </div>
+          <span className="text-[15px] font-bold tracking-tight text-[var(--text-primary)]">
+            PlagShield
+          </span>
+        </div>
+
+        {/* Nav items */}
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = view === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setView(item.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
+                  isActive
+                    ? 'bg-[var(--accent-muted)] text-[var(--accent-light)]'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <Icon size={18} />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* User section */}
+        <div className="border-t border-[var(--border-subtle)] p-3 space-y-2">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-lg">
+            <UserCircle2 size={20} className="text-[var(--text-tertiary)]" />
+            <span className="text-[13px] font-medium text-[var(--text-secondary)] truncate">{username}</span>
+          </div>
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[var(--text-tertiary)] hover:bg-red-500/10 hover:text-red-400 transition-colors"
+          >
+            <LogOut size={18} />
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      {/* ─── Mobile bottom nav ─── */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-secondary)] border-t border-[var(--border-default)] flex items-center justify-around px-2 py-2">
+        {NAV_ITEMS.slice(0, 5).map((item) => {
+          const Icon = item.icon;
+          const isActive = view === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setView(item.id)}
+              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
+                isActive
+                  ? 'text-[var(--accent-light)]'
+                  : 'text-[var(--text-tertiary)]'
+              }`}
+            >
+              <Icon size={18} />
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* ─── Main content ─── */}
+      <main className="flex-1 lg:ml-[240px] pb-20 lg:pb-0">
+        {/* Top bar */}
+        <header className="sticky top-0 z-[30] border-b border-[var(--border-subtle)]" style={{ background: 'rgba(10, 10, 11, 0.95)', backdropFilter: 'blur(12px)' }}>
+          <div className="flex items-center justify-between px-6 py-4 max-w-[1400px] mx-auto">
             <div>
-              <p className="font-display text-lg font-semibold text-white">PlagShield</p>
-              <p className="text-[10px] uppercase tracking-[0.24em] text-[#94a3b8]">Code Analysis Platform</p>
+              <p className="section-label mb-0.5">{currentNav.label}</p>
+              <h1 className="page-title">{currentNav.label === 'Dashboard' ? 'Workspace Overview' : currentNav.label}</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  fetchHistory();
+                  showToast('Data refreshed.', 'success');
+                }}
+                className="btn-secondary"
+              >
+                Refresh
+              </button>
+              <button
+                onClick={() => setView('dashboard')}
+                className="btn-primary"
+              >
+                <FileUp size={16} />
+                New Analysis
+              </button>
             </div>
           </div>
+        </header>
 
-          <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex">
-            <TopNavItem icon={<FileUp size={16} />} label="Upload" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
-            <TopNavItem icon={<LayoutDashboard size={16} />} label="Reports" active={view === 'graph'} onClick={() => setView('graph')} />
-            <TopNavItem icon={<History size={16} />} label="History" active={view === 'history'} onClick={() => setView('history')} />
-            <TopNavItem icon={<Settings size={16} />} label="Settings" active={view === 'preferences'} onClick={() => setView('preferences')} />
-          </nav>
-
-          <div className="ml-auto flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => setView('dashboard')}
-              className="hidden items-center gap-2 rounded-full border border-[#1f2937] bg-[#111827] px-4 py-2 text-sm font-medium text-[#e5e7eb] transition-colors hover:border-[#3b82f6]/50 hover:text-white sm:inline-flex"
-            >
-              <Sparkles size={14} /> New analysis
-            </button>
-            <button
-              onClick={() => {
-                fetchHistory();
-                showToast('History refreshed from backend.', 'success');
-              }}
-              className="hidden rounded-full border border-[#1f2937] bg-[#111827] px-4 py-2 text-sm font-medium text-[#e5e7eb] transition-colors hover:border-[#3b82f6]/50 hover:text-white md:inline-flex"
-            >
-              Reports
-            </button>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#1f2937] bg-[#111827] text-[#cbd5e1]">
-              <UserCircle2 size={20} />
-            </div>
-          </div>
+        {/* Page content */}
+        <div className="px-6 py-6 max-w-[1400px] mx-auto">
+          <AnimatePresence mode="wait">
+            {renderView()}
+          </AnimatePresence>
         </div>
-      </div>
-
-      <main className="mx-auto w-full max-w-[1800px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <div className="mb-6 flex flex-col gap-4 border-b border-[#1f2937] pb-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#94a3b8]">{view === 'dashboard' ? 'Overview' : view}</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Plagiarism detection workspace</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#94a3b8]">{renderHeaderSubtitle()}</p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setView('dashboard')}
-              className="inline-flex items-center gap-2 rounded-full border border-[#1f2937] bg-[#111827] px-4 py-2 text-sm font-medium text-[#e5e7eb] transition-colors hover:border-[#3b82f6]/50"
-            >
-              <Sparkles size={14} /> Overview
-            </button>
-            <button
-              onClick={() => {
-                fetchHistory();
-                showToast('History refreshed from backend.', 'success');
-              }}
-              className="inline-flex items-center gap-2 rounded-full border border-[#1f2937] bg-[#111827] px-4 py-2 text-sm font-medium text-[#e5e7eb] transition-colors hover:border-[#3b82f6]/50"
-            >
-              <Filter size={14} /> Refresh
-            </button>
-          </div>
-        </div>
-
-        <AnimatePresence mode="wait">
-          {renderView()}
-        </AnimatePresence>
       </main>
 
+      {/* ─── Toast ─── */}
       <AnimatePresence>
         {toast && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className={`fixed bottom-6 right-6 z-30 rounded-xl border px-4 py-3 text-sm shadow-2xl ${
+            className={`fixed bottom-6 right-6 z-50 rounded-lg border px-4 py-3 text-sm font-medium shadow-xl ${
               toast.type === 'error'
-                ? 'border-rose-100/35 bg-rose-500/30 text-rose-100'
+                ? 'border-red-500/30 bg-red-500/10 text-red-300'
                 : toast.type === 'success'
-                  ? 'border-emerald-100/30 bg-emerald-500/25 text-emerald-100'
-                  : 'border-cyan-100/25 bg-cyan-900/80 text-cyan-100'
+                  ? 'border-green-500/30 bg-green-500/10 text-green-300'
+                  : 'border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
             }`}
           >
             {toast.message}
@@ -218,33 +279,5 @@ function App() {
     </div>
   );
 }
-
-const NavItem = ({ icon, label, active = false, onClick, compact = false }) => (
-  <button
-    onClick={onClick}
-    className={`${compact ? 'shrink-0 rounded-xl px-4 py-2.5 text-sm' : 'w-full rounded-2xl px-5 py-3.5'} flex items-center gap-3 font-semibold transition-all duration-300 ${
-      active
-        ? 'bg-cyan-500/25 text-white shadow-lg shadow-cyan-900/30'
-        : 'text-cyan-100/70 hover:bg-cyan-500/10 hover:text-cyan-50'
-    }`}
-  >
-    <span className={`${active ? 'text-cyan-50' : 'text-cyan-100/70'} transition-colors`}>
-      {React.cloneElement(icon, { size: compact ? 18 : 20 })}
-    </span>
-    {label}
-  </button>
-);
-
-const TopNavItem = ({ icon, label, active = false, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-      active ? 'bg-[#111827] text-white' : 'text-[#94a3b8] hover:bg-[#111827] hover:text-white'
-    }`}
-  >
-    {icon}
-    {label}
-  </button>
-);
 
 export default App;

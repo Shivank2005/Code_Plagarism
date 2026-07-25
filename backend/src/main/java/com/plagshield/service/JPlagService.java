@@ -1,58 +1,36 @@
 package com.plagshield.service;
 
-import com.plagshield.model.AnalysisBatch;
-import com.plagshield.repository.AnalysisBatchRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class JPlagService {
 
-    @Autowired
-    private AnalysisBatchRepository batchRepository;
-
-    private final String JPLAG_JAR_PATH = "lib/jplag.jar"; // Assumed location
-
-    @Async
-    public void runAnalysis(String batchId, String language) {
-        AnalysisBatch batch = batchRepository.findById(batchId).orElseThrow();
-        batch.setStatus("PROCESSING");
-        batchRepository.save(batch);
-
-        try {
-            Path submissionPath = Paths.get(batch.getStoragePath());
-            Path outputPath = submissionPath.resolve("jplag_results");
-
-            // Build Command: java -jar jplag.jar <submissions> -l <language> -r <resultFile> --csv-export
-            ProcessBuilder pb = new ProcessBuilder(
-                "java", "-jar", JPLAG_JAR_PATH,
-                submissionPath.toString(),
-                "-l", language,
-                "-r", outputPath.toString(),
-                "--csv-export"
-            );
-
-            pb.inheritIO();
-            Process process = pb.start();
-            int exitCode = process.waitFor();
-
-            if (exitCode == 0) {
-                batch.setStatus("COMPLETED");
-                // TODO: Trigger ResultParser to read the CSV and save to DB
-            } else {
-                batch.setStatus("FAILED");
-            }
-        } catch (Exception e) {
-            batch.setStatus("FAILED");
-            e.printStackTrace();
-        } finally {
-            batchRepository.save(batch);
-        }
+    public double calculateTokenSimilarity(String code1, String code2) {
+        if (code1 == null || code2 == null) return 0.0;
+        if (code1.isBlank() && code2.isBlank()) return 100.0;
+        
+        String[] tokens1 = code1.toLowerCase().split("\\W+");
+        String[] tokens2 = code2.toLowerCase().split("\\W+");
+        
+        Set<String> set1 = new java.util.HashSet<>(java.util.Arrays.asList(tokens1));
+        Set<String> set2 = new java.util.HashSet<>(java.util.Arrays.asList(tokens2));
+        
+        set1.remove("");
+        set2.remove("");
+        
+        if (set1.isEmpty() && set2.isEmpty()) return 100.0;
+        if (set1.isEmpty() || set2.isEmpty()) return 0.0;
+        
+        Set<String> intersection = new java.util.HashSet<>(set1);
+        intersection.retainAll(set2);
+        
+        Set<String> union = new java.util.HashSet<>(set1);
+        union.addAll(set2);
+        
+        return ((double) intersection.size() / union.size()) * 100.0;
     }
 }

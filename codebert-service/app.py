@@ -87,14 +87,34 @@ def _hashed_embedding(text: str, dims: int = 384) -> np.ndarray:
 
 def _embed_texts(submissions: list[Submission]) -> np.ndarray:
     model = _load_model()
-    texts = [item.code or "" for item in submissions]
+    embeddings_list = []
 
-    if model:
-        embeddings = model.encode(texts, normalize_embeddings=True)
-        return np.array(embeddings, dtype=np.float32)
+    for item in submissions:
+        text = item.code or ""
+        lines = text.splitlines()
+        chunks = []
+        chunk_size = 50
+        
+        for i in range(0, max(1, len(lines)), chunk_size):
+            chunk = "\n".join(lines[i:i+chunk_size])
+            chunks.append(chunk if chunk else " ")
 
-    fallback = [_hashed_embedding(text) for text in texts]
-    return np.array(fallback, dtype=np.float32)
+        if model:
+            chunk_embs = model.encode(chunks, normalize_embeddings=True)
+            doc_emb = np.mean(chunk_embs, axis=0)
+            norm = np.linalg.norm(doc_emb)
+            if norm > 0:
+                doc_emb = doc_emb / norm
+            embeddings_list.append(doc_emb)
+        else:
+            chunk_embs = [_hashed_embedding(c) for c in chunks]
+            doc_emb = np.mean(chunk_embs, axis=0)
+            norm = np.linalg.norm(doc_emb)
+            if norm > 0:
+                doc_emb = doc_emb / norm
+            embeddings_list.append(doc_emb)
+
+    return np.array(embeddings_list, dtype=np.float32)
 
 
 @app.get("/health")

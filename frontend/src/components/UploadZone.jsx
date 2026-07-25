@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Upload, FileCode, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, FileCode, AlertCircle, Loader2 } from 'lucide-react';
+import { useAuth } from '../hooks/AuthContext';
 
 const UploadZone = ({ onUploadSuccess }) => {
+  const { token } = useAuth();
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
@@ -31,7 +33,9 @@ const UploadZone = ({ onUploadSuccess }) => {
 
     try {
       const res = await axios.post('http://localhost:8082/api/submissions/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       const files = await Promise.all(
         fileList.map(async (file) => ({
@@ -41,7 +45,9 @@ const UploadZone = ({ onUploadSuccess }) => {
       );
       onUploadSuccess({ ...res.data, files });
     } catch (err) {
-      setError('Upload failed. Please check the backend connection.');
+      console.error('Upload error:', err);
+      const message = err.response?.data?.message || err.message || 'Upload failed. Please check the backend connection.';
+      setError(message);
     } finally {
       setUploading(false);
     }
@@ -53,59 +59,81 @@ const UploadZone = ({ onUploadSuccess }) => {
         onDragOver={handleDrag}
         onDragLeave={handleDrag}
         onDrop={handleDrop}
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
-        className={`glass-card relative flex min-h-[22rem] cursor-pointer flex-col items-center justify-center gap-6 rounded-[2rem] border-2 border-dashed p-6 transition-all duration-500 sm:p-8 ${
-          isDragging ? 'scale-[1.02] border-cyan-300/80 bg-cyan-500/20' : 'border-cyan-100/25 hover:border-cyan-100/45'
-        }`}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="card relative flex min-h-[20rem] cursor-pointer flex-col items-center justify-center gap-5 p-6 sm:p-8"
+        style={{
+          borderStyle: 'dashed',
+          borderWidth: '2px',
+          borderColor: isDragging ? 'var(--accent)' : 'var(--border-default)',
+          background: isDragging ? 'var(--accent-muted)' : 'var(--bg-secondary)',
+          transition: 'border-color 0.2s ease, background 0.2s ease',
+        }}
       >
-        <input 
-          type="file" 
+        <input
+          type="file"
           multiple
           webkitdirectory="true"
-          className="absolute inset-0 opacity-0 cursor-pointer" 
+          className="absolute inset-0 opacity-0 cursor-pointer"
           onChange={(e) => e.target.files?.length && uploadFiles(Array.from(e.target.files))}
         />
 
-        <div className={`flex h-20 w-20 items-center justify-center rounded-3xl transition-all duration-500 ${
-          isDragging ? 'rotate-6 bg-cyan-500 text-white' : 'bg-cyan-900/50 text-cyan-100/70 group-hover:bg-cyan-800/60 group-hover:text-cyan-100'
-        }`}>
-          {uploading ? <Loader2 className="animate-spin" size={32} /> : <Upload size={32} />}
+        {/* Icon */}
+        <div
+          className="flex h-16 w-16 items-center justify-center rounded-xl transition-colors duration-200"
+          style={{
+            background: isDragging ? 'var(--accent)' : 'var(--bg-surface)',
+            color: isDragging ? '#fff' : 'var(--text-tertiary)',
+          }}
+        >
+          {uploading ? <Loader2 className="animate-spin" size={28} /> : <Upload size={28} />}
         </div>
 
-        <div className="max-w-[18rem] text-center">
-          <h4 className="font-display mb-2 text-xl font-bold text-white">
-            {uploading ? 'Processing Data...' : isDragging ? 'Release to Start' : 'Initialize Analysis'}
+        {/* Text */}
+        <div className="text-center">
+          <h4
+            className="text-lg font-semibold mb-1"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {uploading ? 'Uploading...' : isDragging ? 'Drop to upload' : 'Drop files here'}
           </h4>
-          <p className="mx-auto max-w-[260px] text-sm leading-relaxed text-cyan-100/70">
-            Drag and drop a folder, ZIP archive, or multiple code files to begin structural verification.
+          <p
+            className="text-sm max-w-[260px] mx-auto"
+            style={{ color: 'var(--text-tertiary)', lineHeight: '1.6' }}
+          >
+            Drag and drop a folder, ZIP archive, or code files to begin analysis.
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-3">
-          <Badge icon={<FileCode size={12}/>} label="JAVA" />
-          <Badge icon={<FileCode size={12}/>} label="PYTHON" />
-          <Badge icon={<FileCode size={12}/>} label="ZIP" />
+        {/* Language badges */}
+        <div className="flex flex-wrap justify-center gap-2">
+          <span className="badge badge-neutral">
+            <FileCode size={12} /> JAVA
+          </span>
+          <span className="badge badge-neutral">
+            <FileCode size={12} /> PYTHON
+          </span>
+          <span className="badge badge-neutral">
+            <FileCode size={12} /> ZIP
+          </span>
         </div>
       </motion.div>
 
+      {/* Error display */}
       {error && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 rounded-2xl border border-rose-100/30 bg-rose-500/20 p-4 text-sm font-medium text-rose-100"
+          transition={{ duration: 0.2 }}
+          className="badge badge-danger px-4 py-3 rounded-lg text-sm w-full"
+          style={{ fontSize: '13px', gap: '8px' }}
         >
-          <AlertCircle size={18} /> {error}
+          <AlertCircle size={16} /> {error}
         </motion.div>
       )}
     </div>
   );
 };
-
-const Badge = ({ icon, label }) => (
-  <div className="flex items-center gap-2 rounded-full border border-cyan-100/25 bg-cyan-950/70 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-cyan-100/75">
-    {icon} {label}
-  </div>
-);
 
 export default UploadZone;

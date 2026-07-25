@@ -8,6 +8,24 @@ import java.util.*;
 @Service
 public class StructuralAnalyzer {
 
+    private static final Map<String, String> IR_MAP = new HashMap<>();
+    static {
+        String[] conds = {"if", "else", "elif", "switch", "case", "match"};
+        for (String c : conds) IR_MAP.put(c, "COND");
+        String[] loops = {"for", "while", "do", "foreach"};
+        for (String l : loops) IR_MAP.put(l, "LOOP");
+        String[] ex = {"try", "catch", "finally", "except", "throw", "throws", "raise"};
+        for (String e : ex) IR_MAP.put(e, "EXCEPT");
+        String[] decls = {"class", "interface", "enum", "struct", "def", "function", "func"};
+        for (String d : decls) IR_MAP.put(d, "DECL");
+        String[] mods = {"public", "private", "protected", "static", "async", "await", "yield", "let", "const", "var"};
+        for (String m : mods) IR_MAP.put(m, "MOD");
+        String[] ctrls = {"return", "break", "continue", "pass"};
+        for (String c : ctrls) IR_MAP.put(c, "CTRL");
+        String[] imps = {"import", "from", "require", "include", "package"};
+        for (String i : imps) IR_MAP.put(i, "IMP");
+    }
+
     public double calculateStructuralSimilarity(String code1, String code2) {
         String normalized1 = normalizeCode(code1);
         String normalized2 = normalizeCode(code2);
@@ -20,9 +38,14 @@ public class StructuralAnalyzer {
         Set<String> tokenSet2 = getTokenSet(normalized2);
         Set<String> fingerprint1 = getStructuralFingerprint(normalized1);
         Set<String> fingerprint2 = getStructuralFingerprint(normalized2);
+        
+        List<String> seq1 = getStructuralFingerprintSequence(normalized1);
+        List<String> seq2 = getStructuralFingerprintSequence(normalized2);
 
         double tokenScore = calculateJaccardSimilarity(tokenSet1, tokenSet2);
-        double structuralScore = calculateJaccardSimilarity(fingerprint1, fingerprint2);
+        double structuralJaccardScore = calculateJaccardSimilarity(fingerprint1, fingerprint2);
+        double treeEditDistanceScore = calculateSequenceSimilarity(String.join(" ", seq1), String.join(" ", seq2));
+        double structuralScore = (structuralJaccardScore + treeEditDistanceScore) / 2.0;
         double sequenceScore = calculateSequenceSimilarity(normalized1, normalized2);
         double lengthPenalty = calculateLengthPenalty(normalized1, normalized2);
 
@@ -30,7 +53,7 @@ public class StructuralAnalyzer {
         return Math.max(0.0, Math.min(100.0, combinedScore * lengthPenalty));
     }
 
-    private String normalizeCode(String code) {
+    public String normalizeCode(String code) {
         if (code == null || code.isBlank()) {
             return "";
         }
@@ -60,16 +83,26 @@ public class StructuralAnalyzer {
 
     private Set<String> getStructuralFingerprint(String code) {
         Set<String> fingerprint = new HashSet<>();
-        String[] keywords = {"if", "else", "for", "while", "do", "switch", "case", "try", "catch", "finally", "class", "interface", "enum", "function", "def", "return", "public", "private", "protected", "static", "async", "await", "import", "from", "extends", "implements"};
-
-        String patternString = "\\b(" + String.join("|", keywords) + ")\\b";
+        String patternString = "\\b(" + String.join("|", IR_MAP.keySet()) + ")\\b";
         Pattern pattern = Pattern.compile(patternString);
         Matcher matcher = pattern.matcher(code);
         
         while (matcher.find()) {
-            fingerprint.add(matcher.group().toLowerCase(Locale.ROOT));
+            fingerprint.add(IR_MAP.get(matcher.group().toLowerCase(Locale.ROOT)));
         }
         return fingerprint;
+    }
+
+    private List<String> getStructuralFingerprintSequence(String code) {
+        List<String> sequence = new ArrayList<>();
+        String patternString = "\\b(" + String.join("|", IR_MAP.keySet()) + ")\\b";
+        Pattern pattern = Pattern.compile(patternString);
+        Matcher matcher = pattern.matcher(code);
+        
+        while (matcher.find()) {
+            sequence.add(IR_MAP.get(matcher.group().toLowerCase(Locale.ROOT)));
+        }
+        return sequence;
     }
 
     private double calculateJaccardSimilarity(Set<String> set1, Set<String> set2) {
