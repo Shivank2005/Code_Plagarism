@@ -1,11 +1,11 @@
 package com.plagshield.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Data;
 
 @Data
-@Entity
+@Document(collection = "preferences")
 public class AppPreference {
     @Id
     private String id;

@@ -4,7 +4,7 @@ import com.plagshield.model.AnalysisBatch;
 import com.plagshield.model.PlagiarismResult;
 import com.plagshield.model.EvaluationResult;
 import com.plagshield.repository.AnalysisBatchRepository;
-import com.plagshield.repository.PlagiarismResultRepository;
+
 import com.plagshield.service.AnalysisService;
 import com.plagshield.service.ClusteringService;
 import com.plagshield.service.EvaluationService;
@@ -32,8 +32,6 @@ public class AnalysisController {
     @Autowired
     private ClusteringService clusteringService;
 
-    @Autowired
-    private PlagiarismResultRepository resultRepository;
 
     @Autowired
     private EvaluationService evaluationService;
@@ -146,7 +144,6 @@ public class AnalysisController {
 
     @DeleteMapping("/history")
     public ResponseEntity<?> clearHistory() {
-        resultRepository.deleteAll();
         batchRepository.deleteAll();
         return ResponseEntity.ok(Map.of("message", "History cleared"));
     }

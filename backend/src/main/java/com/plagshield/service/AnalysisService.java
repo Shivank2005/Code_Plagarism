@@ -3,7 +3,7 @@ package com.plagshield.service;
 import com.plagshield.model.AnalysisBatch;
 import com.plagshield.model.PlagiarismResult;
 import com.plagshield.repository.AnalysisBatchRepository;
-import com.plagshield.repository.PlagiarismResultRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -29,8 +29,6 @@ public class AnalysisService {
     @Autowired
     private AnalysisBatchRepository batchRepository;
 
-    @Autowired
-    private PlagiarismResultRepository resultRepository;
 
     @Autowired
     private StructuralAnalyzer structuralAnalyzer;
@@ -107,7 +105,6 @@ public class AnalysisService {
                         result.setSubmissionA(studentA);
                         result.setSubmissionB(studentB);
                         result.setSimilarityScore(finalScore);
-                        result.setBatch(batch);
                         results.add(result);
                     }
                 }
@@ -115,7 +112,6 @@ public class AnalysisService {
                 throw new RuntimeException("CodeBERT semantic analysis failed.");
             }
 
-            resultRepository.saveAll(results);
             batch.setResults(results);
             batch.setStatus("COMPLETED");
 

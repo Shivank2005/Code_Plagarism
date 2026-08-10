@@ -29,7 +29,6 @@ public class ResultParser {
                 String[] values = line.split(",");
                 if (values.length >= 3) {
                     PlagiarismResult result = new PlagiarismResult();
-                    result.setBatch(batch);
                     result.setSubmissionA(values[0]);
                     result.setSubmissionB(values[1]);
                     result.setSimilarityScore(Double.parseDouble(values[2]));

@@ -7,6 +7,7 @@ const LoginView = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login, register } = useAuth();
@@ -14,6 +15,18 @@ const LoginView = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (isRegistering) {
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       if (isRegistering) {
@@ -143,6 +156,30 @@ const LoginView = () => {
               </div>
             </div>
 
+            {/* Confirm Password */}
+            {isRegistering && (
+              <div className="space-y-1.5">
+                <label className="section-label">Confirm Password</label>
+                <div className="relative">
+                  <div
+                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    <KeyRound size={16} />
+                  </div>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required={isRegistering}
+                    className="input-field"
+                    style={{ paddingLeft: '36px' }}
+                    placeholder="Confirm your password"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Submit */}
             <button
               type="submit"
@@ -175,6 +212,7 @@ const LoginView = () => {
             onClick={() => {
               setIsRegistering(!isRegistering);
               setError('');
+              setConfirmPassword('');
             }}
             className="mt-1 inline-flex items-center gap-1 text-sm font-medium transition-colors"
             style={{

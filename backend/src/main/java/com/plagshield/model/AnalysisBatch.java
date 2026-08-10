@@ -1,12 +1,13 @@
 package com.plagshield.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@Entity
+@Document(collection = "analysis_batches")
 public class AnalysisBatch {
     @Id
     private String id;
@@ -15,6 +16,5 @@ public class AnalysisBatch {
     private String storagePath;
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<PlagiarismResult> results;
 }
