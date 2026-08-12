@@ -5,6 +5,9 @@ import com.plagshield.repository.AppPreferenceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/preferences")
@@ -17,8 +20,12 @@ public class PreferencesController {
     private AppPreferenceRepository preferenceRepository;
 
     @GetMapping
-    public ResponseEntity<AppPreference> getPreferences(@RequestParam(name = "user", required = false) String user) {
-        String preferenceId = resolvePreferenceId(user);
+    public ResponseEntity<AppPreference> getPreferences() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String preferenceId = resolvePreferenceId(auth.getName());
         AppPreference preferences = preferenceRepository
                 .findById(preferenceId)
                 .orElseGet(() -> createDefaultPreferences(preferenceId));
@@ -27,9 +34,12 @@ public class PreferencesController {
 
     @PutMapping
     public ResponseEntity<AppPreference> savePreferences(
-            @RequestParam(name = "user", required = false) String user,
             @RequestBody AppPreference request) {
-        String preferenceId = resolvePreferenceId(user);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String preferenceId = resolvePreferenceId(auth.getName());
         AppPreference preferences = preferenceRepository
                 .findById(preferenceId)
                 .orElseGet(() -> createDefaultPreferences(preferenceId));

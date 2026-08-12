@@ -105,6 +105,9 @@ public class AnalysisService {
                         result.setSubmissionA(studentA);
                         result.setSubmissionB(studentB);
                         result.setSimilarityScore(finalScore);
+                        result.setTokenScore(tokenScore);
+                        result.setStructuralScore(structuralScore);
+                        result.setSemanticScore(semanticScore);
                         results.add(result);
                     }
                 }

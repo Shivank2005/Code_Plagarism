@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { GitCompareArrows, Loader2 } from 'lucide-react';
 
-const CODEBERT_API = 'http://localhost:8090/api/embeddings';
+const CODEBERT_BASE = import.meta.env.VITE_CODEBERT_API || 'http://localhost:8090';
+const CODEBERT_API = `${CODEBERT_BASE}/api/embeddings`;
 
 const rowClass = {
   same: 'bg-[#031926]',
@@ -11,13 +12,27 @@ const rowClass = {
   delete: 'bg-rose-500/12',
 };
 
-const DiffViewer = ({ files, semanticData, selectedPair }) => {
+const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
   const candidatePairs = useMemo(() => {
-    if (!semanticData || !Array.isArray(semanticData.links)) {
+    if (!results || !Array.isArray(results.students) || !Array.isArray(results.matrix)) {
       return [];
     }
-    return semanticData.links.slice(0, 24);
-  }, [semanticData]);
+
+    const pairs = [];
+    for (let i = 0; i < results.students.length; i += 1) {
+      for (let j = i + 1; j < results.students.length; j += 1) {
+        const score = results.matrix[i][j] ?? 0;
+        if (score > 0) {
+          pairs.push({
+            source: results.students[i],
+            target: results.students[j],
+            weight: score.toFixed(1)
+          });
+        }
+      }
+    }
+    return pairs.sort((a, b) => b.weight - a.weight).slice(0, 24);
+  }, [results]);
 
   const [selectedLocalPair, setSelectedLocalPair] = useState(null);
   const [diffData, setDiffData] = useState(null);
@@ -44,12 +59,25 @@ const DiffViewer = ({ files, semanticData, selectedPair }) => {
     setLoading(true);
     setError('');
 
-    const leftFile = fileById.get(pair.source);
-    const rightFile = fileById.get(pair.target);
+    let leftFile = fileById.get(pair.source);
+    let rightFile = fileById.get(pair.target);
+
+    if (!leftFile || !rightFile) {
+      const allFiles = Array.from(fileById.values());
+      if (!leftFile) {
+        leftFile = allFiles.find(f => f.id.includes(pair.source) || pair.source.includes(f.id) || (f.name && (f.name.includes(pair.source) || pair.source.includes(f.name))));
+      }
+      if (!rightFile) {
+        rightFile = allFiles.find(f => f.id.includes(pair.target) || pair.target.includes(f.id) || (f.name && (f.name.includes(pair.target) || pair.target.includes(f.name))));
+      }
+    }
 
     if (!leftFile || !rightFile) {
       setLoading(false);
-      setError('Selected pair code files are not available.');
+      const missing = [];
+      if (!leftFile) missing.push(pair.source);
+      if (!rightFile) missing.push(pair.target);
+      setError(`Selected pair code files are not available: ${missing.join(', ')}`);
       return;
     }
 

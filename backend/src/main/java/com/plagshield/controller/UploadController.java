@@ -38,7 +38,7 @@ public class UploadController {
         batch.setId(batchId);
         batch.setStatus("UPLOADED");
         batch.setStoragePath(path);
-        batch.setLanguage("JAVA"); // Default for now
+        batch.setLanguage(determineLanguage(files));
         batchRepository.save(batch);
 
         Map<String, Object> response = new HashMap<>();
@@ -72,5 +72,22 @@ public class UploadController {
         }
 
         return files;
+    }
+
+    private String determineLanguage(List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) return "UNKNOWN";
+        java.util.Set<String> langs = new java.util.HashSet<>();
+        for (MultipartFile file : files) {
+            String name = file.getOriginalFilename();
+            if (name == null) continue;
+            name = name.toLowerCase();
+            if (name.endsWith(".java")) langs.add("JAVA");
+            else if (name.endsWith(".py")) langs.add("PYTHON");
+            else if (name.endsWith(".js")) langs.add("JAVASCRIPT");
+            else if (name.endsWith(".cpp") || name.endsWith(".c") || name.endsWith(".h")) langs.add("CPP");
+        }
+        if (langs.isEmpty()) return "UNKNOWN";
+        if (langs.size() > 1) return "MULTI";
+        return langs.iterator().next();
     }
 }

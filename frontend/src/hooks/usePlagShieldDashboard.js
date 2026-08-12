@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 
-const API_BASE = 'http://localhost:8082/api';
-const CODEBERT_API = 'http://localhost:8090/api/embeddings';
+const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:8082';
+const CODEBERT_BASE = import.meta.env.VITE_CODEBERT_API || 'http://localhost:8090';
+const API_BASE = `${API_BASE_URL}/api`;
+const CODEBERT_API = `${CODEBERT_BASE}/api/embeddings`;
 
 const DEFAULT_PREFERENCES = {
   highRiskThreshold: 75,
@@ -239,10 +241,9 @@ export function usePlagShieldDashboard() {
         const res = await axios.get(`${API_BASE}/analysis/${batchId}/results`);
         if (res.data && Array.isArray(res.data.students) && res.data.students.length > 0) {
           setResults(res.data);
-        } else if (batchFiles.length > 0) {
-          setResults(buildLocalResults(batchFiles, preferences));
         } else {
           setResults(null);
+          showToast('No valid results found in the backend response.', 'error');
         }
         await fetchBatchFiles(batchId);
         setIsAnalyzing(false);
@@ -253,11 +254,8 @@ export function usePlagShieldDashboard() {
         showToast('Analysis completed and matrix generated.', 'success');
       } catch (err) {
         console.error('Error fetching results:', err);
-        if (batchFiles.length > 0) {
-          setResults(buildLocalResults(batchFiles, preferences));
-        } else {
-          setResults(null);
-        }
+        setResults(null);
+        showToast('Failed to fetch analysis results. ' + (err.response?.data?.message || err.message), 'error');
         setIsAnalyzing(false);
         fetchHistory();
       }
@@ -303,7 +301,6 @@ export function usePlagShieldDashboard() {
       if (Array.isArray(data.files) && data.files.length > 0) {
         setBatchFiles(data.files);
         await fetchSemanticEmbeddings(data.files);
-        setResults(buildLocalResults(data.files, preferences));
       }
       fetchHistory();
       setIsAnalyzing(true);

@@ -64,7 +64,7 @@ def _load_model() -> Any:
     return _model
 
 
-def _hashed_embedding(text: str, dims: int = 384) -> np.ndarray:
+def _hashed_embedding(text: str, dims: int = 10000) -> np.ndarray:
     vec = np.zeros(dims, dtype=np.float32)
     if not text:
         return vec
@@ -138,8 +138,38 @@ def similarity_matrix(payload: EmbeddingsRequest) -> dict[str, Any]:
         }
 
     vectors = _embed_texts(submissions)
-    sim = np.clip(np.matmul(vectors, vectors.T), -1.0, 1.0)
-    matrix = ((sim + 1.0) / 2.0) * 100.0
+
+    # ── Embedding Centering ("All-but-the-top") ──
+    # microsoft/codebert-base was trained for masked language modeling, NOT
+    # code similarity.  Its mean-pooled embeddings all point in roughly the
+    # same direction (cosine ~0.96-1.0 for everything).  Centering removes
+    # that dominant shared direction so the residual captures actual semantic
+    # differences between programs.
+    mean_vec = np.mean(vectors, axis=0)
+    centered = vectors - mean_vec
+    norms = np.linalg.norm(centered, axis=1, keepdims=True)
+    norms = np.where(norms > 0, norms, 1.0)
+    centered = centered / norms
+
+    raw_sim = np.matmul(centered, centered.T)  # range roughly [-1, 1]
+
+    # ── Contrast Rescaling ──
+    # Map the off-diagonal cosine similarities to [0, 100] using the
+    # actual observed range so the spread is maximized.
+    n = len(submissions)
+    off_diag = raw_sim[np.triu_indices(n, k=1)]
+    if len(off_diag) > 0:
+        sim_min = float(np.min(off_diag))
+        sim_max = float(np.max(off_diag))
+        spread = sim_max - sim_min
+        if spread < 0.01:
+            spread = 1.0  # avoid divide-by-zero if all identical
+        matrix = np.clip((raw_sim - sim_min) / spread * 100.0, 0.0, 100.0)
+    else:
+        matrix = np.clip(raw_sim * 100.0, 0.0, 100.0)
+
+    # Force diagonal to 100
+    np.fill_diagonal(matrix, 100.0)
 
     ids = [s.id for s in submissions]
     nodes = []

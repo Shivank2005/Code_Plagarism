@@ -8,61 +8,35 @@ import java.io.File;
 
 @Service
 public class RiskScoringService {
-    
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    /**
-     * Aggregates different similarity scores into a final weighted Risk Score via ML.
-     * 
-     * @param tokenScore From JPlag
-     * @param structuralScore From StructuralAnalyzer
-     * @param semanticScore From Semantic Python Service
-     * @return Final Risk Score (0-100)
-     */
     public double calculateFinalRiskScore(double tokenScore, double structuralScore, double semanticScore) {
-        try {
-            // Find scripts directory
-            String basePath = new File("").getAbsolutePath();
-            String scriptPath = basePath + File.separator + "scripts" + File.separator + "ml_classifier.py";
-            
-            ProcessBuilder processBuilder = new ProcessBuilder("python", scriptPath, 
-                String.valueOf(tokenScore), 
-                String.valueOf(structuralScore), 
-                String.valueOf(semanticScore));
-                
-            processBuilder.redirectErrorStream(true);
-            Process process = processBuilder.start();
-            
-            StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line);
-                }
-            }
-            
-            process.waitFor();
-            
-            String jsonOutput = output.toString().trim();
-            if (jsonOutput.contains("ml_risk_score")) {
-                JsonNode rootNode = objectMapper.readTree(jsonOutput);
-                return rootNode.get("ml_risk_score").asDouble();
-            }
-            
-            // Fallback if python script fails
-            return fallbackScore(tokenScore, structuralScore, semanticScore);
-            
-        } catch (Exception e) {
-            System.err.println("Error calling ML Classifier: " + e.getMessage());
-            return fallbackScore(tokenScore, structuralScore, semanticScore);
+        if (tokenScore > 99.0 && structuralScore > 99.0 && semanticScore > 99.0) {
+            return 100.0;
         }
-    }
+        if (tokenScore < 5.0 && structuralScore < 5.0 && semanticScore < 5.0) {
+            return 0.0;
+        }
 
-    private double fallbackScore(double tokenScore, double structuralScore, double semanticScore) {
-        double tokenWeight = 0.33;
-        double structuralWeight = 0.33;
-        double semanticWeight = 0.34;
-        return (tokenScore * tokenWeight) + (structuralScore * structuralWeight) + (semanticScore * semanticWeight);
+        // Weights: JPlag GST and AST tree parser are the reliable engines.
+        // CodeBERT (microsoft/codebert-base) was trained for masked language
+        // modeling, not code similarity — after centering it clusters by
+        // LANGUAGE not ALGORITHM.  Keep it as a minor tiebreaker only.
+        double tokenWeight = 0.45;
+        double structWeight = 0.45;
+        double semanticWeight = 0.10;
+
+        double score = (tokenScore * tokenWeight) + (structuralScore * structWeight) + (semanticScore * semanticWeight);
+        
+        // Disagreement penalty: if token and structural strongly disagree,
+        // dampen the score to prevent false positives from shared boilerplate
+        double tsMax = Math.max(tokenScore, structuralScore);
+        double tsMin = Math.min(tokenScore, structuralScore);
+        if (tsMax - tsMin > 50.0) {
+            score = score * 0.85;
+        }
+        
+        // Sharpen the score to push borderline cases towards clear risk categories
+        double sharpened = 100.0 / (1.0 + Math.exp(-0.12 * (score - 50.0)));
+        return Math.max(0.0, Math.min(100.0, sharpened));
     }
 
     public String classifyRisk(double finalScore) {

@@ -16,14 +16,16 @@ public class StructuralAnalyzer {
         for (String l : loops) IR_MAP.put(l, "LOOP");
         String[] ex = {"try", "catch", "finally", "except", "throw", "throws", "raise"};
         for (String e : ex) IR_MAP.put(e, "EXCEPT");
-        String[] decls = {"class", "interface", "enum", "struct", "def", "function", "func"};
-        for (String d : decls) IR_MAP.put(d, "DECL");
-        String[] mods = {"public", "private", "protected", "static", "async", "await", "yield", "let", "const", "var"};
-        for (String m : mods) IR_MAP.put(m, "MOD");
         String[] ctrls = {"return", "break", "continue", "pass"};
         for (String c : ctrls) IR_MAP.put(c, "CTRL");
         String[] imps = {"import", "from", "require", "include", "package"};
         for (String i : imps) IR_MAP.put(i, "IMP");
+        String[] decls = {"class", "interface", "enum", "struct", "def", "function", "func"};
+        for (String d : decls) IR_MAP.put(d, "DECL");
+        String[] mods = {"public", "private", "protected", "static"};
+        for (String m : mods) IR_MAP.put(m, "MOD");
+        String[] asyncs = {"async", "await"};
+        for (String a : asyncs) IR_MAP.put(a, "ASYNC");
     }
 
     public double calculateStructuralSimilarity(String code1, String code2) {
@@ -36,20 +38,24 @@ public class StructuralAnalyzer {
 
         Set<String> tokenSet1 = getTokenSet(normalized1);
         Set<String> tokenSet2 = getTokenSet(normalized2);
-        Set<String> fingerprint1 = getStructuralFingerprint(normalized1);
-        Set<String> fingerprint2 = getStructuralFingerprint(normalized2);
         
-        List<String> seq1 = getStructuralFingerprintSequence(normalized1);
-        List<String> seq2 = getStructuralFingerprintSequence(normalized2);
+        List<String> tree1 = getTreeSequence(code1);
+        List<String> tree2 = getTreeSequence(code2);
+        
+        Set<String> fingerprint1 = new HashSet<>(tree1);
+        Set<String> fingerprint2 = new HashSet<>(tree2);
 
         double tokenScore = calculateJaccardSimilarity(tokenSet1, tokenSet2);
         double structuralJaccardScore = calculateJaccardSimilarity(fingerprint1, fingerprint2);
-        double treeEditDistanceScore = calculateSequenceSimilarity(String.join(" ", seq1), String.join(" ", seq2));
-        double structuralScore = (structuralJaccardScore + treeEditDistanceScore) / 2.0;
+        double treeEditDistanceScore = calculateSequenceSimilarity(String.join(" ", tree1), String.join(" ", tree2));
+        
+        // Tree Edit Distance is much more accurate than pure jaccard, weight it heavily
+        double structuralScore = (structuralJaccardScore * 0.3) + (treeEditDistanceScore * 0.7);
         double sequenceScore = calculateSequenceSimilarity(normalized1, normalized2);
         double lengthPenalty = calculateLengthPenalty(normalized1, normalized2);
 
-        double combinedScore = (tokenScore * 0.45) + (structuralScore * 0.35) + (sequenceScore * 0.20);
+        // Increased weight on the pure structural fingerprint to assist cross-language detection
+        double combinedScore = (tokenScore * 0.25) + (structuralScore * 0.60) + (sequenceScore * 0.15);
         return Math.max(0.0, Math.min(100.0, combinedScore * lengthPenalty));
     }
 
@@ -66,6 +72,68 @@ public class StructuralAnalyzer {
         return normalized.toLowerCase(Locale.ROOT).trim();
     }
 
+    private String stripCommentsAndStrings(String code) {
+        if (code == null) return "";
+        String clean = code.replaceAll("(?m)//.*?$", "");
+        clean = clean.replaceAll("(?s)/\\*.*?\\*/", "");
+        clean = clean.replaceAll("\"(?:\\\\.|[^\"\\\\])*\"", "STR");
+        clean = clean.replaceAll("'(?:\\\\.|[^'\\\\])*'", "CHR");
+        return clean.toLowerCase(Locale.ROOT);
+    }
+
+    private List<String> getTreeSequence(String originalCode) {
+        List<String> tree = new ArrayList<>();
+        String code = stripCommentsAndStrings(originalCode);
+        
+        boolean isPython = !code.contains("{") && !code.contains("}");
+        int depth = 0;
+        
+        if (isPython) {
+            String[] lines = code.split("\n");
+            for (String line : lines) {
+                if (line.trim().isEmpty()) continue;
+                
+                int leadingSpaces = 0;
+                while (leadingSpaces < line.length() && line.charAt(leadingSpaces) == ' ') {
+                    leadingSpaces++;
+                }
+                int newDepth = leadingSpaces / 4;
+                
+                while (newDepth > depth) {
+                    tree.add("DOWN");
+                    depth++;
+                }
+                while (newDepth < depth) {
+                    tree.add("UP");
+                    depth--;
+                }
+                
+                String patternString = "\\b(" + String.join("|", IR_MAP.keySet()) + ")\\b";
+                Pattern pattern = Pattern.compile(patternString);
+                Matcher matcher = pattern.matcher(line);
+                while (matcher.find()) {
+                    tree.add(IR_MAP.get(matcher.group()));
+                }
+            }
+        } else {
+            String patternString = "\\b(" + String.join("|", IR_MAP.keySet()) + ")\\b|\\{|\\}";
+            Pattern pattern = Pattern.compile(patternString);
+            Matcher matcher = pattern.matcher(code);
+            
+            while (matcher.find()) {
+                String match = matcher.group();
+                if (match.equals("{")) {
+                    tree.add("DOWN");
+                } else if (match.equals("}")) {
+                    tree.add("UP");
+                } else {
+                    tree.add(IR_MAP.get(match));
+                }
+            }
+        }
+        return tree;
+    }
+
     private Set<String> getTokenSet(String code) {
         Set<String> tokens = new HashSet<>();
         if (code == null || code.isBlank()) {
@@ -79,30 +147,6 @@ public class StructuralAnalyzer {
             }
         }
         return tokens;
-    }
-
-    private Set<String> getStructuralFingerprint(String code) {
-        Set<String> fingerprint = new HashSet<>();
-        String patternString = "\\b(" + String.join("|", IR_MAP.keySet()) + ")\\b";
-        Pattern pattern = Pattern.compile(patternString);
-        Matcher matcher = pattern.matcher(code);
-        
-        while (matcher.find()) {
-            fingerprint.add(IR_MAP.get(matcher.group().toLowerCase(Locale.ROOT)));
-        }
-        return fingerprint;
-    }
-
-    private List<String> getStructuralFingerprintSequence(String code) {
-        List<String> sequence = new ArrayList<>();
-        String patternString = "\\b(" + String.join("|", IR_MAP.keySet()) + ")\\b";
-        Pattern pattern = Pattern.compile(patternString);
-        Matcher matcher = pattern.matcher(code);
-        
-        while (matcher.find()) {
-            sequence.add(IR_MAP.get(matcher.group().toLowerCase(Locale.ROOT)));
-        }
-        return sequence;
     }
 
     private double calculateJaccardSimilarity(Set<String> set1, Set<String> set2) {
@@ -129,6 +173,11 @@ public class StructuralAnalyzer {
         int maxLength = Math.max(code1.length(), code2.length());
         if (maxLength == 0) {
             return 100.0;
+        }
+        if (code1.length() > 2000 || code2.length() > 2000) {
+            Set<String> set1 = new HashSet<>(Arrays.asList(code1.split("")));
+            Set<String> set2 = new HashSet<>(Arrays.asList(code2.split("")));
+            return calculateJaccardSimilarity(set1, set2);
         }
         int distance = calculateEditDistance(code1, code2);
         return Math.max(0.0, 100.0 - ((double) distance / maxLength * 100.0));

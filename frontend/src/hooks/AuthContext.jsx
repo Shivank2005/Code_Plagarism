@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8082';
+
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
@@ -26,13 +28,13 @@ export const AuthProvider = ({ children }) => {
   }, [token, username]);
 
   const login = async (user, password) => {
-    const response = await axios.post('http://localhost:8082/api/auth/login', { username: user, password });
+    const response = await axios.post(`${API_BASE}/api/auth/login`, { username: user, password });
     setToken(response.data.token);
     setUsername(response.data.username);
   };
 
   const register = async (user, password) => {
-    const response = await axios.post('http://localhost:8082/api/auth/register', { username: user, password });
+    const response = await axios.post(`${API_BASE}/api/auth/register`, { username: user, password });
     setToken(response.data.token);
     setUsername(response.data.username);
   };

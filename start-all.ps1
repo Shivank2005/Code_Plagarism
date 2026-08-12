@@ -29,12 +29,14 @@ foreach ($port in @(8082, 8090, 5173)) {
 }
 Start-Sleep -Seconds 2
 
-# Remove H2 lock file if it exists
-$lockFile = Join-Path $PSScriptRoot 'backend\data\plagdb.mv.db'
-$lockFileLock = Join-Path $PSScriptRoot 'backend\data\plagdb.lock.db'
-if (Test-Path $lockFileLock) {
-	Remove-Item $lockFileLock -Force -ErrorAction SilentlyContinue
-	Write-Host "  Removed stale H2 lock file" -ForegroundColor DarkYellow
+# Check if MongoDB is running
+$mongoConn = Get-NetTCPConnection -LocalPort 27017 -State Listen -ErrorAction SilentlyContinue
+if (-not $mongoConn) {
+	Write-Host "`n[WARNING] MongoDB is not running on port 27017!" -ForegroundColor Red
+	Write-Host "The backend requires MongoDB to function. Please start your MongoDB server." -ForegroundColor Yellow
+	Start-Sleep -Seconds 3
+} else {
+	Write-Host "`nMongoDB detected on port 27017." -ForegroundColor Green
 }
 
 # Start CodeBERT Service (Port 8090)

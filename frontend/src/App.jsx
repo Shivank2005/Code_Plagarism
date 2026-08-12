@@ -117,7 +117,7 @@ function App() {
       case 'evaluation':
         return <EvaluationView activeBatch={activeBatch} evaluateModel={evaluateModel} evaluationResults={evaluationResults} />;
       case 'diff':
-        return <DiffView batchFiles={batchFiles} semanticResults={semanticResults} selectedSuspiciousPair={selectedSuspiciousPair} />;
+        return <DiffView batchFiles={batchFiles} results={results} semanticResults={semanticResults} selectedSuspiciousPair={selectedSuspiciousPair} />;
       default:
         return (
           <DashboardView
@@ -198,15 +198,15 @@ function App() {
       </aside>
 
       {/* ─── Mobile bottom nav ─── */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-secondary)] border-t border-[var(--border-default)] flex items-center justify-around px-2 py-2">
-        {NAV_ITEMS.slice(0, 5).map((item) => {
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-secondary)] border-t border-[var(--border-default)] flex items-center justify-start overflow-x-auto px-2 py-2 gap-2 hide-scrollbar">
+        {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = view === item.id;
           return (
             <button
               key={item.id}
               onClick={() => setView(item.id)}
-              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
+              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-medium transition-colors min-w-[64px] flex-shrink-0 ${
                 isActive
                   ? 'text-[var(--accent-light)]'
                   : 'text-[var(--text-tertiary)]'

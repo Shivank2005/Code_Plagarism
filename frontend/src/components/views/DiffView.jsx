@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import DiffViewer from '../DiffViewer';
 
-const DiffView = ({ batchFiles, semanticResults, selectedSuspiciousPair }) => {
+const DiffView = ({ batchFiles, results, semanticResults, selectedSuspiciousPair }) => {
   return (
     <motion.div
       key="diff"
@@ -11,7 +11,7 @@ const DiffView = ({ batchFiles, semanticResults, selectedSuspiciousPair }) => {
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2 }}
     >
-      <DiffViewer files={batchFiles} semanticData={semanticResults} selectedPair={selectedSuspiciousPair} />
+      <DiffViewer files={batchFiles} results={results} semanticData={semanticResults} selectedPair={selectedSuspiciousPair} />
     </motion.div>
   );
 };

@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Upload, FileCode, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/AuthContext';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8082';
+
 const UploadZone = ({ onUploadSuccess }) => {
   const { token } = useAuth();
   const [isDragging, setIsDragging] = useState(false);
@@ -32,7 +34,7 @@ const UploadZone = ({ onUploadSuccess }) => {
     });
 
     try {
-      const res = await axios.post('http://localhost:8082/api/submissions/upload', formData, {
+      const res = await axios.post(`${API_BASE}/api/submissions/upload`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
