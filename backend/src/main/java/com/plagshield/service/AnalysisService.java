@@ -3,6 +3,7 @@ package com.plagshield.service;
 import com.plagshield.model.AnalysisBatch;
 import com.plagshield.model.PlagiarismResult;
 import com.plagshield.repository.AnalysisBatchRepository;
+import com.plagshield.repository.PlagiarismResultRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -28,6 +29,9 @@ public class AnalysisService {
 
     @Autowired
     private AnalysisBatchRepository batchRepository;
+    
+    @Autowired
+    private PlagiarismResultRepository resultRepository;
 
 
     @Autowired
@@ -38,6 +42,9 @@ public class AnalysisService {
 
     @Autowired
     private JPlagService jPlagService;
+    
+    @Autowired
+    private PreFilterService preFilterService;
 
     @Async
     public void startAnalysis(String batchId) {
@@ -58,11 +65,14 @@ public class AnalysisService {
             for (Path file : files) {
                 String content = Files.readString(file);
                 String fileName = file.getFileName().toString();
-                String normalizedContent = structuralAnalyzer.normalizeCode(content);
                 
                 Map<String, String> sub = new HashMap<>();
                 sub.put("id", fileName);
-                sub.put("code", normalizedContent);
+                // Send ORIGINAL code to CodeBERT — it needs real variable names,
+                // comments, and strings to understand semantic meaning.
+                // Sending normalized code strips all that away and makes
+                // unrelated Java files look identical to the model.
+                sub.put("code", content);
                 submissions.add(sub);
                 
                 originalCodes.put(fileName, content);
@@ -71,52 +81,121 @@ public class AnalysisService {
             Map<String, Object> payload = new HashMap<>();
             payload.put("submissions", submissions);
 
-            RestTemplate restTemplate = new RestTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+            List<List<Number>> matrix = null;
+            List<String> students = new ArrayList<>();
+            for (Map<String, String> sub : submissions) {
+                students.add(sub.get("id"));
+            }
+            boolean codebertSuccess = false;
 
-            ResponseEntity<Map> response = restTemplate.postForEntity("http://localhost:8090/api/embeddings/similarity-matrix", request, Map.class);
-            
-            List<PlagiarismResult> results = new ArrayList<>();
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                List<List<Number>> matrix = (List<List<Number>>) response.getBody().get("matrix");
-                List<String> students = (List<String>) response.getBody().get("students");
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
 
-                for (int i = 0; i < students.size(); i++) {
-                    for (int j = i + 1; j < students.size(); j++) {
-                        double semanticScore = matrix.get(i).get(j).doubleValue();
-                        String studentA = students.get(i);
-                        String studentB = students.get(j);
-                        
-                        double structuralScore = structuralAnalyzer.calculateStructuralSimilarity(
-                            originalCodes.get(studentA), 
-                            originalCodes.get(studentB)
+                ResponseEntity<Map> response = restTemplate.postForEntity("http://localhost:8090/api/embeddings/similarity-matrix", request, Map.class);
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    matrix = (List<List<Number>>) response.getBody().get("matrix");
+                    students = (List<String>) response.getBody().get("students");
+                    codebertSuccess = true;
+                }
+            } catch (Exception e) {
+                System.err.println("CodeBERT unavailable or failed. Falling back to local analysis only: " + e.getMessage());
+            }
+
+            final List<String> finalStudents = students;
+            final List<List<Number>> finalMatrix = matrix;
+            final boolean finalCodebertSuccess = codebertSuccess;
+
+            // Generate all pairs
+            List<int[]> pairs = new ArrayList<>();
+            for (int i = 0; i < finalStudents.size(); i++) {
+                for (int j = i + 1; j < finalStudents.size(); j++) {
+                    pairs.add(new int[]{i, j});
+                }
+            }
+
+            // Process pairs in parallel
+            // --- GLOBAL DF FILTERING (FIRST PASS) ---
+            Map<String, java.util.Set<String>> fileWords = new java.util.HashMap<>();
+            for (String student : finalStudents) {
+                fileWords.put(student, preFilterService.extractWords(originalCodes.get(student)));
+            }
+            java.util.Set<String> globalBoilerplate = preFilterService.calculateBoilerplate(fileWords.values());
+            // ----------------------------------------
+
+            List<PlagiarismResult> results = pairs.parallelStream()
+                    .map(pair -> {
+                        int i = pair[0];
+                        int j = pair[1];
+                        String studentA = finalStudents.get(i);
+                        String studentB = finalStudents.get(j);
+
+                        String codeA = originalCodes.get(studentA);
+                        String codeB = originalCodes.get(studentB);
+
+                        PreFilterService.FilterResult filterResult = preFilterService.shouldDeepScan(
+                                fileWords.get(studentA), 
+                                fileWords.get(studentB), 
+                                globalBoilerplate
                         );
+
+                        if (!filterResult.shouldScan) {
+                            PlagiarismResult result = new PlagiarismResult();
+                            result.setBatchId(batchId);
+                            result.setSubmissionA(studentA);
+                            result.setSubmissionB(studentB);
+                            result.setSimilarityScore(0.0);
+                            result.setTokenScore(0.0);
+                            result.setStructuralScore(0.0);
+                            result.setSemanticScore(0.0);
+                            result.setBoilerplateRemovedCount(filterResult.boilerplateRemoved);
+                            return result;
+                        }
+
+                        double semanticScore = 0.0;
+                        if (finalCodebertSuccess && finalMatrix != null) {
+                            semanticScore = finalMatrix.get(i).get(j).doubleValue();
+                        }
+
+                        double structuralScore = structuralAnalyzer.calculateStructuralSimilarity(codeA, codeB);
+                        double tokenScore = jPlagService.calculateTokenSimilarity(codeA, codeB);
+
+                        String extA = studentA.contains(".") ? studentA.substring(studentA.lastIndexOf(".") + 1).toLowerCase() : "txt";
+                        String extB = studentB.contains(".") ? studentB.substring(studentB.lastIndexOf(".") + 1).toLowerCase() : "txt";
+                        boolean isCrossLanguage = !extA.isEmpty() && !extA.equalsIgnoreCase(extB);
                         
-                        double tokenScore = jPlagService.calculateTokenSimilarity(
-                            originalCodes.get(studentA), 
-                            originalCodes.get(studentB)
-                        );
-                        
-                        double finalScore = riskScoringService.calculateFinalRiskScore(tokenScore, structuralScore, semanticScore);
-                        
+                        String languagePair;
+                        if (extA.compareTo(extB) <= 0) {
+                            languagePair = extA + "-" + extB;
+                        } else {
+                            languagePair = extB + "-" + extA;
+                        }
+
+                        RiskScoringService.RiskResult finalScore = riskScoringService.calculateFinalRiskScore(tokenScore, structuralScore, semanticScore, isCrossLanguage, languagePair);
+
                         PlagiarismResult result = new PlagiarismResult();
+                        result.setBatchId(batchId);
                         result.setSubmissionA(studentA);
                         result.setSubmissionB(studentB);
-                        result.setSimilarityScore(finalScore);
+                        result.setSimilarityScore(finalScore.score);
                         result.setTokenScore(tokenScore);
                         result.setStructuralScore(structuralScore);
                         result.setSemanticScore(semanticScore);
-                        results.add(result);
-                    }
-                }
-            } else {
-                throw new RuntimeException("CodeBERT semantic analysis failed.");
-            }
+                        result.setBoilerplateRemovedCount(filterResult.boilerplateRemoved);
+                        result.setConfidenceScore(finalScore.confidence);
+                        return result;
+                }).collect(Collectors.toList());
 
-            batch.setResults(results);
-            batch.setStatus("COMPLETED");
+            // Save results to repository
+            resultRepository.saveAll(results);
+
+            if (codebertSuccess) {
+                batch.setStatus("COMPLETED");
+            } else {
+                batch.setStatus("COMPLETED_WITH_WARNINGS");
+            }
 
         } catch (Exception e) {
             batch.setStatus("FAILED");

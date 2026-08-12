@@ -15,6 +15,4 @@ public class AnalysisBatch {
     private String language;
     private String storagePath;
     private LocalDateTime createdAt = LocalDateTime.now();
-
-    private List<PlagiarismResult> results;
 }

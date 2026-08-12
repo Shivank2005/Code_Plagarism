@@ -29,34 +29,22 @@ public class StructuralAnalyzer {
     }
 
     public double calculateStructuralSimilarity(String code1, String code2) {
-        String normalized1 = normalizeCode(code1);
-        String normalized2 = normalizeCode(code2);
-
-        if (normalized1.isBlank() && normalized2.isBlank()) {
-            return 100.0;
-        }
-
-        Set<String> tokenSet1 = getTokenSet(normalized1);
-        Set<String> tokenSet2 = getTokenSet(normalized2);
+        if (code1 == null || code2 == null) return 0.0;
         
         List<String> tree1 = getTreeSequence(code1);
         List<String> tree2 = getTreeSequence(code2);
         
+        if (tree1.isEmpty() && tree2.isEmpty()) return 100.0;
+        
         Set<String> fingerprint1 = new HashSet<>(tree1);
         Set<String> fingerprint2 = new HashSet<>(tree2);
 
-        double tokenScore = calculateJaccardSimilarity(tokenSet1, tokenSet2);
         double structuralJaccardScore = calculateJaccardSimilarity(fingerprint1, fingerprint2);
         double treeEditDistanceScore = calculateSequenceSimilarity(String.join(" ", tree1), String.join(" ", tree2));
         
-        // Tree Edit Distance is much more accurate than pure jaccard, weight it heavily
+        // Pure AST structural matching
         double structuralScore = (structuralJaccardScore * 0.3) + (treeEditDistanceScore * 0.7);
-        double sequenceScore = calculateSequenceSimilarity(normalized1, normalized2);
-        double lengthPenalty = calculateLengthPenalty(normalized1, normalized2);
-
-        // Increased weight on the pure structural fingerprint to assist cross-language detection
-        double combinedScore = (tokenScore * 0.25) + (structuralScore * 0.60) + (sequenceScore * 0.15);
-        return Math.max(0.0, Math.min(100.0, combinedScore * lengthPenalty));
+        return Math.max(0.0, Math.min(100.0, structuralScore));
     }
 
     public String normalizeCode(String code) {
@@ -74,10 +62,19 @@ public class StructuralAnalyzer {
 
     private String stripCommentsAndStrings(String code) {
         if (code == null) return "";
-        String clean = code.replaceAll("(?m)//.*?$", "");
-        clean = clean.replaceAll("(?s)/\\*.*?\\*/", "");
+        String clean = code;
+        // Python multi-line strings
+        clean = clean.replaceAll("(?s)\"\"\"(.*?)\"\"\"", "STR");
+        clean = clean.replaceAll("(?s)'''(.*?)'''", "STR");
+        // JS template literals
+        clean = clean.replaceAll("(?s)`(.*?)`", "STR");
+        // Single and double quoted strings
         clean = clean.replaceAll("\"(?:\\\\.|[^\"\\\\])*\"", "STR");
         clean = clean.replaceAll("'(?:\\\\.|[^'\\\\])*'", "CHR");
+        // Comments
+        clean = clean.replaceAll("(?s)/\\*.*?\\*/", "");
+        clean = clean.replaceAll("(?m)//.*?$", "");
+        clean = clean.replaceAll("(?m)#.*?$", ""); // Python comments
         return clean.toLowerCase(Locale.ROOT);
     }
 
@@ -85,10 +82,14 @@ public class StructuralAnalyzer {
         List<String> tree = new ArrayList<>();
         String code = stripCommentsAndStrings(originalCode);
         
-        boolean isPython = !code.contains("{") && !code.contains("}");
+        // Detect indentation-based languages (Python, Ruby) vs brace-based languages
+        // Old heuristic `!code.contains("{")` breaks on Python dicts like {"key": "val"}
+        // Better: check if code uses `def ` for function definitions (Python/Ruby indicator)
+        // and has significant indentation structure
+        boolean isIndentationBased = code.contains("def ") && !code.contains("};");
         int depth = 0;
         
-        if (isPython) {
+        if (isIndentationBased) {
             String[] lines = code.split("\n");
             for (String line : lines) {
                 if (line.trim().isEmpty()) continue;
@@ -108,15 +109,43 @@ public class StructuralAnalyzer {
                     depth--;
                 }
                 
-                String patternString = "\\b(" + String.join("|", IR_MAP.keySet()) + ")\\b";
+            // Expand Python/Ruby keyword detection
+                String patternString = "\\b(class|def|if|elif|else|for|while|return|try|except|rescue|break|continue|begin|end|yield|raise)\\b";
                 Pattern pattern = Pattern.compile(patternString);
                 Matcher matcher = pattern.matcher(line);
                 while (matcher.find()) {
-                    tree.add(IR_MAP.get(matcher.group()));
+                    String match = matcher.group();
+                    if (match.equals("class")) tree.add("CLASS");
+                    else if (match.equals("def")) tree.add("FUNCTION");
+                    else if (match.equals("if") || match.equals("elif") || match.equals("else")) tree.add("IF");
+                    else if (match.equals("for") || match.equals("while")) tree.add("LOOP");
+                    else if (match.equals("return") || match.equals("break") || match.equals("continue") || match.equals("yield")) tree.add("CTRL");
+                    else if (match.equals("try") || match.equals("except") || match.equals("rescue") || match.equals("raise")) tree.add("EXCEPT");
                 }
             }
+            while (depth > 0) {
+                tree.add("UP");
+                depth--;
+            }
         } else {
-            String patternString = "\\b(" + String.join("|", IR_MAP.keySet()) + ")\\b|\\{|\\}";
+            // Brace-based languages: Java, C, C++, JavaScript, Go, Rust, C#, PHP, etc.
+            // Normalize ALL language-specific keywords to universal AST concepts
+            code = code.replaceAll("\\b(class|struct|interface|enum|trait|impl)\\b", " CLASS ");
+            code = code.replaceAll("\\b(if|else|elif|elseif|switch|case|default|when|match|guard)\\b", " IF ");
+            code = code.replaceAll("\\b(for|while|do|foreach|loop|range)\\b", " LOOP ");
+            code = code.replaceAll("\\b(return|break|continue|yield|goto|fallthrough)\\b", " CTRL ");
+            code = code.replaceAll("\\b(try|catch|finally|throw|throws|raise|rescue|except)\\b", " EXCEPT ");
+            
+            // Detect function declarations across languages:
+            // Go: func name(
+            // Rust: fn name(
+            // JS: function name( or const name = ( or name => 
+            // C/Java: type name(
+            code = code.replaceAll("\\b(func|fn|function)\\s+[a-zA-Z_]\\w*\\s*\\(", " FUNCTION ");
+            // General heuristic: identifier followed by ( that isn't a known keyword
+            code = code.replaceAll("\\b(?!(?:IF|LOOP|CTRL|EXCEPT|CLASS|FUNCTION)\\b)[a-zA-Z_]\\w*\\s*\\(", " FUNCTION ");
+
+            String patternString = "\\b(CLASS|FUNCTION|IF|LOOP|CTRL|EXCEPT)\\b|\\{|\\}";
             Pattern pattern = Pattern.compile(patternString);
             Matcher matcher = pattern.matcher(code);
             
@@ -127,7 +156,7 @@ public class StructuralAnalyzer {
                 } else if (match.equals("}")) {
                     tree.add("UP");
                 } else {
-                    tree.add(IR_MAP.get(match));
+                    tree.add(match);
                 }
             }
         }

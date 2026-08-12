@@ -1,47 +1,79 @@
 package com.plagshield.service;
 import org.springframework.stereotype.Service;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.File;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class RiskScoringService {
-    public double calculateFinalRiskScore(double tokenScore, double structuralScore, double semanticScore) {
+
+    private double semanticWeight = 0.15;
+
+    public static class RiskResult {
+        public double score;
+        public double confidence;
+        public RiskResult(double score, double confidence) {
+            this.score = score;
+            this.confidence = confidence;
+        }
+    }
+
+    public RiskResult calculateFinalRiskScore(double tokenScore, double structuralScore, double semanticScore, boolean isCrossLanguage, String languagePair) {
         if (tokenScore > 99.0 && structuralScore > 99.0 && semanticScore > 99.0) {
-            return 100.0;
+            return new RiskResult(100.0, 99.0);
         }
         if (tokenScore < 5.0 && structuralScore < 5.0 && semanticScore < 5.0) {
-            return 0.0;
+            return new RiskResult(0.0, 99.0);
         }
 
-        // Weights: JPlag GST and AST tree parser are the reliable engines.
-        // CodeBERT (microsoft/codebert-base) was trained for masked language
-        // modeling, not code similarity — after centering it clusters by
-        // LANGUAGE not ALGORITHM.  Keep it as a minor tiebreaker only.
-        double tokenWeight = 0.45;
-        double structWeight = 0.45;
-        double semanticWeight = 0.10;
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("tokenScore", tokenScore);
+            payload.put("structuralScore", structuralScore);
+            payload.put("semanticScore", semanticScore);
+            payload.put("isCrossLanguage", isCrossLanguage ? 1 : 0);
+            payload.put("languagePair", languagePair);
+            
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+            ResponseEntity<Map> response = restTemplate.postForEntity("http://localhost:8090/api/ml/predict", request, Map.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                double riskScore = ((Number) response.getBody().get("riskScore")).doubleValue();
+                double confidence = ((Number) response.getBody().get("confidence")).doubleValue();
+                return new RiskResult(riskScore, confidence);
+            }
+        } catch (Exception e) {
+            // Fallback to hardcoded math if Python ML service is down
+        }
+
+        // Hardcoded fallback logic
+        double tokenWeight = (1.0 - semanticWeight) / 2.0;
+        double structWeight = (1.0 - semanticWeight) / 2.0;
 
         double score = (tokenScore * tokenWeight) + (structuralScore * structWeight) + (semanticScore * semanticWeight);
         
-        // Disagreement penalty: if token and structural strongly disagree,
-        // dampen the score to prevent false positives from shared boilerplate
         double tsMax = Math.max(tokenScore, structuralScore);
         double tsMin = Math.min(tokenScore, structuralScore);
         if (tsMax - tsMin > 50.0) {
             score = score * 0.85;
         }
         
-        // Sharpen the score to push borderline cases towards clear risk categories
         double sharpened = 100.0 / (1.0 + Math.exp(-0.12 * (score - 50.0)));
-        return Math.max(0.0, Math.min(100.0, sharpened));
-    }
-
-    public String classifyRisk(double finalScore) {
-        if (finalScore >= 75) return "HIGH";
-        if (finalScore >= 40) return "MEDIUM";
-        return "LOW";
+        double finalScore = Math.max(0.0, Math.min(100.0, sharpened));
+        
+        // Fallback confidence is derived from agreement between subscores
+        double disagreement = Math.abs(tokenScore - structuralScore) / 100.0;
+        double confidence = (1.0 - disagreement) * 100.0;
+        
+        return new RiskResult(finalScore, confidence);
     }
 }

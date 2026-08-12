@@ -166,47 +166,80 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-[#30363d] bg-[#161b22] p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <Palette size={14} className="text-[#58a6ff]" />
-              <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8b949e]">Scale</h4>
+        <div className="space-y-5">
+          {/* SCALE PANEL */}
+          <div className="group relative overflow-hidden rounded-2xl border border-[#30363d] bg-gradient-to-b from-[#161b22] to-[#0d1117] p-5 shadow-lg transition-all hover:border-[#58a6ff]/30">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
+            <div className="relative z-10 mb-5 flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#58a6ff]/10">
+                <Palette size={13} className="text-[#58a6ff]" />
+              </div>
+              <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#e6edf3]">Risk Scale</h4>
             </div>
-            <div className="space-y-4">
-              <LegendItem color="bg-[#3b82f6]" label="Low" range={`0-${suspiciousThreshold}%`} />
-              <LegendItem color="bg-[#22c55e]" label="Medium" range={`${suspiciousThreshold}-${highRiskThreshold}%`} />
-              <LegendItem color="bg-[#a855f7]" label="High" range={`>${highRiskThreshold}%`} />
+            
+            {/* Gradient Bar */}
+            <div className="relative z-10 mb-5 h-2 w-full rounded-full bg-gradient-to-r from-[hsl(214,78%,24%)] via-[hsl(175,81%,35%)] to-[hsl(136,84%,46%)] shadow-[0_0_10px_rgba(34,197,94,0.2)]"></div>
+
+            <div className="relative z-10 space-y-3">
+              <LegendItem color="bg-[hsl(214,78%,45%)] shadow-[0_0_8px_hsla(214,78%,45%,0.4)]" label="Low Risk" range={`0-${suspiciousThreshold}%`} />
+              <LegendItem color="bg-[hsl(175,81%,40%)] shadow-[0_0_8px_hsla(175,81%,40%,0.4)]" label="Suspicious" range={`${suspiciousThreshold}-${highRiskThreshold}%`} />
+              <LegendItem color="bg-[hsl(136,84%,46%)] shadow-[0_0_8px_hsla(136,84%,46%,0.4)]" label="High Risk" range={`>${highRiskThreshold}%`} />
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#30363d] bg-[#161b22] p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <Users2 size={14} className="text-[#58a6ff]" />
-              <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8b949e]">Ring clusters</h4>
+          {/* CLUSTERS PANEL */}
+          <div className="group relative overflow-hidden rounded-2xl border border-[#30363d] bg-gradient-to-b from-[#161b22] to-[#0d1117] p-5 shadow-lg transition-all hover:border-[#58a6ff]/30">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
+            
+            <div className="relative z-10 mb-5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#58a6ff]/10">
+                  <Users2 size={13} className="text-[#58a6ff]" />
+                </div>
+                <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#e6edf3]">Ring Clusters</h4>
+              </div>
+              {rings.length > 0 && (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#22c55e]/20 text-[10px] font-bold text-[#22c55e]">
+                  {rings.length}
+                </span>
+              )}
             </div>
 
-            <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
+            <div className="relative z-10 max-h-72 space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#30363d]">
               {rings.length === 0 ? (
-                <p className="text-sm text-[#8b949e]">No collaborative networks found in this batch.</p>
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#30363d] py-6 text-center">
+                  <span className="text-xl opacity-50">🛡️</span>
+                  <p className="mt-2 text-xs text-[#8b949e]">No collaborative networks<br/>found in this batch.</p>
+                </div>
               ) : (
                 rings.map((ring, index) => (
-                  <div key={index} className="rounded-xl border border-[#30363d] bg-[#0d1117] p-4">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    key={index} 
+                    className="relative overflow-hidden rounded-xl border border-[#30363d] bg-[#0d1117]/50 p-4 transition-colors hover:border-[#58a6ff]/50 hover:bg-[#161b22]"
+                  >
+                    {/* Subtle glow for cluster */}
+                    <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-[#58a6ff] opacity-10 blur-xl"></div>
+                    
                     <div className="mb-3 flex items-center justify-between">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8b949e]">Cluster #{index + 1}</p>
-                      <span className="text-[10px] font-medium text-[#8b949e]">{ring.length} files</span>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#58a6ff]">Cluster {index + 1}</p>
+                      <span className="rounded-md bg-[#30363d]/50 px-2 py-0.5 text-[10px] font-semibold text-[#c9d1d9]">{ring.length} files</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {Array.from(ring).map((student) => (
-                        <span
+                        <div
                           key={student}
-                          className="max-w-[120px] truncate rounded-full border border-[#30363d] bg-[#161b22] px-2.5 py-1 text-[11px] text-[#c9d1d9]"
+                          className="flex max-w-[130px] items-center gap-1.5 truncate rounded-lg border border-[#30363d] bg-[#010409] px-2.5 py-1.5 text-[11px] font-medium text-[#c9d1d9] shadow-sm transition-colors hover:border-[#8b949e]"
                           title={student}
                         >
-                          {student.split('.')[0]}
-                        </span>
+                          <div className="h-1.5 w-1.5 rounded-full bg-[#f85149]"></div>
+                          <span className="truncate">{student.split('.')[0]}</span>
+                        </div>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               )}
             </div>
@@ -255,7 +288,7 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
                   <div className="flex items-center gap-3">
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#30363d]">
                       <div
-                        className={`h-full ${selectedPair.score > 75 ? 'bg-[#f85149]' : selectedPair.score > 40 ? 'bg-[#d29922]' : 'bg-[#2ea043]'}`}
+                        className={`h-full ${selectedPair.score > 75 ? 'bg-[#22c55e]' : selectedPair.score > 40 ? 'bg-[#0d9488]' : 'bg-[#3b82f6]'}`}
                         style={{ width: `${Math.min(selectedPair.score, 100)}%` }}
                       />
                     </div>
@@ -282,12 +315,12 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
 };
 
 const LegendItem = ({ color, label, range }) => (
-  <div className="flex items-center justify-between gap-4">
+  <div className="flex items-center justify-between gap-4 rounded-lg bg-[#0d1117]/50 px-3 py-2">
     <div className="flex items-center gap-3">
-      <div className={`h-3 w-3 rounded-full ${color}`} />
-      <span className="text-sm text-[#c9d1d9]">{label}</span>
+      <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
+      <span className="text-[13px] font-medium text-[#c9d1d9]">{label}</span>
     </div>
-    <span className="text-[10px] font-mono text-[#8b949e]">{range}</span>
+    <span className="text-[11px] font-mono font-medium text-[#8b949e]">{range}</span>
   </div>
 );
 

@@ -17,11 +17,56 @@ const UploadZone = ({ onUploadSuccess }) => {
     setIsDragging(e.type === 'dragover');
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = e.dataTransfer.files;
-    if (files.length > 0) uploadFiles(Array.from(files));
+    const items = e.dataTransfer.items;
+    if (!items || items.length === 0) return;
+
+    setUploading(true);
+    const files = [];
+    const queue = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === 'file') {
+        const entry = item.webkitGetAsEntry();
+        if (entry) queue.push(entry);
+      }
+    }
+
+    const processQueue = async () => {
+      while (queue.length > 0) {
+        const entry = queue.shift();
+        if (entry.isFile) {
+          const file = await new Promise((resolve) => entry.file(resolve));
+          Object.defineProperty(file, 'webkitRelativePath', {
+            value: entry.fullPath.replace(/^\//, ''),
+            writable: true
+          });
+          files.push(file);
+        } else if (entry.isDirectory) {
+          const reader = entry.createReader();
+          // readEntries doesn't always return everything in one call for large dirs,
+          // but for typical use cases (like a few dozen files) this is sufficient.
+          const entries = await new Promise((resolve) => reader.readEntries(resolve));
+          queue.push(...entries);
+        }
+      }
+    };
+
+    try {
+      await processQueue();
+      if (files.length > 0) {
+        uploadFiles(files);
+      } else {
+        setUploading(false);
+      }
+    } catch (err) {
+      console.error("Error reading dropped files:", err);
+      setError("Failed to read folder contents.");
+      setUploading(false);
+    }
   };
 
   const uploadFiles = async (fileList) => {

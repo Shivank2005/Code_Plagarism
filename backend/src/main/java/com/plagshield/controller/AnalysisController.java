@@ -4,6 +4,7 @@ import com.plagshield.model.AnalysisBatch;
 import com.plagshield.model.PlagiarismResult;
 import com.plagshield.model.EvaluationResult;
 import com.plagshield.repository.AnalysisBatchRepository;
+import com.plagshield.repository.PlagiarismResultRepository;
 
 import com.plagshield.service.AnalysisService;
 import com.plagshield.service.ClusteringService;
@@ -30,6 +31,9 @@ public class AnalysisController {
     private AnalysisBatchRepository batchRepository;
 
     @Autowired
+    private PlagiarismResultRepository resultRepository;
+
+    @Autowired
     private AnalysisService analysisService;
 
     @Autowired
@@ -43,7 +47,7 @@ public class AnalysisController {
     public ResponseEntity<?> evaluateBatch(@PathVariable String batchId, @RequestBody Map<String, Object> payload) {
         return batchRepository.findById(batchId)
                 .map(batch -> {
-                    List<PlagiarismResult> results = batch.getResults();
+                    List<PlagiarismResult> results = resultRepository.findByBatchId(batchId);
                     double threshold = Double.parseDouble(payload.getOrDefault("threshold", "70.0").toString());
                     List<String> groundTruthList = (List<String>) payload.getOrDefault("groundTruth", Collections.emptyList());
                     Set<String> groundTruthPairs = new HashSet<>(groundTruthList);
@@ -72,7 +76,7 @@ public class AnalysisController {
     public ResponseEntity<?> getResults(@PathVariable String batchId) {
         return batchRepository.findById(batchId)
                 .map(batch -> {
-                    List<PlagiarismResult> results = batch.getResults();
+                    List<PlagiarismResult> results = resultRepository.findByBatchId(batchId);
                     
                     // Generate Heatmap Data
                     Set<String> students = new HashSet<>();
@@ -99,6 +103,7 @@ public class AnalysisController {
                     response.put("matrix", matrix);
                     response.put("rings", clusteringService.detectPlagiarismRings(results, 70.0));
                     response.put("status", batch.getStatus());
+                    response.put("detailedResults", results);
                     
                     return ResponseEntity.ok(response);
                 })

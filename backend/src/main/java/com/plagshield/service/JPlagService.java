@@ -67,9 +67,52 @@ public class JPlagService {
     private String[] tokenize(String code) {
         // Tokenize code into meaningful tokens: identifiers, numbers, and operators
         java.util.List<String> tokens = new java.util.ArrayList<>();
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("[a-zA-Z_]\\w*|\\d+\\.?\\d*|[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]").matcher(code);
+        java.util.Set<String> keywords = new java.util.HashSet<>(java.util.Arrays.asList(
+            // Universal control flow
+            "if", "else", "elif", "for", "while", "do", "switch", "case", "default",
+            "return", "break", "continue", "goto", "pass", "yield",
+            // Declarations and modifiers
+            "public", "private", "protected", "class", "interface", "extends", "implements",
+            "abstract", "final", "static", "new", "this", "super", "self", "cls",
+            // Types (Java/C/C++/C#/Go/Rust)
+            "boolean", "int", "float", "double", "char", "string", "void", "long", "short",
+            "byte", "unsigned", "signed", "bool", "var", "let", "const", "val", "mut",
+            // Literals
+            "true", "false", "null", "nil", "none", "undefined", "nan",
+            // Python
+            "def", "import", "from", "pass", "and", "or", "not", "in", "is", "as",
+            "with", "lambda", "nonlocal", "global", "assert", "except", "finally", "raise",
+            // JavaScript/TypeScript
+            "function", "async", "await", "export", "require", "module", "typeof", "instanceof",
+            "delete", "debugger", "of",
+            // C/C++
+            "include", "define", "ifdef", "ifndef", "endif", "pragma", "typedef", "sizeof",
+            "struct", "union", "extern", "register", "volatile", "inline", "template",
+            "namespace", "using", "virtual", "override", "explicit", "friend",
+            // Go
+            "func", "go", "chan", "defer", "select", "range", "map", "type", "package",
+            "fallthrough",
+            // Rust
+            "fn", "impl", "trait", "pub", "mod", "crate", "use", "where", "move",
+            "ref", "match", "loop", "unsafe", "dyn", "enum",
+            // Ruby
+            "begin", "end", "rescue", "ensure", "puts", "attr_accessor", "attr_reader",
+            // PHP
+            "echo", "print", "array", "foreach", "elseif", "endfor", "endforeach",
+            "endif", "endwhile",
+            // C#/Kotlin/Swift/Scala
+            "fun", "object", "companion", "sealed", "data", "when", "internal",
+            "guard", "protocol", "extension", "optional", "throws",
+            // Exception handling (universal)
+            "try", "catch", "throw", "throws"
+        ));
+        
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("[a-zA-Z_]\\w*|\\d+\\.?\\d*").matcher(code);
         while (m.find()) {
-            tokens.add(m.group());
+            String token = m.group();
+            if (!keywords.contains(token.toLowerCase())) {
+                tokens.add(token);
+            }
         }
         return tokens.toArray(new String[0]);
     }
