@@ -8,31 +8,18 @@ import java.util.*;
 @Service
 public class StructuralAnalyzer {
 
-    private static final Map<String, String> IR_MAP = new HashMap<>();
-    static {
-        String[] conds = {"if", "else", "elif", "switch", "case", "match"};
-        for (String c : conds) IR_MAP.put(c, "COND");
-        String[] loops = {"for", "while", "do", "foreach"};
-        for (String l : loops) IR_MAP.put(l, "LOOP");
-        String[] ex = {"try", "catch", "finally", "except", "throw", "throws", "raise"};
-        for (String e : ex) IR_MAP.put(e, "EXCEPT");
-        String[] ctrls = {"return", "break", "continue", "pass"};
-        for (String c : ctrls) IR_MAP.put(c, "CTRL");
-        String[] imps = {"import", "from", "require", "include", "package"};
-        for (String i : imps) IR_MAP.put(i, "IMP");
-        String[] decls = {"class", "interface", "enum", "struct", "def", "function", "func"};
-        for (String d : decls) IR_MAP.put(d, "DECL");
-        String[] mods = {"public", "private", "protected", "static"};
-        for (String m : mods) IR_MAP.put(m, "MOD");
-        String[] asyncs = {"async", "await"};
-        for (String a : asyncs) IR_MAP.put(a, "ASYNC");
+    private final LanguageConfigService languageConfigService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public StructuralAnalyzer(LanguageConfigService languageConfigService) {
+        this.languageConfigService = languageConfigService;
     }
 
-    public double calculateStructuralSimilarity(String code1, String code2) {
+    public double calculateStructuralSimilarity(String code1, String code2, String ext1, String ext2) {
         if (code1 == null || code2 == null) return 0.0;
         
-        List<String> tree1 = getTreeSequence(code1);
-        List<String> tree2 = getTreeSequence(code2);
+        List<String> tree1 = getTreeSequence(code1, ext1);
+        List<String> tree2 = getTreeSequence(code2, ext2);
         
         if (tree1.isEmpty() && tree2.isEmpty()) return 100.0;
         
@@ -60,36 +47,57 @@ public class StructuralAnalyzer {
         return normalized.toLowerCase(Locale.ROOT).trim();
     }
 
-    private String stripCommentsAndStrings(String code) {
+    private String stripCommentsAndStrings(String code, com.plagshield.model.LanguageRuleConfig rule) {
         if (code == null) return "";
         String clean = code;
-        // Python multi-line strings
-        clean = clean.replaceAll("(?s)\"\"\"(.*?)\"\"\"", "STR");
-        clean = clean.replaceAll("(?s)'''(.*?)'''", "STR");
-        // JS template literals
-        clean = clean.replaceAll("(?s)`(.*?)`", "STR");
-        // Single and double quoted strings
-        clean = clean.replaceAll("\"(?:\\\\.|[^\"\\\\])*\"", "STR");
-        clean = clean.replaceAll("'(?:\\\\.|[^'\\\\])*'", "CHR");
-        // Comments
-        clean = clean.replaceAll("(?s)/\\*.*?\\*/", "");
-        clean = clean.replaceAll("(?m)//.*?$", "");
-        clean = clean.replaceAll("(?m)#.*?$", ""); // Python comments
+        
+        if (rule == null) {
+            // Default generic fallback stripping
+            clean = clean.replaceAll("(?m)//.*?$", "");
+            clean = clean.replaceAll("(?s)/\\*.*?\\*/", "");
+            clean = clean.replaceAll("\"(?:\\\\.|[^\"\\\\])*\"", "STR");
+            clean = clean.replaceAll("'(?:\\\\.|[^'\\\\])*'", "CHR");
+            return clean.toLowerCase(Locale.ROOT);
+        }
+
+        if (rule.getCompiledMultiLineString() != null) {
+            clean = rule.getCompiledMultiLineString().matcher(clean).replaceAll("STR");
+        }
+        if (rule.getCompiledSingleLineString() != null) {
+            // Very naive way to preserve CHR vs STR (if it contains ', assume char).
+            // Based on existing behavior.
+            Matcher m = rule.getCompiledSingleLineString().matcher(clean);
+            StringBuffer sb = new StringBuffer();
+            while (m.find()) {
+                String match = m.group();
+                if (match.startsWith("'")) {
+                    m.appendReplacement(sb, "CHR");
+                } else {
+                    m.appendReplacement(sb, "STR");
+                }
+            }
+            m.appendTail(sb);
+            clean = sb.toString();
+        }
+        if (rule.getCompiledMultiLineComment() != null) {
+            clean = rule.getCompiledMultiLineComment().matcher(clean).replaceAll("");
+        }
+        if (rule.getCompiledSingleLineComment() != null) {
+            clean = rule.getCompiledSingleLineComment().matcher(clean).replaceAll("");
+        }
+        
         return clean.toLowerCase(Locale.ROOT);
     }
 
-    private List<String> getTreeSequence(String originalCode) {
+    private List<String> getTreeSequence(String originalCode, String extension) {
+        com.plagshield.model.LanguageRuleConfig rule = languageConfigService.getRuleForExtension(extension);
         List<String> tree = new ArrayList<>();
-        String code = stripCommentsAndStrings(originalCode);
+        String code = stripCommentsAndStrings(originalCode, rule);
         
-        // Detect indentation-based languages (Python, Ruby) vs brace-based languages
-        // Old heuristic `!code.contains("{")` breaks on Python dicts like {"key": "val"}
-        // Better: check if code uses `def ` for function definitions (Python/Ruby indicator)
-        // and has significant indentation structure
-        boolean isIndentationBased = code.contains("def ") && !code.contains("};");
-        int depth = 0;
+        boolean isIndentationBased = (rule != null) && rule.isIndentationBased();
         
         if (isIndentationBased) {
+            int depth = 0;
             String[] lines = code.split("\n");
             for (String line : lines) {
                 if (line.trim().isEmpty()) continue;
@@ -109,18 +117,29 @@ public class StructuralAnalyzer {
                     depth--;
                 }
                 
-            // Expand Python/Ruby keyword detection
-                String patternString = "\\b(class|def|if|elif|else|for|while|return|try|except|rescue|break|continue|begin|end|yield|raise)\\b";
-                Pattern pattern = Pattern.compile(patternString);
-                Matcher matcher = pattern.matcher(line);
-                while (matcher.find()) {
-                    String match = matcher.group();
-                    if (match.equals("class")) tree.add("CLASS");
-                    else if (match.equals("def")) tree.add("FUNCTION");
-                    else if (match.equals("if") || match.equals("elif") || match.equals("else")) tree.add("IF");
-                    else if (match.equals("for") || match.equals("while")) tree.add("LOOP");
-                    else if (match.equals("return") || match.equals("break") || match.equals("continue") || match.equals("yield")) tree.add("CTRL");
-                    else if (match.equals("try") || match.equals("except") || match.equals("rescue") || match.equals("raise")) tree.add("EXCEPT");
+                if (rule.getCompiledClass() != null) {
+                    Matcher m = rule.getCompiledClass().matcher(line);
+                    while(m.find()) tree.add("CLASS");
+                }
+                if (rule.getCompiledFunction() != null) {
+                    Matcher m = rule.getCompiledFunction().matcher(line);
+                    while(m.find()) tree.add("FUNCTION");
+                }
+                if (rule.getCompiledIf() != null) {
+                    Matcher m = rule.getCompiledIf().matcher(line);
+                    while(m.find()) tree.add("IF");
+                }
+                if (rule.getCompiledLoop() != null) {
+                    Matcher m = rule.getCompiledLoop().matcher(line);
+                    while(m.find()) tree.add("LOOP");
+                }
+                if (rule.getCompiledCtrl() != null) {
+                    Matcher m = rule.getCompiledCtrl().matcher(line);
+                    while(m.find()) tree.add("CTRL");
+                }
+                if (rule.getCompiledExcept() != null) {
+                    Matcher m = rule.getCompiledExcept().matcher(line);
+                    while(m.find()) tree.add("EXCEPT");
                 }
             }
             while (depth > 0) {
@@ -128,22 +147,22 @@ public class StructuralAnalyzer {
                 depth--;
             }
         } else {
-            // Brace-based languages: Java, C, C++, JavaScript, Go, Rust, C#, PHP, etc.
-            // Normalize ALL language-specific keywords to universal AST concepts
-            code = code.replaceAll("\\b(class|struct|interface|enum|trait|impl)\\b", " CLASS ");
-            code = code.replaceAll("\\b(if|else|elif|elseif|switch|case|default|when|match|guard)\\b", " IF ");
-            code = code.replaceAll("\\b(for|while|do|foreach|loop|range)\\b", " LOOP ");
-            code = code.replaceAll("\\b(return|break|continue|yield|goto|fallthrough)\\b", " CTRL ");
-            code = code.replaceAll("\\b(try|catch|finally|throw|throws|raise|rescue|except)\\b", " EXCEPT ");
-            
-            // Detect function declarations across languages:
-            // Go: func name(
-            // Rust: fn name(
-            // JS: function name( or const name = ( or name => 
-            // C/Java: type name(
-            code = code.replaceAll("\\b(func|fn|function)\\s+[a-zA-Z_]\\w*\\s*\\(", " FUNCTION ");
-            // General heuristic: identifier followed by ( that isn't a known keyword
-            code = code.replaceAll("\\b(?!(?:IF|LOOP|CTRL|EXCEPT|CLASS|FUNCTION)\\b)[a-zA-Z_]\\w*\\s*\\(", " FUNCTION ");
+            if (rule != null) {
+                if (rule.getCompiledClass() != null) code = rule.getCompiledClass().matcher(code).replaceAll(" CLASS ");
+                if (rule.getCompiledIf() != null) code = rule.getCompiledIf().matcher(code).replaceAll(" IF ");
+                if (rule.getCompiledLoop() != null) code = rule.getCompiledLoop().matcher(code).replaceAll(" LOOP ");
+                if (rule.getCompiledCtrl() != null) code = rule.getCompiledCtrl().matcher(code).replaceAll(" CTRL ");
+                if (rule.getCompiledExcept() != null) code = rule.getCompiledExcept().matcher(code).replaceAll(" EXCEPT ");
+                if (rule.getCompiledFunction() != null) code = rule.getCompiledFunction().matcher(code).replaceAll(" FUNCTION ");
+            } else {
+                // Fallback for unknown languages (mimicking old brace-based generic approach)
+                code = code.replaceAll("\\b(class|struct|interface|enum|trait|impl)\\b", " CLASS ");
+                code = code.replaceAll("\\b(if|else|elif|elseif|switch|case|default|when|match|guard)\\b", " IF ");
+                code = code.replaceAll("\\b(for|while|do|foreach|loop|range)\\b", " LOOP ");
+                code = code.replaceAll("\\b(return|break|continue|yield|goto|fallthrough)\\b", " CTRL ");
+                code = code.replaceAll("\\b(try|catch|finally|throw|throws|raise|rescue|except)\\b", " EXCEPT ");
+                code = code.replaceAll("\\b(func|fn|function)\\s+[a-zA-Z_]\\w*\\s*\\(|\\b(?!(?:IF|LOOP|CTRL|EXCEPT|CLASS|FUNCTION)\\b)[a-zA-Z_]\\w*\\s*\\(", " FUNCTION ");
+            }
 
             String patternString = "\\b(CLASS|FUNCTION|IF|LOOP|CTRL|EXCEPT)\\b|\\{|\\}";
             Pattern pattern = Pattern.compile(patternString);

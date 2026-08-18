@@ -3,6 +3,7 @@ package com.plagshield.controller;
 import com.plagshield.model.AnalysisBatch;
 import com.plagshield.repository.AnalysisBatchRepository;
 import com.plagshield.service.FileStorageService;
+import com.plagshield.service.LanguageConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,11 +24,18 @@ import java.util.stream.Stream;
 @RequestMapping("/api/submissions")
 public class UploadController {
 
-    @Autowired
-    private FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService;
+    private final AnalysisBatchRepository batchRepository;
+    private final LanguageConfigService languageConfigService;
 
     @Autowired
-    private AnalysisBatchRepository batchRepository;
+    public UploadController(FileStorageService fileStorageService,
+                            AnalysisBatchRepository batchRepository,
+                            LanguageConfigService languageConfigService) {
+        this.fileStorageService = fileStorageService;
+        this.batchRepository = batchRepository;
+        this.languageConfigService = languageConfigService;
+    }
 
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> uploadSubmissions(@RequestParam("file") List<MultipartFile> files) {
@@ -80,14 +88,16 @@ public class UploadController {
         for (MultipartFile file : files) {
             String name = file.getOriginalFilename();
             if (name == null) continue;
-            name = name.toLowerCase();
-            if (name.endsWith(".java")) langs.add("JAVA");
-            else if (name.endsWith(".py")) langs.add("PYTHON");
-            else if (name.endsWith(".js")) langs.add("JAVASCRIPT");
-            else if (name.endsWith(".cpp") || name.endsWith(".c") || name.endsWith(".h")) langs.add("CPP");
+            
+            String ext = name.contains(".") ? name.substring(name.lastIndexOf(".") + 1) : "txt";
+            String lang = languageConfigService.getLanguageForExtension(ext);
+            if (!"UNKNOWN".equals(lang)) {
+                langs.add(lang);
+            }
         }
         if (langs.isEmpty()) return "UNKNOWN";
         if (langs.size() > 1) return "MULTI";
         return langs.iterator().next();
     }
 }
+

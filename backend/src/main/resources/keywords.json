@@ -1,0 +1,121 @@
+{
+  "java": {
+    "extensions": ["java"],
+    "keywords": [
+      "if", "else", "elif", "for", "while", "do", "switch", "case", "default",
+      "return", "break", "continue", "goto", "pass", "yield",
+      "public", "private", "protected", "class", "interface", "extends", "implements",
+      "abstract", "final", "static", "new", "this", "super", "self", "cls",
+      "boolean", "int", "float", "double", "char", "string", "void", "long", "short",
+      "byte", "unsigned", "signed", "bool", "var", "let", "const", "val", "mut",
+      "true", "false", "null", "nil", "none", "undefined", "nan",
+      "try", "catch", "throw", "throws"
+    ]
+  },
+  "python": {
+    "extensions": ["py"],
+    "keywords": [
+      "def", "import", "from", "pass", "and", "or", "not", "in", "is", "as",
+      "with", "lambda", "nonlocal", "global", "assert", "except", "finally", "raise",
+      "if", "else", "elif", "for", "while", "return", "break", "continue", "yield",
+      "true", "false", "none", "try"
+    ]
+  },
+  "javascript": {
+    "extensions": ["js", "jsx", "ts", "tsx"],
+    "keywords": [
+      "function", "async", "await", "export", "require", "module", "typeof", "instanceof",
+      "delete", "debugger", "of", "if", "else", "for", "while", "do", "switch", "case", "default",
+      "return", "break", "continue", "var", "let", "const", "true", "false", "null", "undefined",
+      "nan", "try", "catch", "throw", "class", "extends", "super", "this", "new", "interface",
+      "type", "implements", "public", "private", "protected"
+    ]
+  },
+  "cpp": {
+    "extensions": ["cpp", "cc", "cxx", "c", "h", "hpp"],
+    "keywords": [
+      "include", "define", "ifdef", "ifndef", "endif", "pragma", "typedef", "sizeof",
+      "struct", "union", "extern", "register", "volatile", "inline", "template",
+      "namespace", "using", "virtual", "override", "explicit", "friend", "class",
+      "public", "private", "protected", "new", "this", "if", "else", "for", "while",
+      "do", "switch", "case", "default", "return", "break", "continue", "goto",
+      "unsigned", "signed", "void", "char", "short", "int", "long", "float", "double",
+      "bool", "true", "false", "try", "catch", "throw"
+    ]
+  },
+  "go": {
+    "extensions": ["go"],
+    "keywords": [
+      "func", "go", "chan", "defer", "select", "range", "map", "type", "package",
+      "fallthrough", "if", "else", "for", "switch", "case", "default", "return",
+      "break", "continue", "var", "const", "true", "false", "nil", "struct", "interface"
+    ]
+  },
+  "rust": {
+    "extensions": ["rs"],
+    "keywords": [
+      "fn", "impl", "trait", "pub", "mod", "crate", "use", "where", "move",
+      "ref", "match", "loop", "unsafe", "dyn", "enum", "if", "else", "while",
+      "for", "return", "break", "continue", "let", "mut", "const", "true", "false", "struct", "type"
+    ]
+  },
+  "ruby": {
+    "extensions": ["rb"],
+    "keywords": [
+      "begin", "end", "rescue", "ensure", "puts", "attr_accessor", "attr_reader",
+      "if", "elsif", "else", "unless", "while", "until", "for", "case", "when",
+      "then", "return", "break", "next", "redo", "retry", "yield", "def", "class",
+      "module", "self", "super", "true", "false", "nil"
+    ]
+  },
+  "php": {
+    "extensions": ["php"],
+    "keywords": [
+      "echo", "print", "array", "foreach", "elseif", "endfor", "endforeach",
+      "endif", "endwhile", "if", "else", "while", "do", "for", "switch", "case",
+      "default", "return", "break", "continue", "class", "interface", "extends",
+      "implements", "public", "private", "protected", "abstract", "final", "static",
+      "new", "this", "true", "false", "null", "try", "catch", "throw"
+    ]
+  },
+  "csharp": {
+    "extensions": ["cs"],
+    "keywords": [
+      "class", "interface", "struct", "enum", "public", "private", "protected",
+      "internal", "abstract", "sealed", "static", "readonly", "volatile", "virtual",
+      "override", "new", "this", "base", "if", "else", "for", "foreach", "while",
+      "do", "switch", "case", "default", "return", "break", "continue", "goto",
+      "bool", "byte", "char", "decimal", "double", "float", "int", "long", "sbyte",
+      "short", "uint", "ulong", "ushort", "string", "void", "true", "false", "null",
+      "try", "catch", "finally", "throw", "async", "await"
+    ]
+  },
+  "swift": {
+    "extensions": ["swift"],
+    "keywords": [
+      "class", "struct", "enum", "protocol", "extension", "func", "guard",
+      "optional", "throws", "public", "private", "internal", "fileprivate", "open",
+      "let", "var", "if", "else", "for", "while", "repeat", "switch", "case",
+      "default", "return", "break", "continue", "fallthrough", "true", "false", "nil",
+      "try", "catch", "throw", "self", "super"
+    ]
+  },
+  "kotlin": {
+    "extensions": ["kt", "kts"],
+    "keywords": [
+      "class", "interface", "fun", "object", "companion", "sealed", "data", "when",
+      "internal", "public", "private", "protected", "override", "val", "var",
+      "if", "else", "for", "while", "do", "return", "break", "continue", "true", "false",
+      "null", "try", "catch", "finally", "throw", "this", "super"
+    ]
+  },
+  "scala": {
+    "extensions": ["scala"],
+    "keywords": [
+      "class", "trait", "object", "extends", "with", "val", "var", "def", "type",
+      "if", "else", "while", "do", "for", "yield", "match", "case", "return",
+      "throw", "try", "catch", "finally", "true", "false", "null", "this", "super",
+      "new", "private", "protected", "sealed", "implicit", "lazy"
+    ]
+  }
+}

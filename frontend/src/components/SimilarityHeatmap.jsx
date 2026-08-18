@@ -205,14 +205,20 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
               )}
             </div>
 
-            <div className="relative z-10 max-h-72 space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#30363d]">
+            <div className="relative z-10 max-h-80 space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#30363d]">
               {rings.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#30363d] py-6 text-center">
                   <span className="text-xl opacity-50">🛡️</span>
                   <p className="mt-2 text-xs text-[#8b949e]">No collaborative networks<br/>found in this batch.</p>
                 </div>
               ) : (
-                rings.map((ring, index) => (
+                rings.map((ring, index) => {
+                  const isHighDensity = ring.density >= 0.8;
+                  const isMediumDensity = ring.density >= 0.5 && ring.density < 0.8;
+                  const glowColor = isHighDensity ? 'bg-[#f85149]' : isMediumDensity ? 'bg-[#d29922]' : 'bg-[#58a6ff]';
+                  const textColor = isHighDensity ? 'text-[#f85149]' : isMediumDensity ? 'text-[#d29922]' : 'text-[#58a6ff]';
+                  
+                  return (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -220,27 +226,43 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
                     key={index} 
                     className="relative overflow-hidden rounded-xl border border-[#30363d] bg-[#0d1117]/50 p-4 transition-colors hover:border-[#58a6ff]/50 hover:bg-[#161b22]"
                   >
-                    {/* Subtle glow for cluster */}
-                    <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-[#58a6ff] opacity-10 blur-xl"></div>
+                    {/* Subtle glow based on classification */}
+                    <div className={`absolute -right-4 -top-4 h-16 w-16 rounded-full ${glowColor} opacity-10 blur-xl`}></div>
                     
-                    <div className="mb-3 flex items-center justify-between">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#58a6ff]">Cluster {index + 1}</p>
-                      <span className="rounded-md bg-[#30363d]/50 px-2 py-0.5 text-[10px] font-semibold text-[#c9d1d9]">{ring.length} files</span>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${textColor}`}>{ring.classification}</p>
+                        <span className="rounded-md bg-[#30363d]/50 px-2 py-0.5 text-[10px] font-semibold text-[#c9d1d9]">{ring.members.length} files</span>
+                      </div>
+                      
+                      {/* Cluster Stats */}
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] text-[#8b949e]">
+                        <div className="flex items-center gap-1.5" title="Average similarity across all valid edges">
+                          <span className="font-semibold text-[#c9d1d9]">{Math.round(ring.averageSimilarity)}%</span> Avg
+                        </div>
+                        <div className="flex items-center gap-1.5" title="Highest similarity connection in the cluster">
+                          <span className="font-semibold text-[#c9d1d9]">{Math.round(ring.maxSimilarity)}%</span> Peak
+                        </div>
+                        <div className="flex items-center gap-1.5" title={`Density: ${ring.connections} out of ${ring.possibleConnections} possible connections`}>
+                          <span className="font-semibold text-[#c9d1d9]">{Math.round(ring.density * 100)}%</span> Density
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {Array.from(ring).map((student) => (
+                    
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {ring.members.map((student) => (
                         <div
                           key={student}
                           className="flex max-w-[130px] items-center gap-1.5 truncate rounded-lg border border-[#30363d] bg-[#010409] px-2.5 py-1.5 text-[11px] font-medium text-[#c9d1d9] shadow-sm transition-colors hover:border-[#8b949e]"
                           title={student}
                         >
-                          <div className="h-1.5 w-1.5 rounded-full bg-[#f85149]"></div>
+                          <div className={`h-1.5 w-1.5 rounded-full ${glowColor}`}></div>
                           <span className="truncate">{student.split('.')[0]}</span>
                         </div>
                       ))}
                     </div>
                   </motion.div>
-                ))
+                )})
               )}
             </div>
           </div>

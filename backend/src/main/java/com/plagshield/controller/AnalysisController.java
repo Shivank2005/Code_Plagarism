@@ -43,6 +43,9 @@ public class AnalysisController {
     @Autowired
     private EvaluationService evaluationService;
 
+    @Autowired
+    private com.plagshield.service.LanguageConfigService languageConfigService;
+
     @PostMapping("/{batchId}/evaluate")
     public ResponseEntity<?> evaluateBatch(@PathVariable String batchId, @RequestBody Map<String, Object> payload) {
         return batchRepository.findById(batchId)
@@ -162,22 +165,7 @@ public class AnalysisController {
 
     private boolean isLikelyCodeFile(Path path) {
         String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
-        return name.endsWith(".java") ||
-                name.endsWith(".py") ||
-                name.endsWith(".js") ||
-                name.endsWith(".jsx") ||
-                name.endsWith(".ts") ||
-                name.endsWith(".tsx") ||
-                name.endsWith(".cpp") ||
-                name.endsWith(".c") ||
-                name.endsWith(".h") ||
-                name.endsWith(".cs") ||
-            name.endsWith(".rb") ||
-            name.endsWith(".php") ||
-                name.endsWith(".kt") ||
-                name.endsWith(".go") ||
-                name.endsWith(".rs") ||
-                name.endsWith(".swift") ||
-                name.endsWith(".scala");
+        String ext = name.contains(".") ? name.substring(name.lastIndexOf(".") + 1) : "txt";
+        return !"UNKNOWN".equals(languageConfigService.getLanguageForExtension(ext));
     }
 }

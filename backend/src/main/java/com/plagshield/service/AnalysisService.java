@@ -159,11 +159,12 @@ public class AnalysisService {
                             semanticScore = finalMatrix.get(i).get(j).doubleValue();
                         }
 
-                        double structuralScore = structuralAnalyzer.calculateStructuralSimilarity(codeA, codeB);
-                        double tokenScore = jPlagService.calculateTokenSimilarity(codeA, codeB);
-
                         String extA = studentA.contains(".") ? studentA.substring(studentA.lastIndexOf(".") + 1).toLowerCase() : "txt";
                         String extB = studentB.contains(".") ? studentB.substring(studentB.lastIndexOf(".") + 1).toLowerCase() : "txt";
+
+                        double structuralScore = structuralAnalyzer.calculateStructuralSimilarity(codeA, codeB, extA, extB);
+                        double tokenScore = jPlagService.calculateTokenSimilarity(codeA, codeB, extA, extB);
+
                         boolean isCrossLanguage = !extA.isEmpty() && !extA.equalsIgnoreCase(extB);
                         
                         String languagePair;

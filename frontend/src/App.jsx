@@ -261,14 +261,14 @@ function App() {
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className={`fixed bottom-6 right-6 z-50 rounded-lg border px-4 py-3 text-sm font-medium shadow-xl ${
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed top-24 right-8 z-[9999] rounded-lg border-2 px-6 py-4 text-sm font-semibold shadow-[0_10px_40px_rgba(0,0,0,0.5)] ${
               toast.type === 'error'
-                ? 'border-red-500/30 bg-red-500/10 text-red-300'
+                ? 'border-red-500 bg-[#450a0a] text-red-200'
                 : toast.type === 'success'
-                  ? 'border-green-500/30 bg-green-500/10 text-green-300'
+                  ? 'border-green-500 bg-[#052e16] text-green-200'
                   : 'border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
             }`}
           >

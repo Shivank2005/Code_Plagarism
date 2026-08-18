@@ -1,0 +1,32 @@
+{
+  "java": {
+    "extensions": ["java", "cs", "php", "cpp", "cc", "cxx", "c", "h", "hpp", "js", "jsx", "ts", "tsx", "go", "rs", "kt", "kts", "swift", "scala"],
+    "indentationBased": false,
+    "singleLineCommentPattern": "(?m)//.*?$",
+    "multiLineCommentStart": "/\\*",
+    "multiLineCommentEnd": "\\*/",
+    "singleLineStringPattern": "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'",
+    "multiLineStringPattern": "(?s)`(.*?)`|(?s)\"\"\"(.*?)\"\"\"",
+    "functionPattern": "\\b(func|fn|function)\\s+[a-zA-Z_]\\w*\\s*\\(|\\b(?!(?:IF|LOOP|CTRL|EXCEPT|CLASS|FUNCTION)\\b)[a-zA-Z_]\\w*\\s*\\(",
+    "classPattern": "\\b(class|struct|interface|enum|trait|impl|record)\\b",
+    "ifPattern": "\\b(if|else|elif|elseif|switch|case|default|when|match|guard)\\b",
+    "loopPattern": "\\b(for|while|do|foreach|loop|range)\\b",
+    "ctrlPattern": "\\b(return|break|continue|yield|goto|fallthrough)\\b",
+    "exceptPattern": "\\b(try|catch|finally|throw|throws|raise|rescue|except)\\b"
+  },
+  "python": {
+    "extensions": ["py", "rb"],
+    "indentationBased": true,
+    "singleLineCommentPattern": "(?m)#.*?$",
+    "multiLineCommentStart": null,
+    "multiLineCommentEnd": null,
+    "singleLineStringPattern": "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'",
+    "multiLineStringPattern": "(?s)\"\"\"(.*?)\"\"\"|(?s)'''(.*?)'''|(?s)=begin(.*?)=end",
+    "functionPattern": "\\b(def)\\b",
+    "classPattern": "\\b(class|module)\\b",
+    "ifPattern": "\\b(if|elif|else|elsif|unless|case|when|then)\\b",
+    "loopPattern": "\\b(for|while|until)\\b",
+    "ctrlPattern": "\\b(return|break|continue|yield|next|redo|retry)\\b",
+    "exceptPattern": "\\b(try|except|raise|begin|rescue|ensure)\\b"
+  }
+}

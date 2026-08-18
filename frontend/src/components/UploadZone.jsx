@@ -36,19 +36,28 @@ const UploadZone = ({ onUploadSuccess }) => {
     }
 
     const processQueue = async () => {
+      const allowedExtensions = ['.java', '.py', '.js', '.jsx', '.ts', '.tsx', '.cpp', '.c', '.h', '.cs', '.rb', '.php', '.kt', '.go', '.rs', '.swift', '.scala', '.txt'];
       while (queue.length > 0) {
         const entry = queue.shift();
+        
+        // Skip hidden files/directories (like .git, .DS_Store)
+        if (entry.name.startsWith('.')) continue;
+        
         if (entry.isFile) {
-          const file = await new Promise((resolve) => entry.file(resolve));
-          Object.defineProperty(file, 'webkitRelativePath', {
-            value: entry.fullPath.replace(/^\//, ''),
-            writable: true
-          });
-          files.push(file);
+          const ext = entry.name.includes('.') ? entry.name.substring(entry.name.lastIndexOf('.')).toLowerCase() : '';
+          if (allowedExtensions.includes(ext) || ext === '') {
+            const file = await new Promise((resolve) => entry.file(resolve));
+            // Skip files larger than 1MB to prevent browser memory crash
+            if (file.size <= 1048576) {
+              Object.defineProperty(file, 'webkitRelativePath', {
+                value: entry.fullPath.replace(/^\//, ''),
+                writable: true
+              });
+              files.push(file);
+            }
+          }
         } else if (entry.isDirectory) {
           const reader = entry.createReader();
-          // readEntries doesn't always return everything in one call for large dirs,
-          // but for typical use cases (like a few dozen files) this is sufficient.
           const entries = await new Promise((resolve) => reader.readEntries(resolve));
           queue.push(...entries);
         }

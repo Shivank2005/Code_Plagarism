@@ -9,10 +9,12 @@ public class SystemTestHarness {
         System.out.println("=== PLAGSHIELD SYSTEM TEST HARNESS ===\n");
 
         // 1. Test Structural Analyzer
-        StructuralAnalyzer sa = new StructuralAnalyzer();
+        LanguageConfigService lcs = new LanguageConfigService();
+        lcs.init();
+        StructuralAnalyzer sa = new StructuralAnalyzer(lcs);
         String code1 = "public class A { void run() { for(int i=0; i<10; i++) { } } }";
         String code2 = "class B { void start() { for(int x=0; x<10; x++) { } } }";
-        double structScore = sa.calculateStructuralSimilarity(code1, code2);
+        double structScore = sa.calculateStructuralSimilarity(code1, code2, "java", "java");
         System.out.println("[STRUCTURAL] Score: " + structScore + "%");
 
         // 2. Test Clustering Service (Plagiarism Ring Detection)
@@ -24,16 +26,16 @@ public class SystemTestHarness {
         results.add(createResult("Charlie", "Alice", 88.0)); // Plagiarism Ring: Alice-Bob-Charlie
         results.add(createResult("Dave", "Eve", 15.0));      // Low similarity
         
-        List<Set<String>> clusters = cs.detectPlagiarismRings(results, 70.0);
+        List<Map<String, Object>> clusters = cs.detectPlagiarismRings(results, 70.0);
         System.out.println("[CLUSTERING] Rings Found: " + clusters.size());
-        for(Set<String> ring : clusters) {
-            System.out.println(" - Ring: " + ring);
+        for(Map<String, Object> ring : clusters) {
+            System.out.println(" - Ring: " + ring.get("members") + " (" + ring.get("classification") + ")");
         }
 
         // 3. Test Risk Scoring
         RiskScoringService rss = new RiskScoringService();
-        double finalScore = rss.calculateFinalRiskScore(structScore, structScore, 75.0);
-        System.out.println("[RISK SCORE] Final: " + finalScore + " (" + rss.classifyRisk(finalScore) + ")");
+        RiskScoringService.RiskResult riskResult = rss.calculateFinalRiskScore(structScore, structScore, 75.0, false, "java-java");
+        System.out.println("[RISK SCORE] Final: " + riskResult.score + " (confidence: " + riskResult.confidence + ")");
     }
 
     private static PlagiarismResult createResult(String a, String b, double score) {
@@ -44,3 +46,4 @@ public class SystemTestHarness {
         return res;
     }
 }
+
