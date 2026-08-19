@@ -46,3 +46,22 @@ desktop.ini
 
 # === DB ===
 backend/data/
+
+# === Secrets & Configs ===
+# Ignore application.properties because it contains the MongoDB password
+backend/src/main/resources/application.properties
+*.env
+.env
+.env.*
+!.env.example
+
+# === Python Environments ===
+venv/
+env/
+.venv/
+
+# === Test & Scratch Files ===
+scratch/
+test_files/
+test_files_2/
+*.ps1

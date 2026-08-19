@@ -12,6 +12,39 @@ const rowClass = {
   delete: 'bg-transparent opacity-60',
 };
 
+const CodeHighlight = ({ code }) => {
+  if (!code) return null;
+
+  // Add zero-width spaces after punctuation to allow browser wrapping on minified code
+  const spacedCode = code.replace(/([;{}])/g, '$1\u200B');
+
+  // Tokenizer regex
+  const tokenRegex = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:import|public|private|protected|class|static|void|int|boolean|for|if|else|break|def|return|False|True|not|in|while|new)\b|\b(?:Scanner|String|System|out|arr|len|range|print|println)\b|\b\d+\b)/g;
+  
+  const parts = spacedCode.split(tokenRegex);
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (!part) return null;
+        if (/^["']/.test(part)) {
+          return <span key={index} className="text-green-400">{part}</span>;
+        }
+        if (/^(import|public|private|protected|class|static|void|int|boolean|for|if|else|break|def|return|False|True|not|in|while|new)$/.test(part)) {
+          return <span key={index} className="text-blue-400 font-semibold">{part}</span>;
+        }
+        if (/^(Scanner|String|System|out|arr|len|range|print|println)$/.test(part)) {
+          return <span key={index} className="text-amber-300">{part}</span>;
+        }
+        if (/^\d+$/.test(part)) {
+          return <span key={index} className="text-purple-400">{part}</span>;
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </>
+  );
+};
+
 const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
   const candidatePairs = useMemo(() => {
     if (!results || !Array.isArray(results.students) || !Array.isArray(results.matrix)) {
@@ -225,13 +258,13 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
           </div>
 
           <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20 shadow-inner backdrop-blur-sm">
-            <table className="w-full border-collapse text-xs">
+            <table className="w-full border-collapse text-xs table-fixed">
               <thead>
                 <tr className="bg-black/40 text-white/70 border-b border-white/10">
                   <th className="w-12 px-2 py-3 text-right font-semibold uppercase tracking-wider text-[10px] select-none">L#</th>
-                  <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-[10px]">Original Snippet</th>
+                  <th className="w-[calc(50%-48px)] px-4 py-3 text-left font-semibold uppercase tracking-wider text-[10px]">Original Snippet</th>
                   <th className="w-12 px-2 py-3 text-right font-semibold uppercase tracking-wider text-[10px] border-l border-white/5 select-none">R#</th>
-                  <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-[10px]">Compared Snippet</th>
+                  <th className="w-[calc(50%-48px)] px-4 py-3 text-left font-semibold uppercase tracking-wider text-[10px]">Compared Snippet</th>
                 </tr>
               </thead>
               <tbody className="font-mono text-[11px] leading-relaxed">
@@ -243,16 +276,16 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
                   return (
                     <tr key={`row-${idx}`} className={`${rowBg} hover:bg-white/5 transition-colors`}>
                       <td className="w-12 px-2 py-1 text-right text-white/30 select-none border-r border-white/5">{row.leftNo ?? ''}</td>
-                      <td className={`px-4 py-1 whitespace-pre-wrap break-all ${
-                        isSameText ? 'text-rose-200' : 'text-white/60'
+                      <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-6 ${
+                        isSameText ? 'text-rose-200' : 'text-white/80'
                       } border-r border-white/5`}>
-                        {row.left}
+                        <CodeHighlight code={row.left} />
                       </td>
-                      <td className="w-12 px-2 py-1 text-right text-white/30 select-none border-r border-white/5">{row.rightNo ?? ''}</td>
-                      <td className={`px-4 py-1 whitespace-pre-wrap break-all ${
-                        isSameText ? 'text-rose-200' : 'text-white/60'
+                      <td className="w-12 px-2 py-1.5 text-right text-white/30 select-none border-r border-white/5">{row.rightNo ?? ''}</td>
+                      <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-6 ${
+                        isSameText ? 'text-rose-200' : 'text-white/80'
                       }`}>
-                        {row.right}
+                        <CodeHighlight code={row.right} />
                       </td>
                     </tr>
                   );
