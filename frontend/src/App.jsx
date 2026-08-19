@@ -115,7 +115,7 @@ function App() {
       case 'graph':
         return <GraphView semanticResults={semanticResults} isSemanticLoading={isSemanticLoading} />;
       case 'evaluation':
-        return <EvaluationView activeBatch={activeBatch} evaluateModel={evaluateModel} evaluationResults={evaluationResults} />;
+        return <EvaluationView activeBatch={activeBatch} evaluateModel={evaluateModel} evaluationResults={evaluationResults} results={results} />;
       case 'diff':
         return <DiffView batchFiles={batchFiles} results={results} semanticResults={semanticResults} selectedSuspiciousPair={selectedSuspiciousPair} />;
       default:

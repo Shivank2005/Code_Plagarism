@@ -48,18 +48,23 @@ public class AnalysisController {
 
     @PostMapping("/{batchId}/evaluate")
     public ResponseEntity<?> evaluateBatch(@PathVariable String batchId, @RequestBody Map<String, Object> payload) {
-        return batchRepository.findById(batchId)
-                .map(batch -> {
-                    List<PlagiarismResult> results = resultRepository.findByBatchId(batchId);
-                    double threshold = Double.parseDouble(payload.getOrDefault("threshold", "70.0").toString());
-                    List<String> groundTruthList = (List<String>) payload.getOrDefault("groundTruth", Collections.emptyList());
-                    Set<String> groundTruthPairs = new HashSet<>(groundTruthList);
-                    int totalPossiblePairs = results.size();
-                    
-                    EvaluationResult eval = evaluationService.evaluateModel(results, threshold, groundTruthPairs, totalPossiblePairs);
-                    return ResponseEntity.ok(eval);
-                })
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            return batchRepository.findById(batchId)
+                    .map(batch -> {
+                        List<PlagiarismResult> results = resultRepository.findByBatchId(batchId);
+                        double threshold = Double.parseDouble(payload.getOrDefault("threshold", "70.0").toString());
+                        List<String> groundTruthList = (List<String>) payload.getOrDefault("groundTruth", Collections.emptyList());
+                        Set<String> groundTruthPairs = new HashSet<>(groundTruthList);
+                        int totalPossiblePairs = results.size();
+                        
+                        EvaluationResult eval = evaluationService.evaluateModel(results, threshold, groundTruthPairs, totalPossiblePairs);
+                        return ResponseEntity.ok(eval);
+                    })
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Unknown evaluation error"));
+        }
     }
 
     @PostMapping("/{batchId}/start")

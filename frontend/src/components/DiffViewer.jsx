@@ -71,7 +71,7 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
         }
       }
     }
-    return pairs.sort((a, b) => b.weight - a.weight).slice(0, 24);
+    return pairs.sort((a, b) => b.weight - a.weight).slice(0, 250);
   }, [results]);
 
   const [selectedLocalPair, setSelectedLocalPair] = useState(null);
@@ -156,24 +156,47 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
         </div>
       </div>
 
-      <div className="mb-5 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-        {candidatePairs.length === 0 && (
-          <p className="text-sm text-cyan-100/65">No semantic links available yet. Generate embedding graph first.</p>
-        )}
-        {candidatePairs.map((pair) => (
-          <button
-            key={`${pair.source}-${pair.target}`}
-            onClick={() => runDiff(pair)}
-            className={`rounded-xl border px-3 py-2 text-left text-xs transition-colors ${
-              selectedLocalPair?.source === pair.source && selectedLocalPair?.target === pair.target
-                ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-50 shadow-[0_0_15px_rgba(34,211,238,0.15)]'
-                : 'border-white/10 bg-white/5 text-cyan-100/70 hover:bg-white/10 hover:text-cyan-50'
-            }`}
-          >
-            <p className="font-semibold">{pair.source.split('/').pop()} ↔ {pair.target.split('/').pop()}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.12em]">Similarity {pair.weight}%</p>
-          </button>
-        ))}
+      <div className="mb-6 overflow-hidden rounded-2xl border border-[#30363d] shadow-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[1px] bg-[#30363d] max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-track-[#0d1117] scrollbar-thumb-[#484f58] hover:scrollbar-thumb-[#6e7681]">
+          {candidatePairs.length === 0 && (
+            <div className="col-span-full p-8 text-center text-sm text-[#8b949e] bg-[#0d1117]">
+              No semantic links available yet. Generate embedding graph first.
+            </div>
+          )}
+          {candidatePairs.map((pair) => (
+            <button
+              key={`${pair.source}-${pair.target}`}
+              onClick={() => runDiff(pair)}
+              className={`group flex flex-col p-5 text-left transition-all duration-200 ${
+                selectedLocalPair?.source === pair.source && selectedLocalPair?.target === pair.target
+                  ? 'bg-gradient-to-r from-[#58a6ff]/10 to-[#0d1117] shadow-[inset_3px_0_0_#58a6ff]'
+                  : 'bg-[#0d1117] hover:bg-[#161b22]'
+              }`}
+            >
+              <div className="mb-4 flex w-full items-center justify-between overflow-hidden">
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[9px] font-black tracking-widest uppercase ${
+                    pair.weight > 75 ? 'bg-[#f85149]/10 text-[#f85149] border border-[#f85149]/20 shadow-[0_0_10px_rgba(248,81,73,0.1)]' 
+                    : pair.weight >= 40 ? 'bg-[#d29922]/10 text-[#d29922] border border-[#d29922]/20'
+                    : 'bg-[#238636]/10 text-[#238636] border border-[#238636]/20'
+                }`}>
+                  {pair.weight}% MATCH
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#58a6ff] opacity-0 transition-all duration-300 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0">
+                  Inspect →
+                </span>
+              </div>
+              <div className="flex w-full items-center justify-between gap-3">
+                <p className="flex-1 truncate text-xs font-semibold text-[#e6edf3] transition-colors group-hover:text-white" title={pair.source.split('/').pop()}>
+                  {pair.source.split('/').pop()}
+                </p>
+                <span className="text-[#8b949e] opacity-30 px-1 font-light">↔</span>
+                <p className="flex-1 truncate text-right text-xs font-semibold text-[#e6edf3] transition-colors group-hover:text-white" title={pair.target.split('/').pop()}>
+                  {pair.target.split('/').pop()}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading && (

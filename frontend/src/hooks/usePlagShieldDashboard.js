@@ -488,7 +488,8 @@ export function usePlagShieldDashboard() {
       showToast('Evaluation completed successfully.', 'success');
     } catch (err) {
       console.error('Evaluation error:', err);
-      showToast('Evaluation failed.', 'error');
+      const errMsg = err.response?.data?.error || err.message;
+      showToast(`Evaluation failed: ${errMsg}`, 'error');
     }
   }, [token, showToast]);
 
