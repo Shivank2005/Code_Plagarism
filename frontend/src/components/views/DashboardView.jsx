@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Client } from '@stomp/stompjs';
 import { ChevronRight, Download, Loader2, Search, UploadCloud, Activity, LayoutGrid, FileSearch } from 'lucide-react';
 import UploadZone from '../UploadZone';
 import SimilarityHeatmap from '../SimilarityHeatmap';
@@ -25,7 +26,33 @@ const DashboardView = ({
   searchTerm,
   setSearchTerm,
   summaryTiles,
+  batchId,
 }) => {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (isAnalyzing && batchId) {
+      const stompClient = new Client({
+        brokerURL: 'ws://localhost:8082/ws-plagshield',
+        reconnectDelay: 5000,
+        onConnect: () => {
+          stompClient.subscribe(`/topic/progress/${batchId}`, (message) => {
+            if (message.body) {
+              const data = JSON.parse(message.body);
+              setProgress(data.progress);
+            }
+          });
+        },
+      });
+      stompClient.activate();
+      return () => {
+        stompClient.deactivate();
+      };
+    } else {
+      setProgress(0);
+    }
+  }, [isAnalyzing, batchId]);
+
   const matchRows = useMemo(() => {
     if (!results || !Array.isArray(results.students) || !Array.isArray(results.matrix)) {
       return [];
@@ -157,12 +184,17 @@ const DashboardView = ({
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="flex items-center gap-4 px-6 py-5 bg-[#58a6ff]/10 border border-[#58a6ff]/30 rounded-[1.5rem] shadow-[0_0_15px_rgba(88,166,255,0.1)]"
+            className="flex flex-col gap-3 px-6 py-5 bg-[#58a6ff]/10 border border-[#58a6ff]/30 rounded-[1.5rem] shadow-[0_0_15px_rgba(88,166,255,0.1)]"
           >
-            <Loader2 className="animate-spin text-[#58a6ff]" size={20} />
-            <span className="text-sm font-bold text-[#58a6ff]">
-              Processing submissions and updating the analysis dashboard...
-            </span>
+            <div className="flex items-center gap-4">
+              <Loader2 className="animate-spin text-[#58a6ff]" size={20} />
+              <span className="text-sm font-bold text-[#58a6ff]">
+                Processing submissions... {progress}%
+              </span>
+            </div>
+            <div className="w-full bg-[#30363d] rounded-full h-2.5">
+              <div className="bg-[#58a6ff] h-2.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

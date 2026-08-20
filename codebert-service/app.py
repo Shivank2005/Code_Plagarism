@@ -140,136 +140,34 @@ def health() -> dict[str, Any]:
 
 
 # ── Machine Learning Classifier ──
-_ml_model: RandomForestClassifier | None = None
+_ml_model: Any = None
 
-def _train_ml_model() -> RandomForestClassifier:
+def _train_ml_model() -> Any:
     global _ml_model
     if _ml_model is not None:
         return _ml_model
         
-    # Generate synthetic training data
-    # X = [tokenScore, structuralScore, semanticScore]
-    # y = [0 (safe), 1 (plagiarism)]
+    import os
+    from joblib import load
     
-    import random
+    model_path = os.path.join(os.path.dirname(__file__), "model.joblib")
+    if os.path.exists(model_path):
+        _ml_model = load(model_path)
+    else:
+        print("Warning: model.joblib not found. Please run train_model.py first.")
+        _ml_model = None
     
-    # Build a labeled evaluation/training dataset containing real edge cases
-    # Columns: [Token, Struct, Semantic, isCross, LangPair, Label]
-    base_data = [
-        # ===== PLAGIARISM (Label = 1) =====
-        
-        # Exact Copies: all three scores very high
-        [100, 100, 100, 0, "java-java", 1],
-        [95, 98, 99, 0, "java-java", 1],
-        [97, 95, 98, 0, "python-python", 1],
-        
-        # Variable-renamed copies (Obfuscation): token drops, struct/semantic stay high
-        [0, 65, 98, 0, "java-java", 1],
-        [5, 70, 97, 0, "java-java", 1],
-        [0, 60, 96, 0, "python-python", 1],
-        [10, 75, 95, 0, "java-java", 1],
-        
-        # Reformatted copies: token stays high, struct changes slightly
-        [85, 75, 97, 0, "java-java", 1],
-        [90, 80, 98, 0, "python-python", 1],
-        
-        # Logic-preserving rewrites (same algorithm, different style)
-        [30, 50, 95, 0, "java-java", 1],
-        [20, 45, 93, 0, "python-python", 1],
-        
-        # Cross-language translations (Token/Struct low, Semantic high)
-        [0, 30, 85, 1, "java-python", 1],
-        [5, 40, 88, 1, "java-python", 1],
-        [0, 35, 82, 1, "java-python", 1],
-        [10, 50, 90, 1, "java-python", 1],
-        
-        # ===== SAFE (Label = 0) =====
-        
-        # Completely unrelated programs (all scores low)
-        [0, 10, 20, 0, "java-java", 0],
-        [0, 15, 30, 0, "java-java", 0],
-        [5, 5, 15, 0, "python-python", 0],
-        [0, 20, 25, 1, "java-python", 0],
-        
-        # Structural false positive trap: same-language, different purpose
-        # With [0.95, 1.0] cosine mapping, unrelated Java files produce
-        # semantic scores in the 65-80% range, NOT 85-95%.
-        [0, 40, 78, 0, "java-java", 0],
-        [0, 50, 75, 0, "java-java", 0],
-        [0, 70, 80, 0, "java-java", 0],
-        [0, 45, 72, 0, "python-python", 0],
-        [5, 60, 77, 0, "java-java", 0],
-        [0, 35, 68, 0, "java-java", 0],
-        
-        # Template/boilerplate-heavy submissions
-        [40, 60, 50, 0, "java-java", 0],
-        [35, 55, 55, 0, "java-java", 0],
-        [30, 50, 45, 0, "python-python", 0],
-        
-        # Different implementations of the same problem (not plagiarism)
-        # Moderate struct (same problem = similar flow), moderate semantic, low token
-        [0, 50, 70, 0, "java-java", 0],
-        [10, 55, 75, 0, "java-java", 0],
-        [5, 45, 65, 0, "python-python", 0],
-        [0, 50, 72, 0, "js-js", 0],
-        [5, 55, 68, 0, "cpp-cpp", 0],
-        
-        # Unrelated cross-language pairs
-        [0, 10, 30, 1, "java-python", 0],
-        [0, 20, 40, 1, "java-python", 0],
-        [5, 15, 35, 1, "java-python", 0],
-        [0, 15, 25, 1, "cpp-python", 0],
-        [0, 10, 30, 1, "java-js", 0],
-        
-        # Additional language-diverse plagiarism cases
-        [95, 97, 99, 0, "js-js", 1],
-        [90, 95, 98, 0, "cpp-cpp", 1],
-        [0, 60, 96, 0, "js-js", 1],       # Obfuscated JS
-        [0, 55, 94, 0, "cpp-cpp", 1],     # Obfuscated C++
-        [0, 35, 83, 1, "java-js", 1],     # Cross-lang Java->JS
-        [0, 30, 80, 1, "cpp-python", 1],  # Cross-lang C++->Python
-        [5, 40, 85, 1, "go-python", 1],   # Cross-lang Go->Python
-    ]
-
-    # Supplement with synthetic jitter to expand into a continuous model
-    expanded_data = []
-    random.seed(42)
-    for row in base_data:
-        t_base, s_base, c_base, is_cross, pair, label = row
-        for _ in range(150):  # ~5000+ total points
-            t = np.clip(random.gauss(t_base, 8.0), 0, 100)
-            s = np.clip(random.gauss(s_base, 8.0), 0, 100)
-            # Tight semantic jitter to prevent false-positive/plagiarism overlap
-            c = np.clip(random.gauss(c_base, 3.0), 0, 100)
-            expanded_data.append([t, s, c, is_cross, pair, label])
-
-    # Convert to numpy array. dtype=object because we have mixed types (float and str)
-    dataset = np.array(expanded_data, dtype=object)
-    X_train = dataset[:, :-1]
-    y_train = dataset[:, -1].astype(int)
-
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('num', 'passthrough', [0, 1, 2, 3]),
-            ('cat', OneHotEncoder(handle_unknown='ignore'), [4])
-        ])
-
-    pipeline = Pipeline([
-        ('preprocessor', preprocessor),
-        ('classifier', RandomForestClassifier(n_estimators=100, max_depth=8, random_state=42))
-    ])
-
-    pipeline.fit(X_train, y_train)
-    _ml_model = pipeline
     return _ml_model
 
-# Train it immediately on startup
+# Load it immediately on startup
 _train_ml_model()
 
 @app.post("/api/ml/predict")
 def ml_predict(payload: MLPredictRequest) -> dict[str, float]:
     clf = _train_ml_model()
-    
+    if clf is None:
+        return {"riskScore": 0.0, "confidence": 0.0}
+        
     X = np.array([[
         payload.tokenScore, 
         payload.structuralScore, 

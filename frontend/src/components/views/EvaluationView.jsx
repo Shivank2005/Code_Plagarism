@@ -86,7 +86,9 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
         lower.includes('boilerplate') ||
         lower.includes('essay') ||
         lower.includes('readme') ||
-        lower.includes('mergesort');
+        lower.includes('mergesort') ||
+        lower.includes('astar') ||
+        lower.includes('prim');
 
       if (isLikelyInnocent) return;
 
@@ -103,6 +105,8 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
         lower.includes('restructured') ||
         lower.includes('plagiari') ||
         lower.includes('original') ||
+        lower.includes('dijkstra') ||
+        lower.includes('controller') ||
         lower.includes('base');
 
       if (isBaseGroup) {

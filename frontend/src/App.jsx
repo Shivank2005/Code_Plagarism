@@ -12,6 +12,10 @@ import {
   ShieldCheck,
   UserCircle2,
   Users,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  Info,
 } from 'lucide-react';
 import { usePlagShieldDashboard } from './hooks/usePlagShieldDashboard';
 import DashboardView from './components/views/DashboardView';
@@ -57,6 +61,7 @@ function App() {
     setIsMobileNavOpen,
     setPreferenceProfile,
     showToast,
+    hideToast,
     fetchHistory,
     fetchResults,
     handleUploadSuccess,
@@ -121,6 +126,7 @@ function App() {
       default:
         return (
           <DashboardView
+            batchId={activeBatch}
             batchFiles={batchFiles}
             isAnalyzing={isAnalyzing}
             results={results}
@@ -261,18 +267,37 @@ function App() {
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-24 right-8 z-[9999] rounded-lg border-2 px-6 py-4 text-sm font-semibold shadow-[0_10px_40px_rgba(0,0,0,0.5)] ${
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className={`fixed top-24 right-8 z-[9999] flex items-center gap-3 rounded-xl border px-4 py-3 text-[13px] font-medium shadow-[0_16px_40px_rgba(0,0,0,0.4)] backdrop-blur-md min-w-[280px] max-w-[400px] ${
               toast.type === 'error'
-                ? 'border-red-500 bg-[#450a0a] text-red-200'
+                ? 'border-red-500/30 bg-red-500/10 text-red-200'
                 : toast.type === 'success'
-                  ? 'border-green-500 bg-[#052e16] text-green-200'
-                  : 'border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
+                  ? 'border-green-500/30 bg-green-500/10 text-green-200'
+                  : 'border-[var(--border-subtle)] bg-[var(--bg-elevated)]/90 text-[var(--text-primary)]'
             }`}
           >
-            {toast.message}
+            <div className={`flex items-center justify-center rounded-full p-1 shrink-0 ${
+              toast.type === 'error' ? 'bg-red-500/20 text-red-400' :
+              toast.type === 'success' ? 'bg-green-500/20 text-green-400' :
+              'bg-[#30363d] text-[#58a6ff]'
+            }`}>
+              {toast.type === 'error' ? <AlertCircle size={16} strokeWidth={2.5} /> :
+               toast.type === 'success' ? <CheckCircle2 size={16} strokeWidth={2.5} /> :
+               <Info size={16} strokeWidth={2.5} />}
+            </div>
+            
+            <span className="mr-2 leading-relaxed flex-1">{toast.message}</span>
+            
+            <button 
+              onClick={hideToast} 
+              className="shrink-0 rounded-md p-1.5 opacity-50 hover:opacity-100 hover:bg-white/10 transition-colors"
+              aria-label="Close"
+            >
+              <X size={14} strokeWidth={3} />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

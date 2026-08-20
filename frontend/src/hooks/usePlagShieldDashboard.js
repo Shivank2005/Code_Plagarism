@@ -44,13 +44,21 @@ export function usePlagShieldDashboard() {
     }
   }, []);
 
+  const hideToast = useCallback(() => {
+    setToast(null);
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+  }, []);
+
   const showToast = useCallback((message, type = 'info') => {
     setToast({ message, type });
     if (toastTimerRef.current) {
       window.clearTimeout(toastTimerRef.current);
     }
-    toastTimerRef.current = window.setTimeout(() => setToast(null), 2400);
-  }, []);
+    toastTimerRef.current = window.setTimeout(() => hideToast(), 2400);
+  }, [hideToast]);
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -513,6 +521,7 @@ export function usePlagShieldDashboard() {
     setIsMobileNavOpen,
     setPreferenceProfile,
     showToast,
+    hideToast,
     fetchHistory,
     fetchResults,
     handleUploadSuccess,

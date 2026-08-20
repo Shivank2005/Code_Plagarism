@@ -39,6 +39,16 @@ if (-not $mongoConn) {
 	Write-Host "`nMongoDB detected on port 27017." -ForegroundColor Green
 }
 
+# Load environment variables from .env if it exists
+if (Test-Path "$PSScriptRoot\.env") {
+	Write-Host "`nLoading environment variables from .env file..." -ForegroundColor Cyan
+	Get-Content "$PSScriptRoot\.env" | ForEach-Object {
+		if ($_ -match '^(.*?)=(.*)$') {
+			[Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim(), "Process")
+		}
+	}
+}
+
 # Start CodeBERT Service (Port 8090)
 Write-Host "`n[1/3] Starting CodeBERT Embedding Service on port 8090..." -ForegroundColor Green
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\codebert-service'; python app.py" -WindowStyle Normal
@@ -47,7 +57,7 @@ Start-Sleep -Seconds 3
 
 # Start Backend API (Port 8082)
 Write-Host "[2/3] Starting Spring Backend API on port 8082..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$env:JAVA_HOME='$env:JAVA_HOME'; `$env:Path='`$env:JAVA_HOME\bin;' + `$env:Path; cd '$PSScriptRoot\backend'; & 'C:\Users\shiva\maven\maven-3.9.15\bin\mvn.cmd' -q -DskipTests spring-boot:run" -WindowStyle Normal
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$env:MONGO_URI='$env:MONGO_URI'; `$env:JAVA_HOME='$env:JAVA_HOME'; `$env:Path='`$env:JAVA_HOME\bin;' + `$env:Path; cd '$PSScriptRoot\backend'; & 'C:\Users\shiva\maven\maven-3.9.15\bin\mvn.cmd' -q -DskipTests spring-boot:run" -WindowStyle Normal
 
 Start-Sleep -Seconds 5
 

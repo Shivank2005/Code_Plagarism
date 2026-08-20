@@ -1,4 +1,4 @@
-# === Java / Maven ===
+﻿# === Java / Maven ===
 backend/target/
 *.class
 *.jar
@@ -65,3 +65,6 @@ scratch/
 test_files/
 test_files_2/
 *.ps1
+.env
+
+.env
