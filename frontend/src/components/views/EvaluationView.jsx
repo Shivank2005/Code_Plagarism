@@ -149,6 +149,27 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
 
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-12 w-full px-4 pt-6 flex flex-col gap-10">
+      
+      {/* Hybrid Mode Toggle */}
+      <div className="flex justify-between items-center border border-purple-500/30 bg-[#0d1117] rounded-[2rem] p-6 shadow-[0_0_30px_rgba(168,85,247,0.1)] relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div className="flex items-center gap-4 z-10">
+          <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400 border border-purple-500/30">
+            <Brain size={24} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-purple-300 tracking-tight">Project Hybrid Architecture Metrics</h3>
+            <p className="text-xs text-purple-400/80 mt-1">Simulate LLM Deep Scan on ML edge-cases (False Negatives).</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => setIsHybridMode(!isHybridMode)}
+          className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors z-10 border ${isHybridMode ? 'bg-purple-500 border-purple-400' : 'bg-[#161b22] border-[#30363d]'}`}
+        >
+          <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-lg ${isHybridMode ? 'translate-x-9' : 'translate-x-1'}`} />
+        </button>
+      </div>
+
       {/* Row 1: Test Configuration */}
       <div className="glass-card rounded-[2rem] p-8 border border-[#30363d] bg-[#0d1117] shadow-2xl relative overflow-hidden flex flex-col">
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#58a6ff]/10 blur-[60px] rounded-full pointer-events-none"></div>
@@ -251,26 +272,6 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
       ) : (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
           
-          {/* Hybrid Mode Toggle */}
-          <div className="flex justify-between items-center border border-purple-500/30 bg-purple-500/10 rounded-[2rem] p-6 shadow-[0_0_30px_rgba(168,85,247,0.15)] relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="flex items-center gap-4 z-10">
-              <div className="w-14 h-14 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400 border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-                <Brain size={28} />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-purple-300 tracking-tight">Project Hybrid Architecture Metrics</h3>
-                <p className="text-sm text-purple-400/80 mt-1">Simulate LLM Deep Scan on ML edge-cases (False Negatives).</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => setIsHybridMode(!isHybridMode)}
-              className={`relative inline-flex h-10 w-20 items-center rounded-full transition-colors z-10 border ${isHybridMode ? 'bg-purple-500 border-purple-400' : 'bg-[#161b22] border-[#30363d]'}`}
-            >
-              <span className={`inline-block h-8 w-8 transform rounded-full bg-white transition-transform shadow-lg ${isHybridMode ? 'translate-x-11' : 'translate-x-1'}`} />
-            </button>
-          </div>
-
           {/* Metrics Row */}
           <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
             <div className="relative flex flex-col items-center justify-center rounded-[2rem] border border-[#30363d] bg-[#0d1117] p-10 shadow-2xl overflow-hidden group hover:border-[#58a6ff]/50 transition-all">
