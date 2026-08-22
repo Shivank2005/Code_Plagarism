@@ -20,9 +20,21 @@ public class RiskScoringService {
     public static class RiskResult {
         public double score;
         public double confidence;
+        public boolean isAnomaly;
+        public Map<String, Double> featureImportance;
+        
         public RiskResult(double score, double confidence) {
             this.score = score;
             this.confidence = confidence;
+            this.isAnomaly = false;
+            this.featureImportance = new HashMap<>();
+        }
+        
+        public RiskResult(double score, double confidence, boolean isAnomaly, Map<String, Double> featureImportance) {
+            this.score = score;
+            this.confidence = confidence;
+            this.isAnomaly = isAnomaly;
+            this.featureImportance = featureImportance != null ? featureImportance : new HashMap<>();
         }
     }
 
@@ -52,7 +64,24 @@ public class RiskScoringService {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 double riskScore = ((Number) response.getBody().get("riskScore")).doubleValue();
                 double confidence = ((Number) response.getBody().get("confidence")).doubleValue();
-                return new RiskResult(riskScore, confidence);
+                
+                boolean isAnomaly = false;
+                if (response.getBody().containsKey("isAnomaly")) {
+                    Object anomalyVal = response.getBody().get("isAnomaly");
+                    isAnomaly = anomalyVal instanceof Boolean ? (Boolean) anomalyVal : false;
+                }
+                
+                Map<String, Double> featureImportance = new HashMap<>();
+                if (response.getBody().containsKey("featureImportance")) {
+                    Map<String, Object> fiRaw = (Map<String, Object>) response.getBody().get("featureImportance");
+                    if (fiRaw != null) {
+                        for (Map.Entry<String, Object> entry : fiRaw.entrySet()) {
+                            featureImportance.put(entry.getKey(), ((Number) entry.getValue()).doubleValue());
+                        }
+                    }
+                }
+                
+                return new RiskResult(riskScore, confidence, isAnomaly, featureImportance);
             }
         } catch (Exception e) {
             // Fallback to hardcoded math if Python ML service is down

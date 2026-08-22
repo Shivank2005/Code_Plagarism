@@ -235,6 +235,27 @@ def train_and_save(X: np.ndarray, y: np.ndarray, groups: np.ndarray, output_path
     file_size_kb = os.path.getsize(output_path) / 1024
     print(f"\nModel saved to: {output_path} ({file_size_kb:.1f} KB)")
 
+    # ---------------------------------------------------------
+    # Train Isolation Forest for Anomaly Detection (Feature #4)
+    # ---------------------------------------------------------
+    print("\nTraining Isolation Forest (Anomaly Detection)...")
+    from sklearn.ensemble import IsolationForest
+    
+    iso_pipeline = Pipeline([
+        ("preprocessor", preprocessor),
+        ("anomaly_detector", IsolationForest(
+            n_estimators=100,
+            contamination=0.05,  # Flag top 5% most unusual pairs as anomalies
+            random_state=42
+        ))
+    ])
+    iso_pipeline.fit(X)
+    
+    iso_output_path = output_path.replace("model.joblib", "isolation_model.joblib")
+    dump(iso_pipeline, iso_output_path)
+    file_size_kb_iso = os.path.getsize(iso_output_path) / 1024
+    print(f"Isolation model saved to: {iso_output_path} ({file_size_kb_iso:.1f} KB)")
+
 
 def main() -> None:
     script_dir = Path(__file__).parent

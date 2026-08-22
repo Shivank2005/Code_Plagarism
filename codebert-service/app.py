@@ -139,34 +139,48 @@ def health() -> dict[str, Any]:
     }
 
 
-# ── Machine Learning Classifier ──
+# ── Machine Learning Classifier & Explainer ──
 _ml_model: Any = None
+_iso_model: Any = None
+_explainer: Any = None
 
-def _train_ml_model() -> Any:
-    global _ml_model
-    if _ml_model is not None:
-        return _ml_model
+def _load_ml_models() -> tuple[Any, Any, Any]:
+    global _ml_model, _iso_model, _explainer
+    if _ml_model is not None and _iso_model is not None:
+        return _ml_model, _iso_model, _explainer
         
     import os
     from joblib import load
+    import shap
     
-    model_path = os.path.join(os.path.dirname(__file__), "model.joblib")
+    base_dir = os.path.dirname(__file__)
+    model_path = os.path.join(base_dir, "model.joblib")
+    iso_path = os.path.join(base_dir, "isolation_model.joblib")
+    
     if os.path.exists(model_path):
         _ml_model = load(model_path)
+        # Initialize SHAP explainer on the RandomForest component
+        rf_model = _ml_model.named_steps["classifier"]
+        _explainer = shap.TreeExplainer(rf_model)
     else:
         print("Warning: model.joblib not found. Please run train_model.py first.")
         _ml_model = None
+        
+    if os.path.exists(iso_path):
+        _iso_model = load(iso_path)
+    else:
+        _iso_model = None
     
-    return _ml_model
+    return _ml_model, _iso_model, _explainer
 
-# Load it immediately on startup
-_train_ml_model()
+# Load immediately on startup
+_load_ml_models()
 
 @app.post("/api/ml/predict")
-def ml_predict(payload: MLPredictRequest) -> dict[str, float]:
-    clf = _train_ml_model()
+def ml_predict(payload: MLPredictRequest) -> dict[str, Any]:
+    clf, iso_clf, explainer = _load_ml_models()
     if clf is None:
-        return {"riskScore": 0.0, "confidence": 0.0}
+        return {"riskScore": 0.0, "confidence": 0.0, "isAnomaly": False, "featureImportance": {}}
         
     X = np.array([[
         payload.tokenScore, 
@@ -178,15 +192,37 @@ def ml_predict(payload: MLPredictRequest) -> dict[str, float]:
     
     # Get probability of class 1 (plagiarism)
     prob = clf.predict_proba(X)[0][1]
-    
-    # Confidence is how far the probability is from 0.5
-    confidence = abs(prob - 0.5) * 2.0 * 100.0
-    
-    # Convert to percentage
+    confidence = float(abs(prob - 0.5) * 2.0 * 100.0)
     score = float(prob) * 100.0
+    
+    # Get Anomaly Detection
+    is_anomaly = False
+    if iso_clf is not None:
+        iso_pred = iso_clf.predict(X)[0]
+        is_anomaly = bool(iso_pred == -1)
+        
+    # Get Feature Importance Explanations (SHAP)
+    feature_importance = {}
+    if explainer is not None:
+        preprocessor = clf.named_steps["preprocessor"]
+        X_transformed = preprocessor.transform(X)
+        shap_values = explainer.shap_values(X_transformed)
+        
+        # Extract SHAP values for class 1 (plagiarism)
+        if isinstance(shap_values, list):
+            sv = shap_values[1][0]
+        else:
+            sv = shap_values[0] if len(shap_values.shape) == 2 else shap_values[..., 1][0]
+            
+        features = ["Token Score", "Structural Score", "Semantic Score", "Cross-Language"]
+        for i, feature in enumerate(features):
+            feature_importance[feature] = float(sv[i])
+
     return {
         "riskScore": round(score, 2),
-        "confidence": round(confidence, 2)
+        "confidence": round(confidence, 2),
+        "isAnomaly": is_anomaly,
+        "featureImportance": feature_importance
     }
 
 

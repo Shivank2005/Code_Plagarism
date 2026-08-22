@@ -217,6 +217,8 @@ public class AnalysisService {
                         result.setSemanticScore(semanticScore);
                         result.setBoilerplateRemovedCount(filterResult.boilerplateRemoved);
                         result.setConfidenceScore(finalScore.confidence);
+                        result.setAnomaly(finalScore.isAnomaly);
+                        result.setFeatureImportance(finalScore.featureImportance);
                         
                         int processed = processedPairs.incrementAndGet();
                         if (totalPairs > 0) {

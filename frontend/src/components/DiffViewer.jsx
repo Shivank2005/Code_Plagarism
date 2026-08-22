@@ -256,13 +256,23 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
               <h4 className="font-display text-lg font-bold text-white flex items-center">
                 {selectedLocalPair?.source.split('/').pop()} <span className="mx-3 text-white/20">↔</span> {selectedLocalPair?.target.split('/').pop()}
               </h4>
-              {selectedLocalPair?.weight >= 75 ? (
-                <span className="rounded-full bg-rose-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-rose-400 border border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.15)]">High Risk</span>
-              ) : selectedLocalPair?.weight >= 40 ? (
-                <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-400 border border-amber-500/30">Suspicious</span>
-              ) : (
-                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400 border border-emerald-500/30">Safe</span>
-              )}
+              <div className="flex items-center gap-3">
+                {selectedLocalPair?.details?.featureImportance && Object.keys(selectedLocalPair.details.featureImportance).length > 0 && (
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 border-r border-white/10 pr-3">
+                    Top factor: {Object.entries(selectedLocalPair.details.featureImportance).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))[0][0]}
+                  </span>
+                )}
+                {(selectedLocalPair?.details?.isAnomaly || selectedLocalPair?.details?.anomaly) && (
+                  <span className="rounded-full bg-purple-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-purple-300 border border-purple-500/40">⚠️ ISOLATION ANOMALY</span>
+                )}
+                {selectedLocalPair?.weight >= 75 ? (
+                  <span className="rounded-full bg-rose-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-rose-400 border border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.15)]">High Risk</span>
+                ) : selectedLocalPair?.weight >= 40 ? (
+                  <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-400 border border-amber-500/30">Suspicious</span>
+                ) : (
+                  <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400 border border-emerald-500/30">Safe</span>
+                )}
+              </div>
             </div>
 
             {/* AI Deep Scan Module (Always Visible) */}

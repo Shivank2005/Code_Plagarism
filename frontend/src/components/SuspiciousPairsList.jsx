@@ -11,18 +11,29 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
   const highRiskThreshold = thresholds.highRisk ?? 75;
   const suspiciousThreshold = thresholds.suspicious ?? 40;
 
-  // Extract all pairs with their scores
+  // Extract all pairs with their scores and metadata from detailedResults
   const pairs = [];
+  const detailedMap = {};
+  if (data.detailedResults) {
+    data.detailedResults.forEach(r => {
+       detailedMap[`${r.submissionA}-${r.submissionB}`] = r;
+       detailedMap[`${r.submissionB}-${r.submissionA}`] = r;
+    });
+  }
+
   for (let i = 0; i < students.length; i++) {
     for (let j = i + 1; j < students.length; j++) {
       const score = matrix[i][j];
       if (score >= suspiciousThreshold && score < 100) {
+        const detail = detailedMap[`${students[i]}-${students[j]}`] || {};
         pairs.push({
           student1: students[i],
           student2: students[j],
           score,
           isHighRisk: score > highRiskThreshold,
           isSuspicious: score >= suspiciousThreshold && score <= highRiskThreshold,
+          isAnomaly: detail.anomaly || detail.isAnomaly || false,
+          featureImportance: detail.featureImportance || null
         });
       }
     }
@@ -82,6 +93,16 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
                       {pair.student2.substring(0, 24)}
                     </span>
                   </div>
+                  {pair.isAnomaly && (
+                    <div className="mt-2 inline-block rounded-md border border-purple-500/30 bg-purple-500/20 px-2 py-0.5 text-[10px] font-bold text-purple-200">
+                      ⚠️ ISOLATION ANOMALY
+                    </div>
+                  )}
+                  {pair.featureImportance && Object.keys(pair.featureImportance).length > 0 && (
+                     <div className="mt-1 text-[10px] text-rose-100/40">
+                       Top factor: {Object.entries(pair.featureImportance).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))[0][0]}
+                     </div>
+                  )}
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-2xl font-black text-rose-300">{pair.score.toFixed(1)}%</p>

@@ -22,5 +22,7 @@ public class PlagiarismResult {
     private double semanticScore;
     private int boilerplateRemovedCount;
     private double confidenceScore;
+    private boolean isAnomaly;
+    private java.util.Map<String, Double> featureImportance;
     private String reportLink;
 }

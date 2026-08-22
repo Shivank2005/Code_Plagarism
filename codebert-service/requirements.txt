@@ -8,3 +8,4 @@ joblib==1.4.2
 
 requests
 python-dotenv
+shap==0.45.0

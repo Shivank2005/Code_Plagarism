@@ -60,6 +60,14 @@ const DashboardView = ({
       return [];
     }
 
+    const detailedMap = {};
+    if (results.detailedResults) {
+      results.detailedResults.forEach(r => {
+         detailedMap[`${r.submissionA}-${r.submissionB}`] = r;
+         detailedMap[`${r.submissionB}-${r.submissionA}`] = r;
+      });
+    }
+
     const rows = [];
     for (let i = 0; i < results.students.length; i += 1) {
       for (let j = i + 1; j < results.students.length; j += 1) {
@@ -67,13 +75,15 @@ const DashboardView = ({
         if (score <= 0) {
           continue;
         }
-
+        const detail = detailedMap[`${results.students[i]}-${results.students[j]}`] || {};
         const riskLevel = score > riskThreshold ? 'High Risk' : score >= suspiciousThreshold ? 'Suspicious' : 'Safe';
         rows.push({
           fileA: results.students[i],
           fileB: results.students[j],
           score,
           riskLevel,
+          isAnomaly: detail.anomaly || detail.isAnomaly || false,
+          featureImportance: detail.featureImportance || null,
           key: `${results.students[i]}-${results.students[j]}`,
         });
       }
@@ -288,9 +298,21 @@ const DashboardView = ({
                               {row.score.toFixed(1)}%
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-block rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider border ${riskBadgeClass(row.riskLevel)}`}>
-                                {row.riskLevel}
-                              </span>
+                              <div className="flex flex-col items-start gap-1">
+                                <span className={`inline-block rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider border ${riskBadgeClass(row.riskLevel)}`}>
+                                  {row.riskLevel}
+                                </span>
+                                {row.isAnomaly && (
+                                  <div className="inline-block rounded-md border border-purple-500/30 bg-purple-500/20 px-2 py-0.5 text-[10px] font-bold text-purple-200">
+                                    ⚠️ ISOLATION ANOMALY
+                                  </div>
+                                )}
+                                {row.featureImportance && Object.keys(row.featureImportance).length > 0 && (
+                                  <div className="text-[10px] text-gray-400">
+                                    Top factor: {Object.entries(row.featureImportance).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))[0][0]}
+                                  </div>
+                                )}
+                              </div>
                             </td>
                             <td className="px-6 py-4">
                               <button
