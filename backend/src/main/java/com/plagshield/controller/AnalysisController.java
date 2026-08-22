@@ -160,10 +160,6 @@ public class AnalysisController {
 
     @DeleteMapping("/history")
     public ResponseEntity<?> clearHistory() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         batchRepository.deleteAll();
         return ResponseEntity.ok(Map.of("message", "History cleared"));
     }
