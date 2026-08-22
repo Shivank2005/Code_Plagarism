@@ -29,6 +29,9 @@ import java.util.stream.Stream;
 @Service
 public class AnalysisService {
 
+    @org.springframework.beans.factory.annotation.Value("${codebert.api.url:http://localhost:8090}")
+    private String codebertApiUrl;
+
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
@@ -99,7 +102,7 @@ public class AnalysisService {
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
 
-                ResponseEntity<Map> response = restTemplate.postForEntity("http://localhost:8090/api/embeddings/similarity-matrix", request, Map.class);
+                ResponseEntity<Map> response = restTemplate.postForEntity(codebertApiUrl + "/api/embeddings/similarity-matrix", request, Map.class);
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     matrix = (List<List<Number>>) response.getBody().get("matrix");
                     students = (List<String>) response.getBody().get("students");

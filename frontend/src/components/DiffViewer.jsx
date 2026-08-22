@@ -76,12 +76,48 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
 
   const [selectedLocalPair, setSelectedLocalPair] = useState(null);
   const [diffData, setDiffData] = useState(null);
+  const [deepScanResult, setDeepScanResult] = useState(null);
+  const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const fileById = useMemo(() => {
     return new Map((files || []).map((item) => [item.id, item]));
   }, [files]);
+
+  const runDeepScan = async (pairOverride = null) => {
+    const pairToScan = pairOverride || selectedLocalPair;
+    if (!pairToScan) return;
+    setScanning(true);
+    setDeepScanResult(null);
+    try {
+      let leftFile = fileById.get(pairToScan.source);
+      let rightFile = fileById.get(pairToScan.target);
+      
+      if (!leftFile || !rightFile) {
+        const leftName = pairToScan.source.split('/').pop();
+        const rightName = pairToScan.target.split('/').pop();
+        leftFile = Array.from(fileById.values()).find(f => f.id.endsWith(leftName));
+        rightFile = Array.from(fileById.values()).find(f => f.id.endsWith(rightName));
+      }
+
+      if (!leftFile || !rightFile) {
+          throw new Error("Files not found in memory");
+      }
+
+      const res = await axios.post(`${CODEBERT_API}/deepscan`, {
+        code1: leftFile.code,
+        code2: rightFile.code,
+        filename1: pairToScan.source,
+        filename2: pairToScan.target
+      });
+      setDeepScanResult(res.data);
+    } catch (err) {
+      setDeepScanResult({ error: err.message || "Failed to connect to AI Deep Scan service.", plagiarized: false, explanation: "Connection error." });
+    } finally {
+      setScanning(false);
+    }
+  };
 
   // Auto-run diff when selectedPair changes from parent
   useEffect(() => {
@@ -98,6 +134,11 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
     setSelectedLocalPair(pair);
     setLoading(true);
     setError('');
+    setDiffData(null);
+    setDeepScanResult(null);
+
+    // Automatically trigger Deep Scan
+    runDeepScan(pair);
 
     let leftFile = fileById.get(pair.source);
     let rightFile = fileById.get(pair.target);
@@ -221,6 +262,53 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
                 <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-400 border border-amber-500/30">Suspicious</span>
               ) : (
                 <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400 border border-emerald-500/30">Safe</span>
+              )}
+            </div>
+
+            {/* AI Deep Scan Module (Always Visible) */}
+            <div className={`border-b border-white/10 px-6 py-4 transition-colors ${deepScanResult ? (deepScanResult.plagiarized ? 'bg-rose-500/10' : 'bg-emerald-500/10') : 'bg-purple-900/10'}`}>
+              {deepScanResult ? (
+                <div className="flex items-start gap-4">
+                  <div className={`mt-1 rounded-full p-2 ${deepScanResult.plagiarized ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                    {deepScanResult.plagiarized ? <ShieldAlert size={20} /> : <FileText size={20} />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                      <h5 className={`font-display text-lg font-bold ${deepScanResult.plagiarized ? 'text-rose-400' : 'text-emerald-400'}`}>
+                        {deepScanResult.plagiarized ? 'Comparison: Plagiarism Detected' : 'Comparison: Safe'}
+                      </h5>
+                      <button onClick={() => runDeepScan()} disabled={scanning} className="text-[10px] uppercase font-bold text-white/40 hover:text-white/80 transition-colors flex items-center gap-1">
+                        {scanning ? <Loader2 className="animate-spin" size={12} /> : <Brain size={12} />}
+                        {scanning ? 'Comparing...' : 'Compare Again'}
+                      </button>
+                    </div>
+                    {deepScanResult.error ? (
+                      <p className="mt-1 text-sm text-rose-200">{deepScanResult.error}</p>
+                    ) : (
+                      <p className="mt-1 text-sm text-white/80 leading-relaxed whitespace-pre-wrap">{deepScanResult.explanation}</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="rounded-full bg-purple-500/20 p-2 text-purple-400">
+                      <Brain size={20} />
+                    </div>
+                    <div>
+                      <h5 className="font-display text-sm font-bold text-purple-300">Logic Comparison Available</h5>
+                      <p className="mt-0.5 text-xs text-white/60">Analyze algorithmic logic and detect cross-language translations instantly.</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => runDeepScan()} 
+                    disabled={scanning}
+                    className="flex items-center gap-2 rounded-lg bg-purple-500/20 px-4 py-2 text-xs font-bold uppercase tracking-widest text-purple-300 border border-purple-500/30 hover:bg-purple-500/40 transition-all shadow-[0_0_15px_rgba(168,85,247,0.15)] hover:shadow-[0_0_25px_rgba(168,85,247,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {scanning ? <Loader2 className="animate-spin" size={14} /> : <Brain size={14} />}
+                    {scanning ? 'Comparing...' : 'Compare Logic'}
+                  </button>
+                </div>
               )}
             </div>
 

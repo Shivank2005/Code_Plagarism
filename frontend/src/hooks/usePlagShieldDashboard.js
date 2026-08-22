@@ -489,8 +489,6 @@ export function usePlagShieldDashboard() {
       const res = await axios.post(`${API_BASE}/analysis/${batchId}/evaluate`, {
         threshold: threshold,
         groundTruth: groundTruthList
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       setEvaluationResults(res.data);
       showToast('Evaluation completed successfully.', 'success');
@@ -499,7 +497,7 @@ export function usePlagShieldDashboard() {
       const errMsg = err.response?.data?.error || err.message;
       showToast(`Evaluation failed: ${errMsg}`, 'error');
     }
-  }, [token, showToast]);
+  }, [showToast]);
 
   return {
     activeBatch,

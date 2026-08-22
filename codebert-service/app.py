@@ -336,3 +336,63 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("app:app", host="0.0.0.0", port=8090, reload=True)
+
+import requests
+import os
+
+class DeepScanRequest(BaseModel):
+    code1: str
+    code2: str
+    filename1: str = "file1"
+    filename2: str = "file2"
+
+from dotenv import load_dotenv
+load_dotenv()
+
+@app.post("/api/embeddings/deepscan")
+def deep_scan(payload: DeepScanRequest) -> dict[str, Any]:
+    api_key = os.environ.get("GROQ_API_KEY", "")
+    if not api_key:
+        return {"error": "GROQ_API_KEY not found in backend environment (.env).", "plagiarized": False, "explanation": "API Key Missing."}
+    
+    prompt = f"""You are an expert Computer Science professor evaluating two student submissions for plagiarism.
+Ignore standard framework boilerplate (like Spring Boot annotations, standard imports, getter/setters).
+Focus on the core algorithmic logic, variable structures, and edge cases. Watch out for cross-language translation (e.g. Java to Python).
+
+File 1 ({payload.filename1}):
+{payload.code1[:2000]}
+
+File 2 ({payload.filename2}):
+{payload.code2[:2000]}
+
+Are these two files plagiarized from each other? 
+Respond with EXACTLY the word YES or NO on the first line. 
+On the next lines, provide a 2-3 sentence explanation of why."""
+
+    try:
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": "openai/gpt-oss-20b",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.1
+        }
+        response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=10)
+        response.raise_for_status()
+        
+        result = response.json()["choices"][0]["message"]["content"].strip()
+        lines = result.split('\n')
+        is_plagiarized = 'YES' in lines[0].upper()
+        explanation = '\n'.join(lines[1:]).strip()
+        
+        if not explanation:
+            explanation = lines[0]
+            
+        return {
+            "plagiarized": is_plagiarized,
+            "explanation": explanation
+        }
+    except Exception as e:
+        return {"error": str(e), "plagiarized": False, "explanation": f"LLM Error: {str(e)}"}

@@ -12,6 +12,9 @@ import java.util.Map;
 @Service
 public class RiskScoringService {
 
+    @org.springframework.beans.factory.annotation.Value("${codebert.api.url:http://localhost:8090}")
+    private String codebertApiUrl;
+
     private double semanticWeight = 0.15;
 
     public static class RiskResult {
@@ -44,7 +47,7 @@ public class RiskScoringService {
             payload.put("languagePair", languagePair);
             
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
-            ResponseEntity<Map> response = restTemplate.postForEntity("http://localhost:8090/api/ml/predict", request, Map.class);
+            ResponseEntity<Map> response = restTemplate.postForEntity(codebertApiUrl + "/api/ml/predict", request, Map.class);
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 double riskScore = ((Number) response.getBody().get("riskScore")).doubleValue();

@@ -32,8 +32,10 @@ const DashboardView = ({
 
   useEffect(() => {
     if (isAnalyzing && batchId) {
+      const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8082';
+      const wsUrl = API_BASE.replace(/^http/, 'ws') + '/ws-plagshield';
       const stompClient = new Client({
-        brokerURL: 'ws://localhost:8082/ws-plagshield',
+        brokerURL: wsUrl,
         reconnectDelay: 5000,
         onConnect: () => {
           stompClient.subscribe(`/topic/progress/${batchId}`, (message) => {
