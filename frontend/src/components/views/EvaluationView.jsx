@@ -150,25 +150,50 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-12 w-full px-4 pt-6 flex flex-col gap-10">
       
-      {/* Hybrid Mode Toggle */}
-      <div className="flex justify-between items-center border border-purple-500/30 bg-[#0d1117] rounded-[2rem] p-6 shadow-[0_0_30px_rgba(168,85,247,0.1)] relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        <div className="flex items-center gap-4 z-10">
-          <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400 border border-purple-500/30">
-            <Brain size={24} />
+      {/* Premium Hybrid Mode Toggle */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`flex justify-between items-center rounded-[2rem] p-6 relative overflow-hidden transition-all duration-500 ${
+          isHybridMode 
+            ? 'border border-purple-500/50 bg-gradient-to-r from-purple-900/40 via-[#0d1117] to-[#0d1117] shadow-[0_0_40px_rgba(168,85,247,0.2)]' 
+            : 'border border-[#30363d] bg-[#0d1117] hover:border-purple-500/30 shadow-2xl'
+        }`}
+      >
+        {isHybridMode && (
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay"></div>
+        )}
+        <div className="flex items-center gap-5 z-10">
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 ${
+            isHybridMode 
+              ? 'bg-purple-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.5)] scale-110' 
+              : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+          }`}>
+            <Brain size={26} className={isHybridMode ? "animate-pulse" : ""} />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-purple-300 tracking-tight">Project Hybrid Architecture Metrics</h3>
-            <p className="text-xs text-purple-400/80 mt-1">Simulate LLM Deep Scan on ML edge-cases (False Negatives).</p>
+            <h3 className={`font-display text-xl font-bold tracking-tight transition-colors ${isHybridMode ? 'text-white' : 'text-purple-300'}`}>
+              Logic Comparison Mode
+              {isHybridMode && <Sparkles className="inline-block ml-2 text-yellow-400" size={16} />}
+            </h3>
+            <p className={`text-sm mt-1 transition-colors ${isHybridMode ? 'text-purple-200' : 'text-[#8b949e]'}`}>
+              {isHybridMode 
+                ? "Simulating algorithmic logic comparison on edge-cases." 
+                : "Toggle to project metrics with logic comparison enabled."}
+            </p>
           </div>
         </div>
         <button 
           onClick={() => setIsHybridMode(!isHybridMode)}
-          className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors z-10 border ${isHybridMode ? 'bg-purple-500 border-purple-400' : 'bg-[#161b22] border-[#30363d]'}`}
+          className={`relative inline-flex h-10 w-20 items-center rounded-full transition-all duration-500 z-10 outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-[#0d1117] ${
+            isHybridMode ? 'bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'bg-[#161b22] border border-[#30363d]'
+          }`}
         >
-          <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-lg ${isHybridMode ? 'translate-x-9' : 'translate-x-1'}`} />
+          <span className={`inline-block h-8 w-8 transform rounded-full bg-white transition-transform duration-500 ease-spring shadow-lg ${
+            isHybridMode ? 'translate-x-11' : 'translate-x-1'
+          }`} />
         </button>
-      </div>
+      </motion.div>
 
       {/* Row 1: Test Configuration */}
       <div className="glass-card rounded-[2rem] p-8 border border-[#30363d] bg-[#0d1117] shadow-2xl relative overflow-hidden flex flex-col">
