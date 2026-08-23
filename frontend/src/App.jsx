@@ -1,3 +1,18 @@
+import Home from './pages/public/Home';
+import PublicNavbar from './components/public/PublicNavbar';
+import About from './pages/public/About';
+import FAQ from './pages/public/faq';
+import HowItWorks from './pages/public/HowItWorks';
+import Contact from './pages/public/Contact';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
+
+
+
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -34,7 +49,7 @@ const NAV_ITEMS = [
   { id: 'preferences', icon: Settings, label: 'Settings' },
 ];
 
-function App() {
+function DashboardApp()  {
   const { token, username, logout } = useAuth();
 
   const {
@@ -139,10 +154,7 @@ function App() {
     }
   };
 
-  if (!token) {
-    return <LoginView />;
-  }
-
+  
   const currentNav = NAV_ITEMS.find((n) => n.id === view) || NAV_ITEMS[0];
 
   return (
@@ -277,6 +289,63 @@ function App() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+function LoginRoute() {
+  const { token } = useAuth();
+
+  if (token) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <LoginView />;
+}
+
+function ProtectedRoute() {
+  const { token } = useAuth();
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <DashboardApp />;
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+
+        {/* Public Website */}
+        <Route path="/" element={<Home />} />
+
+        {/* Authentication */}
+        <Route path="/login" element={<LoginRoute />} />
+
+        {/* Existing Application */}
+        <Route
+          path="/dashboard"
+          element={<ProtectedRoute />}
+        />
+
+        {/* Temporary placeholders */}
+        <Route path="/about" element={<About />} />
+
+        <Route path="/how-it-works" element={<HowItWorks />} />
+
+        <Route path="/contact" element={<Contact />} />
+
+        <Route path="/faq" element={<FAQ />} />
+
+        {/* Unknown URL */}
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
+        />
+
+      </Routes>
+    </BrowserRouter>
   );
 }
 
