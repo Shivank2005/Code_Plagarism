@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { GitCompareArrows, Loader2, FileText, GitMerge, Brain, ShieldAlert } from 'lucide-react';
 
 const CODEBERT_BASE = import.meta.env.VITE_CODEBERT_API || 'http://localhost:8090';
@@ -15,11 +16,10 @@ const rowClass = {
 const CodeHighlight = ({ code }) => {
   if (!code) return null;
 
-  // Add zero-width spaces after punctuation to allow browser wrapping on minified code
   const spacedCode = code.replace(/([;{}])/g, '$1\u200B');
 
-  // Tokenizer regex
-  const tokenRegex = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:import|public|private|protected|class|static|void|int|boolean|for|if|else|break|def|return|False|True|not|in|while|new)\b|\b(?:Scanner|String|System|out|arr|len|range|print|println)\b|\b\d+\b)/g;
+  // Advanced syntax highlighting regex covering Java, Python, JS, C++, Go, Rust, and comments
+  const tokenRegex = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\/\/.*|\/\*[\s\S]*?\*\/|\b(?:abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|strictfp|super|switch|synchronized|this|throw|throws|transient|try|void|volatile|while|def|False|True|None|and|as|async|await|del|elif|except|from|global|is|lambda|nonlocal|not|or|pass|raise|with|yield|function|let|var|export|struct|impl|mut|fn|match|loop|pub|use|go|chan|defer|fallthrough|type)\b|\b(?:String|Integer|Double|System|Math|Scanner|List|Map|Set|Dict|Array|Console|Object|Promise|Vector|HashMap|print|println|out|len|range)\b|\b\d+(?:\.\d+)?\b|[+\-*/=<>!&|%^~]+)/g;
   
   const parts = spacedCode.split(tokenRegex);
 
@@ -27,19 +27,17 @@ const CodeHighlight = ({ code }) => {
     <>
       {parts.map((part, index) => {
         if (!part) return null;
-        if (/^["']/.test(part)) {
-          return <span key={index} className="text-green-400">{part}</span>;
+        if (/^["']/.test(part)) return <span key={index} className="text-[#a5d6ff]">{part}</span>;
+        if (/^\/\/|^\/\*/.test(part)) return <span key={index} className="text-[#8b949e] italic">{part}</span>;
+        if (/^[+\-*/=<>!&|%^~]+$/.test(part)) return <span key={index} className="text-[#ff7b72]">{part}</span>;
+        if (/^(abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|strictfp|super|switch|synchronized|this|throw|throws|transient|try|void|volatile|while|def|False|True|None|and|as|async|await|del|elif|except|from|global|is|lambda|nonlocal|not|or|pass|raise|with|yield|function|let|var|export|struct|impl|mut|fn|match|loop|pub|use|go|chan|defer|fallthrough|type)$/.test(part)) {
+          return <span key={index} className="text-[#ff7b72] font-semibold">{part}</span>;
         }
-        if (/^(import|public|private|protected|class|static|void|int|boolean|for|if|else|break|def|return|False|True|not|in|while|new)$/.test(part)) {
-          return <span key={index} className="text-blue-400 font-semibold">{part}</span>;
+        if (/^(String|Integer|Double|System|Math|Scanner|List|Map|Set|Dict|Array|Console|Object|Promise|Vector|HashMap|print|println|out|len|range)$/.test(part)) {
+          return <span key={index} className="text-[#d2a8ff]">{part}</span>;
         }
-        if (/^(Scanner|String|System|out|arr|len|range|print|println)$/.test(part)) {
-          return <span key={index} className="text-amber-300">{part}</span>;
-        }
-        if (/^\d+$/.test(part)) {
-          return <span key={index} className="text-purple-400">{part}</span>;
-        }
-        return <span key={index}>{part}</span>;
+        if (/^\d+(?:\.\d+)?$/.test(part)) return <span key={index} className="text-[#79c0ff]">{part}</span>;
+        return <span key={index} className="text-[#e6edf3]">{part}</span>;
       })}
     </>
   );
@@ -112,7 +110,10 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
         filename2: pairToScan.target
       });
       setDeepScanResult(res.data);
+      if (res.data.error) toast.error(res.data.error);
+      else toast.success("AI Logic Scan complete!");
     } catch (err) {
+      toast.error(err.message || "Failed to connect to AI Deep Scan service.");
       setDeepScanResult({ error: err.message || "Failed to connect to AI Deep Scan service.", plagiarized: false, explanation: "Connection error." });
     } finally {
       setScanning(false);
@@ -380,7 +381,7 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
 
           <div className="overflow-auto max-h-[600px] scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent rounded-2xl border border-white/10 bg-black/20 shadow-inner backdrop-blur-sm">
             <table className="w-full border-collapse text-xs table-fixed">
-              <thead className="sticky top-0 z-20 shadow-md">
+              <thead className="sticky top-0 z-0 shadow-md">
                 <tr className="bg-black/80 backdrop-blur-md text-white/70">
                   <th className="w-12 px-2 py-3 text-right font-semibold uppercase tracking-wider text-[10px] select-none border-b border-white/10">L#</th>
                   <th className="w-[calc(50%-48px)] px-4 py-3 text-left font-semibold uppercase tracking-wider text-[10px] border-b border-white/10">Original Snippet</th>

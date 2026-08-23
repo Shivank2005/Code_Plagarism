@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Activity, Download, Layers, Palette, Users2, X } from 'lucide-react';
+import { Activity, Download, Layers, Palette, Users2, X, Maximize2, Minimize2 } from 'lucide-react';
 
 const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }, animateCells = true, onPairSelect }) => {
   const [selectedPair, setSelectedPair] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   if (!data) {
     return (
@@ -45,16 +47,35 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
     matrix.flat().filter((score) => score >= suspiciousThreshold && score <= highRiskThreshold).length / 2,
   );
 
-  return (
-    <div className="glass-card rounded-[2rem] border border-[#30363d] p-6 shadow-[0_16px_40px_rgba(1,4,9,0.35)] sm:p-8 lg:p-10">
-      <div className="mb-6 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+  const content = (
+    <div className={`glass-card rounded-[2rem] border border-[#30363d] p-6 shadow-[0_16px_40px_rgba(1,4,9,0.35)] sm:p-8 lg:p-10 transition-all duration-300 ${isFullscreen ? 'fixed inset-4 z-[99999] overflow-y-auto bg-[#0d1117] shadow-2xl' : 'relative h-full w-full'}`}>
+      {isFullscreen && (
+        <button 
+          onClick={() => setIsFullscreen(false)}
+          className="fixed top-8 right-8 z-[100000] rounded-full bg-[#161b22] p-3 text-white border border-[#30363d] shadow-2xl hover:text-[#58a6ff] hover:border-[#58a6ff]/50 transition-colors"
+        >
+          <Minimize2 size={24} />
+        </button>
+      )}
+
+      {!isFullscreen && (
+<div className="mb-6 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
         <div className="max-w-3xl">
           <div className="mb-3 flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#30363d] bg-[#161b22] text-[#58a6ff]">
               <Layers size={18} />
             </span>
             <div>
+              <div className="flex items-center gap-4">
               <h3 className="font-display text-2xl font-bold text-[#e6edf3] sm:text-3xl">Matrix analysis</h3>
+              <button 
+                onClick={() => setIsFullscreen(!isFullscreen)} 
+                className="rounded-full bg-[#161b22] p-2 text-[#8b949e] border border-[#30363d] hover:text-[#58a6ff] hover:border-[#58a6ff]/50 transition-colors"
+                title="Toggle Fullscreen"
+              >
+                <Maximize2 size={16} />
+              </button>
+            </div>
               <p className="text-sm text-[#8b949e]">Compact similarity map with a sequential palette like your reference heatmap.</p>
             </div>
           </div>
@@ -83,7 +104,8 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
         </div>
       </div>
 
-      <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_280px]">
+      )}
+      <div className={`grid gap-6 ${isFullscreen ? "h-full" : "2xl:grid-cols-[minmax(0,1fr)_280px]"}`}>
         <div className="overflow-hidden rounded-2xl border border-[#30363d] bg-[#0d1117]">
           <div className="overflow-x-auto p-3 sm:p-4 scrollbar-thin scrollbar-thumb-[#30363d] scrollbar-track-transparent">
             <table className="w-full min-w-max table-fixed border-separate border-spacing-0">
@@ -166,6 +188,7 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
           </div>
         </div>
 
+        {!isFullscreen && (
         <div className="space-y-5">
           {/* SCALE PANEL */}
           <div className="group relative overflow-hidden rounded-2xl border border-[#30363d] bg-gradient-to-b from-[#161b22] to-[#0d1117] p-5 shadow-lg transition-all hover:border-[#58a6ff]/30">
@@ -267,6 +290,7 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
             </div>
           </div>
         </div>
+        )}
       </div>
 
       <AnimatePresence>
@@ -334,6 +358,8 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
       </AnimatePresence>
     </div>
   );
+
+  return isFullscreen ? createPortal(content, document.body) : content;
 };
 
 const LegendItem = ({ color, label, range }) => (

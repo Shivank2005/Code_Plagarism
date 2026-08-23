@@ -157,7 +157,7 @@ const DashboardView = ({
       
       {/* Upload Zone */}
       <motion.section {...fadeUp} transition={{ delay: 0.1, duration: 0.3 }}>
-        <div className="bg-[#161b22]/40 rounded-[2rem] p-6 sm:p-8 border border-[#30363d]/30 relative overflow-hidden">
+        <div className="bg-[#161b22]/40 rounded-[2rem] p-6 sm:p-8 border border-[#30363d]/30 relative">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[100px] bg-[#7ee787]/5 blur-[60px] pointer-events-none"></div>
           <div className="mb-6 flex items-center justify-between">
             <h3 className="text-sm font-bold uppercase tracking-wider text-[#c9d1d9] flex items-center gap-2">
@@ -222,7 +222,7 @@ const DashboardView = ({
 
           {/* Heatmap Section */}
           <motion.section {...fadeUp} transition={{ delay: 0.2, duration: 0.3 }}>
-            <div className="bg-[#161b22]/40 rounded-[2rem] p-6 sm:p-8 border border-[#30363d]/30 relative overflow-hidden">
+            <div className="bg-[#161b22]/40 rounded-[2rem] p-6 sm:p-8 border border-[#30363d]/30 relative">
               <div className="absolute -top-10 -right-10 w-64 h-64 bg-[#a371f7]/5 blur-[80px] pointer-events-none"></div>
               
               <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between relative z-10">
@@ -281,7 +281,7 @@ const DashboardView = ({
               <div className="overflow-hidden rounded-[1.5rem] border border-[#30363d]/50 bg-[#0d1117]/50">
                 <div className="max-h-[420px] overflow-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#30363d]">
                   <table className="min-w-full text-left text-sm whitespace-nowrap">
-                    <thead className="sticky top-0 z-10 bg-[#161b22] shadow-[0_1px_0_rgba(48,54,61,0.5)]">
+                    <thead className="sticky top-0 z-0 bg-[#161b22] shadow-[0_1px_0_rgba(48,54,61,0.5)]">
                       <tr>
                         <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#8b949e]">File A</th>
                         <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#8b949e]">File B</th>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { Upload, FileCode, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/AuthContext';
 
@@ -73,7 +74,7 @@ const UploadZone = ({ onUploadSuccess }) => {
       }
     } catch (err) {
       console.error("Error reading dropped files:", err);
-      setError("Failed to read folder contents.");
+      toast.error("Failed to read folder contents.");
       setUploading(false);
     }
   };
@@ -89,7 +90,7 @@ const UploadZone = ({ onUploadSuccess }) => {
     );
 
     if (validFiles.length === 0) {
-      setError("Invalid file type: Please upload code files or ZIP archives only.");
+      toast.error("Invalid file type: Please upload code files or ZIP archives only.");
       setUploading(false);
       return;
     }
@@ -112,11 +113,12 @@ const UploadZone = ({ onUploadSuccess }) => {
           code: await file.text(),
         })),
       );
+      toast.success("Upload successful!");
       onUploadSuccess({ ...res.data, files });
     } catch (err) {
       console.error('Upload error:', err);
       const message = err.response?.data?.message || err.message || 'Upload failed. Please check the backend connection.';
-      setError(message);
+      toast.error(message);
     } finally {
       setUploading(false);
     }
@@ -189,18 +191,7 @@ const UploadZone = ({ onUploadSuccess }) => {
         </div>
       </motion.div>
 
-      {/* Error display */}
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="badge badge-danger px-4 py-3 rounded-lg text-sm w-full"
-          style={{ fontSize: '13px', gap: '8px' }}
-        >
-          <AlertCircle size={16} /> {error}
-        </motion.div>
-      )}
+      
     </div>
   );
 };
