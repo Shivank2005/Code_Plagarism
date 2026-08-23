@@ -396,6 +396,8 @@ const SimilarityGraph = ({ data }) => {
       })()}
     </div>
   );
+
+  return isFullscreen ? createPortal(content, document.body) : content;
 };
 
 export default SimilarityGraph;
