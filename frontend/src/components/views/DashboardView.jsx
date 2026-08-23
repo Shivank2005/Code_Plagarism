@@ -130,6 +130,11 @@ const DashboardView = ({
     window.URL.revokeObjectURL(url);
   };
 
+  const handleExportPdf = () => {
+    if (filteredRows.length === 0) return;
+    generatePdfReport(filteredRows, riskThreshold, suspiciousThreshold, batchId, results?.rings || []);
+  };
+
   const riskBadgeClass = (level) => {
     if (level === 'High Risk') return 'bg-[#f85149]/10 text-[#f85149] border-[#f85149]/20';
     if (level === 'Suspicious') return 'bg-[#d29922]/10 text-[#d29922] border-[#d29922]/20';
@@ -149,30 +154,7 @@ const DashboardView = ({
         </p>
       </div>
 
-      {/* Summary Stats Row */}
-      <motion.section {...fadeUp} className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {selectedMetric.map((tile, i) => {
-           let bgGlow = 'bg-[#58a6ff]';
-           if (tile.label.toLowerCase().includes('high risk')) bgGlow = 'bg-[#f85149]';
-           if (tile.label.toLowerCase().includes('suspicious')) bgGlow = 'bg-[#d29922]';
-           if (tile.label.toLowerCase().includes('rings')) bgGlow = 'bg-[#a371f7]';
-           
-           return (
-            <motion.div
-              key={tile.label}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05, duration: 0.3 }}
-              className="bg-[#161b22]/40 rounded-[2rem] p-6 border border-[#30363d]/30 relative overflow-hidden group hover:border-[#58a6ff]/30 transition-all hover:-translate-y-1 shadow-sm"
-            >
-              <div className={`absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 rounded-full ${bgGlow}/20 blur-[30px] group-hover:blur-[40px] transition-all`}></div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#8b949e] mb-3 relative z-10">{tile.label}</p>
-              <p className="text-4xl font-black text-white tracking-tight relative z-10">{tile.value}</p>
-            </motion.div>
-          );
-        })}
-      </motion.section>
-
+      
       {/* Upload Zone */}
       <motion.section {...fadeUp} transition={{ delay: 0.1, duration: 0.3 }}>
         <div className="bg-[#161b22]/40 rounded-[2rem] p-6 sm:p-8 border border-[#30363d]/30 relative overflow-hidden">
@@ -214,6 +196,30 @@ const DashboardView = ({
       {/* Analysis Results Sections */}
       {results && results.students && results.students.length > 0 && (
         <>
+{/* Summary Stats Row */}
+      <motion.section {...fadeUp} className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        {selectedMetric.map((tile, i) => {
+           let bgGlow = 'bg-[#58a6ff]';
+           if (tile.label.toLowerCase().includes('high risk')) bgGlow = 'bg-[#f85149]';
+           if (tile.label.toLowerCase().includes('suspicious')) bgGlow = 'bg-[#d29922]';
+           if (tile.label.toLowerCase().includes('rings')) bgGlow = 'bg-[#a371f7]';
+           
+           return (
+            <motion.div
+              key={tile.label}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05, duration: 0.3 }}
+              className="bg-[#161b22]/40 rounded-[2rem] p-6 border border-[#30363d]/30 relative overflow-hidden group hover:border-[#58a6ff]/30 transition-all hover:-translate-y-1 shadow-sm"
+            >
+              <div className={`absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 rounded-full ${bgGlow}/20 blur-[30px] group-hover:blur-[40px] transition-all`}></div>
+              <p className="text-xs font-bold uppercase tracking-wider text-[#8b949e] mb-3 relative z-10">{tile.label}</p>
+              <p className="text-4xl font-black text-white tracking-tight relative z-10">{tile.value}</p>
+            </motion.div>
+          );
+        })}
+      </motion.section>
+
           {/* Heatmap Section */}
           <motion.section {...fadeUp} transition={{ delay: 0.2, duration: 0.3 }}>
             <div className="bg-[#161b22]/40 rounded-[2rem] p-6 sm:p-8 border border-[#30363d]/30 relative overflow-hidden">
@@ -232,6 +238,12 @@ const DashboardView = ({
                     className="flex items-center gap-2 rounded-xl bg-[#0d1117] hover:bg-[#30363d] text-[#c9d1d9] px-4 py-2 text-sm font-bold transition-all border border-[#30363d]"
                   >
                     <Download size={14} /> Export CSV
+                  </button>
+                  <button 
+                    onClick={handleExportPdf} 
+                    className="flex items-center gap-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 px-4 py-2 text-sm font-bold transition-all border border-blue-500/30 shadow-[0_0_15px_rgba(37,99,235,0.15)]"
+                  >
+                    <Download size={14} /> Export PDF Report
                   </button>
                 </div>
               </div>
@@ -288,10 +300,10 @@ const DashboardView = ({
                       ) : (
                         filteredRows.slice(0, 12).map((row) => (
                           <tr key={row.key} className="transition-colors hover:bg-[#161b22]/80 group">
-                            <td className="px-6 py-4 text-[#8b949e] group-hover:text-[#c9d1d9] transition-colors max-w-0">
+                            <td className="px-6 py-4 text-[#8b949e] group-hover:text-[#c9d1d9] transition-colors min-w-[150px] max-w-[250px]">
                               <div className="truncate font-mono text-xs" title={row.fileA}>{row.fileA}</div>
                             </td>
-                            <td className="px-6 py-4 text-[#8b949e] group-hover:text-[#c9d1d9] transition-colors max-w-0">
+                            <td className="px-6 py-4 text-[#8b949e] group-hover:text-[#c9d1d9] transition-colors min-w-[150px] max-w-[250px]">
                               <div className="truncate font-mono text-xs" title={row.fileB}>{row.fileB}</div>
                             </td>
                             <td className="px-6 py-4 font-bold text-[#e6edf3]">
@@ -304,11 +316,11 @@ const DashboardView = ({
                                 </span>
                                 {row.isAnomaly && (
                                   <div className="inline-block rounded-md border border-purple-500/30 bg-purple-500/20 px-2 py-0.5 text-[10px] font-bold text-purple-200">
-                                    ⚠️ ISOLATION ANOMALY
+                                    &#9888; ISOLATION ANOMALY
                                   </div>
                                 )}
                                 {row.featureImportance && Object.keys(row.featureImportance).length > 0 && (
-                                  <div className="text-[10px] text-gray-400">
+                                  <div className="text-[10px] text-gray-400 whitespace-normal min-w-[120px]">
                                     Top factor: {Object.entries(row.featureImportance).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))[0][0]}
                                   </div>
                                 )}

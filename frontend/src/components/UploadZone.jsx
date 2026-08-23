@@ -81,8 +81,21 @@ const UploadZone = ({ onUploadSuccess }) => {
   const uploadFiles = async (fileList) => {
     setUploading(true);
     setError(null);
+    
+    // Filter for code files
+    const validExts = ['.java', '.py', '.cpp', '.c', '.h', '.js', '.ts', '.cs', '.go', '.rs', '.txt', '.zip'];
+    const validFiles = fileList.filter(f => 
+      validExts.some(ext => f.name.toLowerCase().endsWith(ext)) || f.type.startsWith('text/')
+    );
+
+    if (validFiles.length === 0) {
+      setError("Invalid file type: Please upload code files or ZIP archives only.");
+      setUploading(false);
+      return;
+    }
+
     const formData = new FormData();
-    fileList.forEach((file) => {
+    validFiles.forEach((file) => {
       const relativeName = file.webkitRelativePath || file.name;
       formData.append('file', file, relativeName);
     });
@@ -94,7 +107,7 @@ const UploadZone = ({ onUploadSuccess }) => {
         }
       });
       const files = await Promise.all(
-        fileList.map(async (file) => ({
+        validFiles.map(async (file) => ({
           id: file.webkitRelativePath || file.name,
           code: await file.text(),
         })),

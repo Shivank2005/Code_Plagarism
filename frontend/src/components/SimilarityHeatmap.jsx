@@ -85,8 +85,8 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
 
       <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_280px]">
         <div className="overflow-hidden rounded-2xl border border-[#30363d] bg-[#0d1117]">
-          <div className="overflow-hidden p-3 sm:p-4">
-            <table className="w-full table-fixed border-separate border-spacing-0">
+          <div className="overflow-x-auto p-3 sm:p-4 scrollbar-thin scrollbar-thumb-[#30363d] scrollbar-track-transparent">
+            <table className="w-full min-w-max table-fixed border-separate border-spacing-0">
               <thead>
                 <tr>
                   <th className="sticky left-0 top-0 z-20 border-b border-r border-[#30363d] bg-[#161b22] px-2 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8b949e]" style={{ width: `${Math.max(120, compactCellSize * 3.6)}px` }}>
@@ -224,39 +224,39 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                     key={index} 
-                    className="relative overflow-hidden rounded-xl border border-[#30363d] bg-[#0d1117]/50 p-4 transition-colors hover:border-[#58a6ff]/50 hover:bg-[#161b22]"
+                    className="relative overflow-hidden rounded-xl border border-[#30363d] bg-[#0d1117]/50 p-3 transition-colors hover:border-[#58a6ff]/50 hover:bg-[#161b22]"
                   >
                     {/* Subtle glow based on classification */}
                     <div className={`absolute -right-4 -top-4 h-16 w-16 rounded-full ${glowColor} opacity-10 blur-xl`}></div>
                     
-                    <div className="mb-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${textColor}`}>{ring.classification}</p>
-                        <span className="rounded-md bg-[#30363d]/50 px-2 py-0.5 text-[10px] font-semibold text-[#c9d1d9]">{ring.members.length} files</span>
+                    <div className="mb-2">
+                      <div className="flex items-center justify-between mb-1.5 gap-2">
+                        <p className={`text-[10px] font-bold uppercase tracking-widest truncate ${textColor}`}>{ring.classification}</p>
+                        <span className="shrink-0 whitespace-nowrap rounded-md bg-[#30363d]/50 px-2 py-0.5 text-[10px] font-semibold text-[#c9d1d9]">{ring.members.length} files</span>
                       </div>
                       
                       {/* Cluster Stats */}
-                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] text-[#8b949e]">
-                        <div className="flex items-center gap-1.5" title="Average similarity across all valid edges">
+                      <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-y border-[#30363d]/30 py-1.5 mb-1.5">
+                        <div title="Average similarity across all valid edges">
                           <span className="font-semibold text-[#c9d1d9]">{Math.round(ring.averageSimilarity)}%</span> Avg
                         </div>
-                        <div className="flex items-center gap-1.5" title="Highest similarity connection in the cluster">
+                        <div title="Highest similarity connection in the cluster">
                           <span className="font-semibold text-[#c9d1d9]">{Math.round(ring.maxSimilarity)}%</span> Peak
                         </div>
-                        <div className="flex items-center gap-1.5" title={`Density: ${ring.connections} out of ${ring.possibleConnections} possible connections`}>
+                        <div title={`Density: ${ring.connections} out of ${ring.possibleConnections} possible connections`}>
                           <span className="font-semibold text-[#c9d1d9]">{Math.round(ring.density * 100)}%</span> Density
                         </div>
                       </div>
                     </div>
                     
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5">
                       {ring.members.map((student) => (
                         <div
                           key={student}
-                          className="flex max-w-[130px] items-center gap-1.5 truncate rounded-lg border border-[#30363d] bg-[#010409] px-2.5 py-1.5 text-[11px] font-medium text-[#c9d1d9] shadow-sm transition-colors hover:border-[#8b949e]"
+                          className="flex max-w-[120px] items-center gap-1.5 truncate rounded-md border border-[#30363d]/50 bg-[#010409] px-2 py-1 text-[10px] font-medium text-[#c9d1d9] transition-colors hover:border-[#8b949e]"
                           title={student}
                         >
-                          <div className={`h-1.5 w-1.5 rounded-full ${glowColor}`}></div>
+                          <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${glowColor}`}></div>
                           <span className="truncate">{student.split('.')[0]}</span>
                         </div>
                       ))}

@@ -378,14 +378,14 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20 shadow-inner backdrop-blur-sm">
+          <div className="overflow-auto max-h-[600px] scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent rounded-2xl border border-white/10 bg-black/20 shadow-inner backdrop-blur-sm">
             <table className="w-full border-collapse text-xs table-fixed">
-              <thead>
-                <tr className="bg-black/40 text-white/70 border-b border-white/10">
-                  <th className="w-12 px-2 py-3 text-right font-semibold uppercase tracking-wider text-[10px] select-none">L#</th>
-                  <th className="w-[calc(50%-48px)] px-4 py-3 text-left font-semibold uppercase tracking-wider text-[10px]">Original Snippet</th>
-                  <th className="w-12 px-2 py-3 text-right font-semibold uppercase tracking-wider text-[10px] border-l border-white/5 select-none">R#</th>
-                  <th className="w-[calc(50%-48px)] px-4 py-3 text-left font-semibold uppercase tracking-wider text-[10px]">Compared Snippet</th>
+              <thead className="sticky top-0 z-20 shadow-md">
+                <tr className="bg-black/80 backdrop-blur-md text-white/70">
+                  <th className="w-12 px-2 py-3 text-right font-semibold uppercase tracking-wider text-[10px] select-none border-b border-white/10">L#</th>
+                  <th className="w-[calc(50%-48px)] px-4 py-3 text-left font-semibold uppercase tracking-wider text-[10px] border-b border-white/10">Original Snippet</th>
+                  <th className="w-12 px-2 py-3 text-right font-semibold uppercase tracking-wider text-[10px] border-l border-b border-white/10 select-none">R#</th>
+                  <th className="w-[calc(50%-48px)] px-4 py-3 text-left font-semibold uppercase tracking-wider text-[10px] border-b border-white/10">Compared Snippet</th>
                 </tr>
               </thead>
               <tbody className="font-mono text-[11px] leading-relaxed">
