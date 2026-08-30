@@ -27,6 +27,10 @@ import {
   ShieldCheck,
   UserCircle2,
   Users,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  Info,
 } from 'lucide-react';
 import { usePlagShieldDashboard } from './hooks/usePlagShieldDashboard';
 import DashboardView from './components/views/DashboardView';
@@ -72,6 +76,7 @@ function DashboardApp()  {
     setIsMobileNavOpen,
     setPreferenceProfile,
     showToast,
+    hideToast,
     fetchHistory,
     fetchResults,
     handleUploadSuccess,
@@ -130,12 +135,13 @@ function DashboardApp()  {
       case 'graph':
         return <GraphView semanticResults={semanticResults} isSemanticLoading={isSemanticLoading} />;
       case 'evaluation':
-        return <EvaluationView activeBatch={activeBatch} evaluateModel={evaluateModel} evaluationResults={evaluationResults} />;
+        return <EvaluationView activeBatch={activeBatch} evaluateModel={evaluateModel} evaluationResults={evaluationResults} results={results} />;
       case 'diff':
         return <DiffView batchFiles={batchFiles} results={results} semanticResults={semanticResults} selectedSuspiciousPair={selectedSuspiciousPair} />;
       default:
         return (
           <DashboardView
+            batchId={activeBatch}
             batchFiles={batchFiles}
             isAnalyzing={isAnalyzing}
             results={results}
@@ -163,16 +169,17 @@ function DashboardApp()  {
       <aside className="hidden lg:flex flex-col w-[240px] border-r border-[var(--border-default)] bg-[var(--bg-secondary)] fixed inset-y-0 left-0 z-40">
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-5 border-b border-[var(--border-subtle)]">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-white">
-            <ShieldCheck size={18} />
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--accent)] text-white shadow-[0_2px_6px_rgba(37,99,235,0.35)]">
+            <div className="absolute inset-0 rounded-[10px] bg-white/15" style={{ maskImage: 'linear-gradient(to bottom, black, transparent)' }} />
+            <ShieldCheck size={18} className="relative" strokeWidth={2.25} />
           </div>
-          <span className="text-[15px] font-bold tracking-tight text-[var(--text-primary)]">
+          <span className="font-display text-[15px] font-bold tracking-tight text-[var(--text-primary)]">
             PlagShield
           </span>
         </div>
 
         {/* Nav items */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-0.5">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = view === item.id;
@@ -180,13 +187,16 @@ function DashboardApp()  {
               <button
                 key={item.id}
                 onClick={() => setView(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
+                className={`relative w-full flex items-center gap-3 pl-3.5 pr-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
                   isActive
                     ? 'bg-[var(--accent-muted)] text-[var(--accent-light)]'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                <Icon size={18} />
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] rounded-full bg-[var(--accent)]" />
+                )}
+                <Icon size={18} strokeWidth={isActive ? 2.25 : 2} />
                 {item.label}
               </button>
             );
@@ -196,12 +206,14 @@ function DashboardApp()  {
         {/* User section */}
         <div className="border-t border-[var(--border-subtle)] p-3 space-y-2">
           <div className="flex items-center gap-3 px-3 py-2 rounded-lg">
-            <UserCircle2 size={20} className="text-[var(--text-tertiary)]" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-muted)] text-[var(--accent)]">
+              <UserCircle2 size={18} />
+            </div>
             <span className="text-[13px] font-medium text-[var(--text-secondary)] truncate">{username}</span>
           </div>
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[var(--text-tertiary)] hover:bg-red-500/10 hover:text-red-400 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[var(--text-tertiary)] hover:bg-red-50 hover:text-red-600 transition-colors"
           >
             <LogOut size={18} />
             Sign out
@@ -210,7 +222,7 @@ function DashboardApp()  {
       </aside>
 
       {/* ─── Mobile bottom nav ─── */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-secondary)] border-t border-[var(--border-default)] flex items-center justify-start overflow-x-auto px-2 py-2 gap-2 hide-scrollbar">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-secondary)]/95 backdrop-blur border-t border-[var(--border-default)] flex items-center justify-start overflow-x-auto px-2 py-2 gap-1 hide-scrollbar">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = view === item.id;
@@ -220,11 +232,11 @@ function DashboardApp()  {
               onClick={() => setView(item.id)}
               className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-medium transition-colors min-w-[64px] flex-shrink-0 ${
                 isActive
-                  ? 'text-[var(--accent-light)]'
+                  ? 'text-[var(--accent-light)] bg-[var(--accent-muted)]'
                   : 'text-[var(--text-tertiary)]'
               }`}
             >
-              <Icon size={18} />
+              <Icon size={18} strokeWidth={isActive ? 2.25 : 2} />
               {item.label}
             </button>
           );
@@ -234,10 +246,10 @@ function DashboardApp()  {
       {/* ─── Main content ─── */}
       <main className="flex-1 lg:ml-[240px] pb-20 lg:pb-0">
         {/* Top bar */}
-        <header className="sticky top-0 z-[30] border-b border-[var(--border-subtle)]" style={{ background: 'rgba(10, 10, 11, 0.95)', backdropFilter: 'blur(12px)' }}>
+        <header className="sticky top-0 z-[30] border-b border-[var(--border-subtle)]" style={{ background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
           <div className="flex items-center justify-between px-6 py-4 max-w-[1400px] mx-auto">
             <div>
-              <p className="section-label mb-0.5">{currentNav.label}</p>
+              <p className="section-label mb-1">{currentNav.label}</p>
               <h1 className="page-title">{currentNav.label === 'Dashboard' ? 'Workspace Overview' : currentNav.label}</h1>
             </div>
             <div className="flex items-center gap-3">
@@ -273,18 +285,37 @@ function DashboardApp()  {
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-24 right-8 z-[9999] rounded-lg border-2 px-6 py-4 text-sm font-semibold shadow-[0_10px_40px_rgba(0,0,0,0.5)] ${
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className={`fixed top-24 right-8 z-[9999] flex items-center gap-3 rounded-xl border px-4 py-3 text-[13px] font-medium shadow-[0_16px_40px_rgba(15,23,42,0.10)] min-w-[280px] max-w-[400px] ${
               toast.type === 'error'
-                ? 'border-red-500 bg-[#450a0a] text-red-200'
+                ? 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
                 : toast.type === 'success'
-                  ? 'border-green-500 bg-[#052e16] text-green-200'
-                  : 'border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
+                  ? 'border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]'
+                  : 'border-[var(--border-subtle)] bg-[var(--bg-elevated)] text-[var(--text-primary)]'
             }`}
           >
-            {toast.message}
+            <div className={`flex items-center justify-center rounded-full p-1 shrink-0 ${
+              toast.type === 'error' ? 'bg-[#FEE2E2] text-[#DC2626]' :
+              toast.type === 'success' ? 'bg-[#DCFCE7] text-[#16A34A]' :
+              'bg-[#E2E8F0] text-[#2563EB]'
+            }`}>
+              {toast.type === 'error' ? <AlertCircle size={16} strokeWidth={2.5} /> :
+               toast.type === 'success' ? <CheckCircle2 size={16} strokeWidth={2.5} /> :
+               <Info size={16} strokeWidth={2.5} />}
+            </div>
+            
+            <span className="mr-2 leading-relaxed flex-1">{toast.message}</span>
+            
+            <button 
+              onClick={hideToast} 
+              className="shrink-0 rounded-md p-1.5 opacity-50 hover:opacity-100 hover:bg-slate-100 transition-colors"
+              aria-label="Close"
+            >
+              <X size={14} strokeWidth={3} />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

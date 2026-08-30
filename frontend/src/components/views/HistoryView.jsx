@@ -67,9 +67,9 @@ const HistoryView = ({ filteredHistory, onExport, onClear, onOpenBatch }) => {
                           : 'var(--accent-muted)',
                     color:
                       batch.status === 'COMPLETED'
-                        ? '#86efac'
+                        ? '#16A34A'
                         : batch.status === 'FAILED'
-                          ? '#fca5a5'
+                          ? '#FCA5A5'
                           : 'var(--accent-light)',
                   }}
                 >

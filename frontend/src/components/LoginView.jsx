@@ -50,7 +50,7 @@ const LoginView = () => {
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse 600px 400px at 50% 40%, rgba(99, 102, 241, 0.08), transparent)',
+            'radial-gradient(ellipse 600px 400px at 50% 40%, rgba(37, 99, 235, 0.08), transparent)',
         }}
       />
 
@@ -99,9 +99,9 @@ const LoginView = () => {
                 <div
                   className="flex items-start gap-3 p-3 rounded-lg text-sm"
                   style={{
-                    background: 'rgba(239, 68, 68, 0.08)',
-                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                    color: '#fca5a5',
+                    background: '#FEF2F2',
+                    border: '1px solid #FECACA',
+                    color: '#B91C1C',
                   }}
                 >
                   <Lock size={16} className="mt-0.5 flex-shrink-0" />

@@ -61,7 +61,7 @@ const faqs = [
   },
 ];
 
-const FAQ = () => {
+const FAQ = ({ embedded = false }) => {
   const [openIndex, setOpenIndex] = useState(null);
   const [question, setQuestion] = useState('');
   const [questionSubmitted, setQuestionSubmitted] = useState(false);
@@ -83,315 +83,220 @@ const FAQ = () => {
   };
 
   return (
-    <div
-      className="min-h-screen overflow-x-hidden"
-      style={{
-        background: 'var(--bg-primary)',
-        color: 'var(--text-primary)',
-      }}
-    >
+    <div className="min-h-screen overflow-x-hidden bg-white text-[#0F172A]">
 
-      {/* =====================================================
-          NAVBAR
-      ====================================================== */}
+      {!embedded && <PublicNavbar />}
 
-      <PublicNavbar />
+      <main className="w-full">
 
+        {/* HERO */}
 
-      {/* =====================================================
-          HERO SECTION
-      ====================================================== */}
+        <section className="relative overflow-hidden px-4 pb-12 pt-16 sm:px-6 sm:pb-14 sm:pt-20">
 
-      <section className="relative px-4 sm:px-6 pt-16 sm:pt-20 pb-12 sm:pb-14">
+          <div className="pointer-events-none absolute left-1/2 top-[-180px] h-[420px] w-[650px] -translate-x-1/2 rounded-full bg-[#EFF6FF] opacity-70 blur-3xl" />
 
-        <div className="max-w-4xl mx-auto text-center">
+          <div className="relative mx-auto max-w-4xl text-center">
 
-          {/* Icon */}
-
-          <div
-            className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center"
-            style={{
-              background: 'var(--accent-muted)',
-              color: 'var(--accent-light)',
-            }}
-          >
-            <HelpCircle size={34} />
-          </div>
-
-
-          {/* Heading */}
-
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-            Frequently Asked Questions
-          </h1>
-
-
-          {/* Description */}
-
-          <p
-            className="mt-5 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed"
-            style={{
-              color: 'var(--text-secondary)',
-            }}
-          >
-            Everything you need to know about PlagShield,
-            code plagiarism detection, and how the platform works.
-          </p>
-
-        </div>
-
-      </section>
-
-
-      {/* =====================================================
-          ASK A QUESTION
-      ====================================================== */}
-
-      <section className="px-4 sm:px-6 pb-10">
-
-        <div className="max-w-4xl mx-auto">
-
-          <div
-            className="rounded-2xl border p-6 sm:p-8"
-            style={{
-              borderColor: 'var(--border-default)',
-              background: 'rgba(255, 255, 255, 0.02)',
-            }}
-          >
-
-            <div className="text-center">
-
-              <h2 className="text-xl sm:text-2xl font-semibold">
-                Have a Question?
-              </h2>
-
-              <p
-                className="mt-2 text-sm sm:text-base"
-                style={{
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                Can't find what you're looking for?
-                Ask your question below.
-              </p>
-
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EFF6FF] text-[#2563EB]">
+              <HelpCircle size={34} />
             </div>
 
+            <h1 className="text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">
+              Frequently Asked Questions
+            </h1>
 
-            {/* Question Form */}
-
-            <form
-              onSubmit={handleQuestionSubmit}
-              className="mt-6"
-            >
-
-              <div className="flex flex-col sm:flex-row gap-3">
-
-                <input
-                  type="text"
-                  value={question}
-                  onChange={(e) => {
-                    setQuestion(e.target.value);
-                    setQuestionSubmitted(false);
-                  }}
-                  placeholder="Type your question here..."
-                  className="flex-1 rounded-lg border px-4 py-3 text-sm outline-none"
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    borderColor: 'var(--border-default)',
-                    color: 'var(--text-primary)',
-                  }}
-                />
-
-                <button
-                  type="submit"
-                  disabled={!question.trim()}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    background: 'var(--accent)',
-                    color: 'white',
-                  }}
-                >
-                  <Send size={17} />
-                  Ask Question
-                </button>
-
-              </div>
-
-            </form>
-
-
-            {/* Question Submitted Message */}
-
-            {questionSubmitted && (
-              <div
-                className="mt-4 rounded-lg border px-4 py-3 text-sm"
-                style={{
-                  borderColor: 'rgba(99, 102, 241, 0.35)',
-                  background: 'var(--accent-muted)',
-                  color: 'var(--accent-light)',
-                }}
-              >
-                Thanks for your question! Our team will review it
-                and provide an answer.
-              </div>
-            )}
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-[#64748B] sm:text-lg">
+              Everything you need to know about PlagShield,
+              code plagiarism detection, and how the platform works.
+            </p>
 
           </div>
 
-        </div>
-
-      </section>
+        </section>
 
 
-      {/* =====================================================
-          FAQ QUESTIONS
-      ====================================================== */}
+        {/* ASK A QUESTION */}
 
-      <section className="px-4 sm:px-6 pb-24">
+        <section className="px-4 pb-10 sm:px-6">
 
-        <div className="max-w-4xl mx-auto">
+          <div className="mx-auto max-w-4xl">
 
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6">
-            Common Questions
-          </h2>
+            <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-6 sm:p-8">
+
+              <div className="text-center">
+
+                <h2 className="text-xl font-semibold text-[#0F172A] sm:text-2xl">
+                  Have a Question?
+                </h2>
+
+                <p className="mt-2 text-sm text-[#64748B] sm:text-base">
+                  Can't find what you're looking for?
+                  Ask your question below.
+                </p>
+
+              </div>
 
 
-          <div className="space-y-3">
+              {/* QUESTION FORM */}
 
-            {faqs.map((faq, index) => {
+              <form
+                onSubmit={handleQuestionSubmit}
+                className="mt-6"
+              >
 
-              const isOpen = openIndex === index;
+                <div className="flex flex-col gap-3 sm:flex-row">
 
-              return (
-                <div
-                  key={index}
-                  className="rounded-xl border overflow-hidden transition-all duration-200"
-                  style={{
-                    borderColor: 'var(--border-default)',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                  }}
-                >
-
-                  {/* Question */}
+                  <input
+                    type="text"
+                    value={question}
+                    onChange={(e) => {
+                      setQuestion(e.target.value);
+                      setQuestionSubmitted(false);
+                    }}
+                    placeholder="Type your question here..."
+                    className="flex-1 rounded-lg border border-[#E2E8F0] bg-white px-4 py-3 text-sm text-[#0F172A] outline-none transition-all placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#EFF6FF]"
+                  />
 
                   <button
-                    type="button"
-                    onClick={() => toggleFAQ(index)}
-                    className="w-full flex items-center justify-between gap-4 text-left px-5 py-5"
-                    style={{
-                      color: 'var(--text-primary)',
-                    }}
-                    aria-expanded={isOpen}
+                    type="submit"
+                    disabled={!question.trim()}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-6 py-3 text-sm font-medium text-white transition-all hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-
-                    <span className="font-medium text-sm sm:text-base">
-                      {faq.question}
-                    </span>
-
-
-                    <ChevronDown
-                      size={20}
-                      className="flex-shrink-0 transition-transform duration-200"
-                      style={{
-                        color: 'var(--accent-light)',
-                        transform: isOpen
-                          ? 'rotate(180deg)'
-                          : 'rotate(0deg)',
-                      }}
-                    />
-
+                    <Send size={17} />
+                    Ask Question
                   </button>
 
-
-                  {/* Answer */}
-
-                  {isOpen && (
-                    <div
-                      className="px-5 pb-5 text-sm leading-7"
-                      style={{
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-
-                      <div
-                        className="pt-1 border-t"
-                        style={{
-                          borderColor: 'var(--border-default)',
-                        }}
-                      >
-
-                        <p className="pt-4">
-                          {faq.answer}
-                        </p>
-
-                      </div>
-
-                    </div>
-                  )}
-
                 </div>
-              );
-            })}
+
+              </form>
+
+
+              {/* QUESTION SUBMITTED */}
+
+              {questionSubmitted && (
+                <div className="mt-4 rounded-lg border border-blue-200 bg-[#EFF6FF] px-4 py-3 text-sm text-[#2563EB]">
+                  Thanks for your question! Our team will review it
+                  and provide an answer.
+                </div>
+              )}
+
+            </div>
 
           </div>
 
-
-          {/* =================================================
-              CONTACT CTA
-          ================================================== */}
-
-          <div
-            className="mt-12 rounded-2xl border p-7 sm:p-9 text-center"
-            style={{
-              borderColor: 'var(--border-default)',
-              background: 'rgba(255, 255, 255, 0.02)',
-            }}
-          >
-
-            <div
-              className="w-11 h-11 mx-auto mb-4 rounded-xl flex items-center justify-center"
-              style={{
-                background: 'var(--accent-muted)',
-                color: 'var(--accent-light)',
-              }}
-            >
-              <ShieldCheck size={22} />
-            </div>
+        </section>
 
 
-            <h2 className="text-xl font-semibold">
-              Still have questions?
+        {/* FAQ QUESTIONS */}
+
+        <section className="px-4 pb-24 sm:px-6">
+
+          <div className="mx-auto max-w-4xl">
+
+            <h2 className="mb-6 text-2xl font-bold text-[#0F172A] sm:text-3xl">
+              Common Questions
             </h2>
 
 
-            <p
-              className="mt-2 text-sm"
-              style={{
-                color: 'var(--text-secondary)',
-              }}
-            >
-              If you need more information about PlagShield,
-              feel free to get in touch with us.
-            </p>
+            <div className="space-y-3">
+
+              {faqs.map((faq, index) => {
+
+                const isOpen = openIndex === index;
+
+                return (
+                  <div
+                    key={index}
+                    className={`overflow-hidden rounded-xl border transition-all duration-200 ${
+                      isOpen
+                        ? 'border-[#BFDBFE] shadow-sm'
+                        : 'border-[#E2E8F0]'
+                    } bg-white`}
+                  >
+
+                    {/* QUESTION */}
+
+                    <button
+                      type="button"
+                      onClick={() => toggleFAQ(index)}
+                      className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left transition-colors hover:bg-[#F8FAFC]"
+                      aria-expanded={isOpen}
+                    >
+
+                      <span
+                        className={`text-sm font-medium sm:text-base ${
+                          isOpen
+                            ? 'text-[#2563EB]'
+                            : 'text-[#0F172A]'
+                        }`}
+                      >
+                        {faq.question}
+                      </span>
+
+                      <ChevronDown
+                        size={20}
+                        className={`flex-shrink-0 text-[#2563EB] transition-transform duration-200 ${
+                          isOpen ? 'rotate-180' : 'rotate-0'
+                        }`}
+                      />
+
+                    </button>
 
 
-            <a
-              href="/contact"
-              className="inline-flex items-center justify-center mt-5 px-5 py-2.5 rounded-lg font-medium text-sm transition-all"
-              style={{
-                background: 'var(--accent)',
-                color: 'white',
-              }}
-            >
-              Contact Us
-            </a>
+                    {/* ANSWER */}
+
+                    {isOpen && (
+                      <div className="px-5 pb-5 text-sm leading-7 text-[#64748B]">
+
+                        <div className="border-t border-[#E2E8F0] pt-1">
+
+                          <p className="pt-4">
+                            {faq.answer}
+                          </p>
+
+                        </div>
+
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })}
+
+            </div>
+
+
+            {/* CONTACT CTA */}
+
+            <div className="mt-12 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-7 text-center sm:p-9">
+
+              <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
+                <ShieldCheck size={22} />
+              </div>
+
+              <h2 className="text-xl font-semibold text-[#0F172A]">
+                Still have questions?
+              </h2>
+
+              <p className="mt-2 text-sm text-[#64748B]">
+                If you need more information about PlagShield,
+                feel free to get in touch with us.
+              </p>
+
+              <a
+                href="/contact"
+                className="mt-5 inline-flex items-center justify-center rounded-lg bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#1D4ED8]"
+              >
+                Contact Us
+              </a>
+
+            </div>
 
           </div>
 
-        </div>
+        </section>
 
-      </section>
+      </main>
 
     </div>
   );

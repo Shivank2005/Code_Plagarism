@@ -1,307 +1,305 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Link,
-  useNavigate,
-  useLocation,
-} from 'react-router-dom';
-
-import {
-  ShieldCheck,
   Menu,
   X,
+  ShieldCheck,
+  ArrowRight,
 } from 'lucide-react';
 
-import { useAuth } from '../../hooks/AuthContext';
+const NAV_ITEMS = [
+  { label: 'Home', id: 'home' },
+  { label: 'About', id: 'about' },
+  { label: 'How It Works', id: 'how-it-works' },
+  { label: 'Contact', id: 'contact' },
+  { label: 'FAQ', id: 'faq' },
+];
 
 const PublicNavbar = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { token } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('home');
 
-  const closeMenu = () => {
-    setMenuOpen(false);
+  /* =========================================================
+     ACTIVE SECTION
+  ========================================================= */
+
+  useEffect(() => {
+    const updateActiveSection = () => {
+      const scrollPosition = window.scrollY + 140;
+
+      let currentSection = 'home';
+
+      NAV_ITEMS.forEach((item) => {
+        const section = document.getElementById(item.id);
+
+        if (section && section.offsetTop <= scrollPosition) {
+          currentSection = item.id;
+        }
+      });
+
+      const pageBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 10;
+
+      if (pageBottom) {
+        currentSection = NAV_ITEMS[NAV_ITEMS.length - 1].id;
+      }
+
+      setActiveSection(currentSection);
+    };
+
+    updateActiveSection();
+
+    window.addEventListener('scroll', updateActiveSection, {
+      passive: true,
+    });
+
+    window.addEventListener('resize', updateActiveSection);
+
+    return () => {
+      window.removeEventListener('scroll', updateActiveSection);
+      window.removeEventListener('resize', updateActiveSection);
+    };
+  }, []);
+
+  /* =========================================================
+     SCROLL
+  ========================================================= */
+
+  const scrollToSection = (id) => {
+    const section = document.getElementById(id);
+
+    if (!section) return;
+
+    const navbarHeight = 64;
+
+    const top =
+      section.getBoundingClientRect().top +
+      window.scrollY -
+      navbarHeight;
+
+    window.scrollTo({
+      top,
+      behavior: 'smooth',
+    });
+
+    setActiveSection(id);
+    setIsOpen(false);
   };
 
+  const handleHome = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+
+    setActiveSection('home');
+    setIsOpen(false);
+  };
+
+  /* =========================================================
+     NAVBAR
+  ========================================================= */
+
   return (
-    <header
-      className="sticky top-0 z-50 border-b"
-      style={{
-        background: 'rgba(10, 10, 11, 0.88)',
-        borderColor: 'var(--border-default)',
-        backdropFilter: 'blur(16px)',
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="h-16 flex items-center justify-between">
+    <header className="fixed left-0 right-0 top-0 z-50 w-full border-b border-[#E2E8F0] bg-white/90 shadow-[0_4px_20px_rgba(15,23,42,0.04)] backdrop-blur-xl">
 
-          {/* Logo */}
-          <Link
-            to="/"
-            onClick={closeMenu}
-            className="flex items-center gap-2.5"
-          >
-            <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{
-                background: 'var(--accent)',
-                color: 'white',
-              }}
-            >
-              <ShieldCheck size={20} />
-            </div>
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
 
-            <span
-              className="text-lg font-bold tracking-tight"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              PlagShield
-            </span>
-          </Link>
+        {/* =================================================
+            LOGO
+        ================================================= */}
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-7">
+        <button
+          type="button"
+          onClick={handleHome}
+          className="group flex items-center gap-2.5"
+        >
 
-            <NavLink
-              to="/"
-              label="Home"
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#2563EB] text-white shadow-sm transition-all duration-200 group-hover:bg-[#1D4ED8] group-hover:shadow-md">
+            <ShieldCheck
+              size={20}
+              strokeWidth={2.2}
             />
-
-            <NavLink
-              to="/about"
-              label="About"
-            />
-
-            <NavLink
-              to="/how-it-works"
-              label="How It Works"
-            />
-
-            <NavLink
-              to="/contact"
-              label="Contact"
-            />
-
-            <NavLink
-              to="/faq"
-              label="FAQ"
-            />
-
-          </nav>
-
-          {/* Desktop Buttons */}
-          <div className="hidden md:flex items-center gap-3">
-
-            {token ? (
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="btn-primary"
-              >
-                Dashboard
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => navigate('/login')}
-                  className="btn-secondary"
-                >
-                  Login
-                </button>
-
-                <button
-                  onClick={() => navigate('/login')}
-                  className="btn-primary"
-                >
-                  Get Started
-                </button>
-              </>
-            )}
-
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{
-              color: 'var(--text-primary)',
-              background: menuOpen
-                ? 'var(--accent-muted)'
-                : 'transparent',
-            }}
-            aria-label="Toggle navigation menu"
+          <span className="text-[17px] font-bold tracking-tight text-[#0F172A]">
+            PlagShield
+          </span>
+
+        </button>
+
+
+        {/* =================================================
+            DESKTOP NAVIGATION
+        ================================================= */}
+
+        <nav className="hidden items-center gap-1 lg:flex">
+
+          {NAV_ITEMS.map((item) => {
+            const active = activeSection === item.id;
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => scrollToSection(item.id)}
+                className={`relative rounded-lg px-3.5 py-2 text-[14px] font-medium transition-all duration-200 ${
+                  active
+                    ? 'bg-[#EFF6FF] text-[#2563EB]'
+                    : 'text-[#475569] hover:bg-[#F8FAFC] hover:text-[#0F172A]'
+                }`}
+              >
+
+                {item.label}
+
+                {active && (
+                  <motion.span
+                    layoutId="navbar-active"
+                    className="absolute bottom-[-1px] left-3 right-3 h-0.5 rounded-full bg-[#2563EB]"
+                    transition={{
+                      type: 'spring',
+                      stiffness: 400,
+                      damping: 30,
+                    }}
+                  />
+                )}
+
+              </button>
+            );
+          })}
+
+        </nav>
+
+
+        {/* =================================================
+            GET STARTED
+        ================================================= */}
+
+        <div className="hidden items-center lg:flex">
+
+          <Link
+            to="/login"
+            className="group inline-flex items-center gap-2 rounded-lg bg-[#2563EB] px-4 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#1D4ED8] hover:shadow-md"
           >
-            {menuOpen ? (
-              <X size={23} />
-            ) : (
-              <Menu size={23} />
-            )}
-          </button>
+
+            Get Started
+
+            <ArrowRight
+              size={16}
+              className="transition-transform duration-200 group-hover:translate-x-0.5"
+            />
+
+          </Link>
 
         </div>
 
-        {/* Mobile Navigation */}
-        {menuOpen && (
-          <div
-            className="md:hidden border-t py-4"
-            style={{
-              borderColor: 'var(--border-default)',
+
+        {/* =================================================
+            MOBILE MENU BUTTON
+        ================================================= */}
+
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#E2E8F0] bg-white text-[#0F172A] transition-all duration-200 hover:border-[#BFDBFE] hover:bg-[#F8FBFF] lg:hidden"
+          aria-label={isOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isOpen}
+        >
+
+          {isOpen ? (
+            <X size={21} />
+          ) : (
+            <Menu size={21} />
+          )}
+
+        </button>
+
+      </div>
+
+
+      {/* =====================================================
+          MOBILE NAVIGATION
+      ===================================================== */}
+
+      <AnimatePresence>
+
+        {isOpen && (
+
+          <motion.div
+            initial={{
+              height: 0,
+              opacity: 0,
             }}
+            animate={{
+              height: 'auto',
+              opacity: 1,
+            }}
+            exit={{
+              height: 0,
+              opacity: 0,
+            }}
+            transition={{
+              duration: 0.2,
+              ease: 'easeOut',
+            }}
+            className="overflow-hidden border-t border-[#E2E8F0] bg-white lg:hidden"
           >
-            <nav className="flex flex-col gap-1">
 
-              <MobileNavLink
-                to="/"
-                label="Home"
-                onClick={closeMenu}
-              />
+            <nav className="mx-auto max-w-7xl px-5 py-4 sm:px-6">
 
-              <MobileNavLink
-                to="/about"
-                label="About"
-                onClick={closeMenu}
-              />
+              <div className="flex flex-col gap-1">
 
-              <MobileNavLink
-                to="/how-it-works"
-                label="How It Works"
-                onClick={closeMenu}
-              />
+                {NAV_ITEMS.map((item) => {
+                  const active = activeSection === item.id;
 
-              <MobileNavLink
-                to="/contact"
-                label="Contact"
-                onClick={closeMenu}
-              />
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => scrollToSection(item.id)}
+                      className={`w-full rounded-lg px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ${
+                        active
+                          ? 'bg-[#EFF6FF] text-[#2563EB]'
+                          : 'text-[#475569] hover:bg-[#F8FAFC] hover:text-[#0F172A]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
 
-              <MobileNavLink
-                to="/faq"
-                label="FAQ"
-                onClick={closeMenu}
-              />
 
-              {/* Mobile Actions */}
-              <div
-                className="flex flex-col gap-2 pt-4 mt-2 border-t"
-                style={{
-                  borderColor: 'var(--border-default)',
-                }}
-              >
+                {/* Mobile Get Started */}
 
-                {token ? (
-                  <button
-                    onClick={() => {
-                      closeMenu();
-                      navigate('/dashboard');
-                    }}
-                    className="btn-primary w-full justify-center"
+                <div className="mt-3 border-t border-[#E2E8F0] pt-3">
+
+                  <Link
+                    to="/login"
+                    onClick={() => setIsOpen(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-4 py-3 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-[#1D4ED8]"
                   >
-                    Dashboard
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => {
-                        closeMenu();
-                        navigate('/login');
-                      }}
-                      className="btn-secondary w-full justify-center"
-                    >
-                      Login
-                    </button>
 
-                    <button
-                      onClick={() => {
-                        closeMenu();
-                        navigate('/login');
-                      }}
-                      className="btn-primary w-full justify-center"
-                    >
-                      Get Started
-                    </button>
-                  </>
-                )}
+                    Get Started
+
+                    <ArrowRight size={17} />
+
+                  </Link>
+
+                </div>
 
               </div>
 
             </nav>
-          </div>
+
+          </motion.div>
+
         )}
 
-      </div>
+      </AnimatePresence>
+
     </header>
-  );
-};
-
-
-/* ============================================================
-   Desktop Navigation Link
-   ============================================================ */
-
-const NavLink = ({ to, label }) => {
-  const location = useLocation();
-
-  const isActive = location.pathname === to;
-
-  return (
-    <Link
-      to={to}
-      className="relative text-sm font-medium transition-all duration-200 py-5"
-      style={{
-        color: isActive
-          ? 'var(--accent-light)'
-          : 'var(--text-secondary)',
-
-        fontWeight: isActive ? 600 : 500,
-      }}
-    >
-      {label}
-
-      {isActive && (
-        <span
-          className="absolute left-0 right-0 bottom-2 h-0.5 rounded-full"
-          style={{
-            background: 'var(--accent-light)',
-          }}
-        />
-      )}
-    </Link>
-  );
-};
-
-
-/* ============================================================
-   Mobile Navigation Link
-   ============================================================ */
-
-const MobileNavLink = ({
-  to,
-  label,
-  onClick,
-}) => {
-  const location = useLocation();
-
-  const isActive = location.pathname === to;
-
-  return (
-    <Link
-      to={to}
-      onClick={onClick}
-      className="px-4 py-3 rounded-lg text-sm font-medium transition-all"
-      style={{
-        color: isActive
-          ? 'var(--accent-light)'
-          : 'var(--text-secondary)',
-
-        background: isActive
-          ? 'var(--accent-muted)'
-          : 'transparent',
-
-        fontWeight: isActive ? 600 : 500,
-      }}
-    >
-      {label}
-    </Link>
   );
 };
 
