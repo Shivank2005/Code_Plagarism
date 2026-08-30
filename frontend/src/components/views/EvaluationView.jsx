@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Target, Sparkles, CheckCircle2, RotateCcw, Plus, Trash2, ShieldCheck, AlertTriangle, XCircle, CheckSquare, Activity, Zap, Check, Brain } from 'lucide-react';
 
-const COLORS = ['#d29922', '#58a6ff', '#f778ba', '#a5d6ff', '#7ee787'];
+const COLORS = ['var(--warning)', 'var(--accent)', '#f778ba', '#a5d6ff', 'var(--success)'];
 
 const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results }) => {
   const [threshold, setThreshold] = useState(60);
@@ -130,17 +130,17 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
   if (!activeBatch || availableFiles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[70vh] text-center px-4 animate-fade-in">
-        <div className="w-24 h-24 bg-[#58a6ff]/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_50px_rgba(88,166,255,0.2)]">
-          <Activity className="text-[#58a6ff]" size={40} />
+        <div className="w-24 h-24 bg-[var(--accent)]/10 rounded-full flex items-center justify-center mb-6 shadow-sm">
+          <Activity className="text-[var(--accent)]" size={40} />
         </div>
-        <h2 className="text-3xl font-display font-bold text-[#e6edf3] mb-3">No Active Analysis</h2>
-        <p className="text-[#8b949e] max-w-md mx-auto text-sm leading-relaxed mb-8">
+        <h2 className="text-3xl font-display font-bold text-[var(--text-primary)] mb-3">No Active Analysis</h2>
+        <p className="text-[var(--text-tertiary)] max-w-md mx-auto text-sm leading-relaxed mb-8">
           The evaluation engine requires a completed analysis batch to construct the ground truth matrix.
         </p>
         <div className="flex items-center justify-center">
-          <div className="bg-[#161b22] border border-[#30363d] px-6 py-4 rounded-2xl flex items-center gap-3">
-             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#238636]/20 text-[#3fb950]"><Check size={14}/></span>
-             <span className="text-sm font-medium text-[#c9d1d9]">Go to Dashboard and click New Analysis</span>
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] px-6 py-4 rounded-xl flex items-center gap-3 shadow-sm">
+             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--success)]/20 text-[var(--success)]"><Check size={14}/></span>
+             <span className="text-sm font-medium text-[var(--text-secondary)]">Go to Dashboard and click New Analysis</span>
           </div>
         </div>
       </div>
@@ -148,35 +148,32 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
   }
 
   return (
-    <div className="animate-fade-in max-w-6xl mx-auto pb-12 w-full px-4 pt-6 flex flex-col gap-10">
+    <div className="animate-fade-in max-w-6xl mx-auto pb-12 w-full pt-6 flex flex-col gap-8">
       
       {/* Premium Hybrid Mode Toggle */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`flex justify-between items-center rounded-[2rem] p-6 relative overflow-hidden transition-all duration-500 ${
+        className={`card flex justify-between items-center p-6 relative overflow-hidden transition-all duration-300 ${
           isHybridMode 
-            ? 'border border-purple-500/50 bg-gradient-to-r from-purple-900/40 via-[#0d1117] to-[#0d1117] shadow-[0_0_40px_rgba(168,85,247,0.2)]' 
-            : 'border border-[#30363d] bg-[#0d1117] hover:border-purple-500/30 shadow-2xl'
+            ? 'border-purple-500/50 bg-gradient-to-r from-purple-50/50 via-[var(--bg-primary)] to-[var(--bg-primary)]' 
+            : 'hover:border-purple-500/30'
         }`}
       >
-        {isHybridMode && (
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay"></div>
-        )}
         <div className="flex items-center gap-5 z-10">
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 ${
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
             isHybridMode 
-              ? 'bg-purple-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.5)] scale-110' 
-              : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+              ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]' 
+              : 'bg-purple-100 text-purple-600'
           }`}>
-            <Brain size={26} className={isHybridMode ? "animate-pulse" : ""} />
+            <Brain size={24} className={isHybridMode ? "animate-pulse" : ""} />
           </div>
           <div>
-            <h3 className={`font-display text-xl font-bold tracking-tight transition-colors ${isHybridMode ? 'text-white' : 'text-purple-300'}`}>
+            <h3 className={`text-lg font-bold transition-colors ${isHybridMode ? 'text-purple-700' : 'text-[var(--text-primary)]'}`}>
               Logic Comparison Mode
-              {isHybridMode && <Sparkles className="inline-block ml-2 text-yellow-400" size={16} />}
+              {isHybridMode && <Sparkles className="inline-block ml-2 text-purple-500" size={16} />}
             </h3>
-            <p className={`text-sm mt-1 transition-colors ${isHybridMode ? 'text-purple-200' : 'text-[#8b949e]'}`}>
+            <p className="text-sm mt-0.5 text-[var(--text-secondary)]">
               {isHybridMode 
                 ? "Simulating algorithmic logic comparison on edge-cases." 
                 : "Toggle to project metrics with logic comparison enabled."}
@@ -185,30 +182,28 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
         </div>
         <button 
           onClick={() => setIsHybridMode(!isHybridMode)}
-          className={`relative inline-flex h-10 w-20 items-center rounded-full transition-all duration-500 z-10 outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-[#0d1117] ${
-            isHybridMode ? 'bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'bg-[#161b22] border border-[#30363d]'
+          className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 z-10 outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)] ${
+            isHybridMode ? 'bg-purple-600' : 'bg-[var(--bg-elevated)] border border-[var(--border-default)]'
           }`}
         >
-          <span className={`inline-block h-8 w-8 transform rounded-full bg-white transition-transform duration-500 ease-spring shadow-lg ${
-            isHybridMode ? 'translate-x-11' : 'translate-x-1'
+          <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ease-spring shadow-sm ${
+            isHybridMode ? 'translate-x-7' : 'translate-x-1'
           }`} />
         </button>
       </motion.div>
 
       {/* Row 1: Test Configuration */}
-      <div className="glass-card rounded-[2rem] p-8 border border-[#30363d] bg-[#0d1117] shadow-2xl relative overflow-hidden flex flex-col">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#58a6ff]/10 blur-[60px] rounded-full pointer-events-none"></div>
-        
-        <div className="mb-8">
-          <h2 className="font-display text-2xl font-black text-[#e6edf3] mb-2 flex items-center gap-3 tracking-tight">
-            <Sparkles className="text-[#58a6ff]" size={24}/> Ground Truth
+      <div className="card p-8 relative overflow-hidden flex flex-col">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1 flex items-center gap-2">
+            <Sparkles className="text-[var(--accent)]" size={20}/> Ground Truth Setup
           </h2>
-          <p className="text-sm text-[#8b949e] leading-relaxed">
+          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
             Select files that are known to be plagiarized to build your answer key. The model will be scored based on how perfectly it matches these groups.
           </p>
         </div>
         
-        <div className="flex items-center gap-2 mb-6 flex-wrap bg-[#161b22]/50 p-3 rounded-2xl border border-[#30363d]/50">
+        <div className="flex items-center gap-2 mb-6 flex-wrap bg-[var(--bg-surface)] p-2 rounded-xl border border-[var(--border-default)]">
           {groups.map((group, idx) => {
             const isActive = activeGroupIdx === idx;
             const color = COLORS[idx % COLORS.length];
@@ -216,27 +211,27 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
               <button
                 key={idx}
                 onClick={() => setActiveGroupIdx(idx)}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all border ${
-                  isActive ? 'border-transparent shadow-md text-black' : 'border-[#30363d] text-[#8b949e] hover:bg-[#30363d] bg-[#161b22]'
+                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all border ${
+                  isActive ? 'border-transparent shadow-sm text-white' : 'border-transparent text-[var(--text-tertiary)] hover:bg-[var(--bg-elevated)]'
                 }`}
-                style={isActive ? { backgroundColor: color } : {}}
+                style={isActive ? { backgroundColor: color, color: '#fff' } : {}}
               >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: isActive ? '#000' : color }}></span>
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: isActive ? 'white' : color }}></span>
                 Group {idx + 1} ({group.size})
                 {groups.length > 1 && (
-                  <span onClick={(e) => { e.stopPropagation(); removeGroup(idx); }} className={`ml-1 cursor-pointer ${isActive ? 'hover:text-black/60' : 'hover:text-[#f85149]'}`}>
+                  <span onClick={(e) => { e.stopPropagation(); removeGroup(idx); }} className={`ml-1 cursor-pointer opacity-70 hover:opacity-100 transition-opacity`}>
                     <Trash2 size={14} />
                   </span>
                 )}
               </button>
             );
           })}
-          <button onClick={addGroup} className="flex items-center justify-center px-4 py-2 rounded-xl border border-dashed border-[#8b949e]/50 text-[#8b949e] hover:border-[#58a6ff] hover:text-[#58a6ff] transition-colors ml-1 bg-[#161b22] font-bold text-sm gap-2">
+          <button onClick={addGroup} className="flex items-center justify-center px-4 py-2 rounded-lg border border-dashed border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors ml-1 bg-transparent font-semibold text-sm gap-2">
             <Plus size={16} /> Add Group
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-10 max-h-[250px] overflow-y-auto custom-scrollbar pr-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8 max-h-[250px] overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--border-default)] scrollbar-track-transparent pr-2">
           {availableFiles.map((file, idx) => {
             const groupIdx = getFileGroup(file);
             const isSelected = groupIdx >= 0;
@@ -246,16 +241,17 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
               <div
                 key={idx}
                 onClick={() => toggleFileInGroup(file)}
-                className={`flex items-center gap-3 rounded-xl p-4 cursor-pointer transition-all border ${
-                  isSelected ? 'border-transparent bg-[#161b22] shadow-lg transform hover:-translate-y-0.5' : 'border-[#30363d] hover:bg-[#161b22]/80 text-[#8b949e]'
+                className={`flex items-center gap-3 rounded-xl p-3 cursor-pointer transition-colors border ${
+                  isSelected ? 'border-transparent shadow-sm' : 'border-[var(--border-default)] hover:bg-[var(--bg-surface)] text-[var(--text-secondary)]'
                 }`}
+                style={isSelected ? { backgroundColor: 'var(--bg-surface)' } : {}}
               >
-                <div className={`flex items-center justify-center shrink-0 w-6 h-6 rounded-md border transition-colors ${
-                  isSelected ? 'border-transparent' : 'border-[#484f58]'
+                <div className={`flex items-center justify-center shrink-0 w-5 h-5 rounded-md border transition-colors ${
+                  isSelected ? 'border-transparent' : 'border-[var(--border-default)]'
                 }`} style={{ backgroundColor: color }}>
-                  {isSelected && <CheckCircle2 size={14} className="text-black" />}
+                  {isSelected && <CheckCircle2 size={14} className="text-white" />}
                 </div>
-                <span className={`text-sm font-semibold truncate ${isSelected ? 'text-[#c9d1d9]' : ''}`}>
+                <span className="text-sm font-medium truncate">
                   {file}
                 </span>
               </div>
@@ -263,23 +259,23 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
           })}
         </div>
 
-        <div className="pt-8 border-t border-[#30363d]/50 flex flex-col md:flex-row gap-8 items-center">
+        <div className="pt-6 border-t border-[var(--border-default)] flex flex-col md:flex-row gap-8 items-center">
           <div className="flex-1 w-full max-w-lg">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold text-[#8b949e] uppercase tracking-widest flex items-center gap-2">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                  Strictness Threshold
               </span>
-              <span className="text-sm font-black text-[#d29922] bg-[#d29922]/10 px-4 py-1.5 rounded-full">{threshold}%</span>
+              <span className="text-xs font-bold text-[var(--warning)] bg-[var(--warning)]/10 px-3 py-1 rounded-md">{threshold}%</span>
             </div>
-            <input type="range" min="1" max="100" value={threshold} onChange={(e) => setThreshold(e.target.value)} className="w-full h-2 bg-[#30363d] rounded-lg appearance-none cursor-pointer accent-[#d29922]"/>
+            <input type="range" min="1" max="100" value={threshold} onChange={(e) => setThreshold(e.target.value)} className="w-full h-1.5 bg-[var(--border-default)] rounded-full appearance-none cursor-pointer accent-[var(--warning)]"/>
           </div>
           
-          <div className="flex gap-4 w-full md:w-auto ml-auto">
-            <button onClick={autoDetectGroups} className="flex-1 md:flex-none flex items-center justify-center gap-2 rounded-2xl bg-[#238636]/10 hover:bg-[#238636]/20 px-8 py-4 font-bold text-[#2ea043] transition-all text-xs tracking-widest uppercase border border-[#238636]/20">
+          <div className="flex gap-3 w-full md:w-auto ml-auto">
+            <button onClick={autoDetectGroups} className="flex-1 md:flex-none flex items-center justify-center gap-2 rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] px-6 py-2.5 font-semibold text-[var(--text-secondary)] transition-colors text-sm border border-[var(--border-default)]">
               <Zap size={16} /> Auto-Detect
             </button>
-            <button onClick={handleEvaluate} disabled={allPairs.length === 0} className={`flex-1 md:flex-none flex items-center justify-center gap-2 rounded-2xl px-10 py-4 font-black transition-all text-xs tracking-widest uppercase ${allPairs.length === 0 ? 'bg-[#161b22] text-[#8b949e] border border-[#30363d] cursor-not-allowed' : 'bg-[#58a6ff] hover:bg-[#388bfd] text-black shadow-[0_0_20px_rgba(88,166,255,0.3)] hover:shadow-[0_0_30px_rgba(88,166,255,0.5)] transform hover:-translate-y-0.5'}`}>
-              <Target size={18} /> {allPairs.length === 0 ? 'Define Groups First' : 'Execute'}
+            <button onClick={handleEvaluate} disabled={allPairs.length === 0} className={`flex-1 md:flex-none flex items-center justify-center gap-2 rounded-xl px-8 py-2.5 font-semibold transition-colors text-sm ${allPairs.length === 0 ? 'bg-[var(--bg-surface)] text-[var(--text-tertiary)] border border-[var(--border-default)] cursor-not-allowed' : 'btn-primary'}`}>
+              <Target size={16} /> {allPairs.length === 0 ? 'Define Groups First' : 'Evaluate'}
             </button>
           </div>
         </div>
@@ -287,67 +283,60 @@ const EvaluationView = ({ activeBatch, evaluateModel, evaluationResults, results
 
       {/* Row 2: Results */}
       {!evaluationResults ? (
-        <div className="border border-dashed border-[#30363d] rounded-[2rem] flex flex-col items-center justify-center bg-[#161b22]/30 py-24 shadow-inner">
-          <div className="w-20 h-20 bg-[#0d1117] border border-[#30363d] rounded-full flex items-center justify-center mb-6">
-            <Target className="text-[#484f58]" size={32} />
+        <div className="card-flat border-dashed flex flex-col items-center justify-center py-16">
+          <div className="w-16 h-16 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-full flex items-center justify-center mb-4">
+            <Target className="text-[var(--text-tertiary)]" size={24} />
           </div>
-          <h3 className="text-xl font-bold text-[#8b949e] mb-2">Ready for Evaluation</h3>
-          <p className="text-[#484f58] text-sm text-center max-w-sm">Configure your ground truth groups above and click Execute to view model metrics.</p>
+          <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-1">Ready for Evaluation</h3>
+          <p className="text-[var(--text-tertiary)] text-sm text-center max-w-sm">Configure your ground truth groups above and click Evaluate to view model metrics.</p>
         </div>
       ) : (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           
           {/* Metrics Row */}
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
-            <div className="relative flex flex-col items-center justify-center rounded-[2rem] border border-[#30363d] bg-[#0d1117] p-10 shadow-2xl overflow-hidden group hover:border-[#58a6ff]/50 transition-all">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#58a6ff]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#8b949e] flex items-center gap-2"><Target size={16} className="text-[#58a6ff]" /> Precision</p>
-              <p className="text-6xl font-black text-[#58a6ff] tracking-tight">{(displayResults.precision * 100).toFixed(1)}<span className="text-3xl text-[#58a6ff]/50">%</span></p>
-              <p className="mt-4 text-[10px] uppercase tracking-widest font-semibold text-[#8b949e] bg-[#161b22] px-4 py-1.5 rounded-full border border-[#30363d]">{displayResults.truePositives} / {displayResults.truePositives + displayResults.falsePositives} Correct</p>
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+            <div className="card flex flex-col items-center justify-center p-8 group transition-all">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2"><Target size={16} className="text-[var(--accent)]" /> Precision</p>
+              <p className="text-5xl font-black text-[var(--text-primary)]">{(displayResults.precision * 100).toFixed(1)}<span className="text-2xl text-[var(--text-tertiary)]">%</span></p>
+              <p className="mt-3 text-[10px] uppercase tracking-wider font-semibold text-[var(--text-tertiary)] bg-[var(--bg-surface)] px-3 py-1 rounded-md border border-[var(--border-default)]">{displayResults.truePositives} / {displayResults.truePositives + displayResults.falsePositives} Correct</p>
             </div>
-            <div className="relative flex flex-col items-center justify-center rounded-[2rem] border border-[#30363d] bg-[#0d1117] p-10 shadow-2xl overflow-hidden group hover:border-[#d29922]/50 transition-all">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#d29922]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#8b949e] flex items-center gap-2"><RotateCcw size={16} className="text-[#d29922]" /> Recall</p>
-              <p className="text-6xl font-black text-[#d29922] tracking-tight">{(displayResults.recall * 100).toFixed(1)}<span className="text-3xl text-[#d29922]/50">%</span></p>
-              <p className="mt-4 text-[10px] uppercase tracking-widest font-semibold text-[#8b949e] bg-[#161b22] px-4 py-1.5 rounded-full border border-[#30363d]">{displayResults.truePositives} / {displayResults.truePositives + displayResults.falseNegatives} Found</p>
+            <div className="card flex flex-col items-center justify-center p-8 group transition-all">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2"><RotateCcw size={16} className="text-[var(--warning)]" /> Recall</p>
+              <p className="text-5xl font-black text-[var(--text-primary)]">{(displayResults.recall * 100).toFixed(1)}<span className="text-2xl text-[var(--text-tertiary)]">%</span></p>
+              <p className="mt-3 text-[10px] uppercase tracking-wider font-semibold text-[var(--text-tertiary)] bg-[var(--bg-surface)] px-3 py-1 rounded-md border border-[var(--border-default)]">{displayResults.truePositives} / {displayResults.truePositives + displayResults.falseNegatives} Found</p>
             </div>
-            <div className="relative flex flex-col items-center justify-center rounded-[2rem] border border-[#30363d] bg-[#0d1117] p-10 shadow-2xl overflow-hidden group hover:border-[#238636]/50 transition-all">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#238636]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#8b949e] flex items-center gap-2"><Sparkles size={16} className="text-[#238636]" /> F1-Score</p>
-              <p className="text-6xl font-black text-[#238636] tracking-tight">{(displayResults.f1Score * 100).toFixed(1)}<span className="text-3xl text-[#238636]/50">%</span></p>
-              <p className="mt-4 text-[10px] uppercase tracking-widest font-semibold text-[#8b949e] bg-[#161b22] px-4 py-1.5 rounded-full border border-[#30363d]">Harmonic Mean</p>
+            <div className="card flex flex-col items-center justify-center p-8 group transition-all">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2"><Sparkles size={16} className="text-[var(--success)]" /> F1-Score</p>
+              <p className="text-5xl font-black text-[var(--text-primary)]">{(displayResults.f1Score * 100).toFixed(1)}<span className="text-2xl text-[var(--text-tertiary)]">%</span></p>
+              <p className="mt-3 text-[10px] uppercase tracking-wider font-semibold text-[var(--text-tertiary)] bg-[var(--bg-surface)] px-3 py-1 rounded-md border border-[var(--border-default)]">Harmonic Mean</p>
             </div>
           </div>
 
           {/* Confusion Matrix Row */}
-          <div className="rounded-[2rem] border border-[#30363d] bg-[#0d1117] p-10 shadow-2xl">
-            <h4 className="text-xs font-black uppercase tracking-[0.25em] text-[#e6edf3] mb-8 pb-6 border-b border-[#30363d]/50 flex items-center gap-3">
-              <Activity className="text-[#8b949e]" size={20}/> Confusion Matrix Breakdown
+          <div className="card p-8">
+            <h4 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-6 flex items-center gap-2">
+              <Activity className="text-[var(--text-tertiary)]" size={16}/> Confusion Matrix Breakdown
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="flex flex-col items-center justify-center rounded-[2rem] bg-[#161b22] border border-[#30363d] p-8 relative overflow-hidden group hover:border-[#238636]/40 transition-colors">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#238636]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <CheckSquare size={40} className="text-[#238636]/20 absolute right-6 top-6" />
-                <p className="text-xs font-bold uppercase tracking-widest text-[#238636] mb-3 z-10">True Positives</p>
-                <p className="text-6xl font-black text-[#238636] z-10">{displayResults.truePositives ?? 0}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="card-flat flex flex-col p-6 relative overflow-hidden group hover:border-[var(--success)]/40 transition-colors">
+                <CheckSquare size={32} className="text-[var(--success)]/20 absolute right-4 top-4" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--success)] mb-1 z-10">True Positives</p>
+                <p className="text-4xl font-black text-[var(--text-primary)] z-10">{displayResults.truePositives ?? 0}</p>
               </div>
-              <div className="flex flex-col items-center justify-center rounded-[2rem] bg-[#161b22] border border-[#30363d] p-8 relative overflow-hidden group hover:border-[#f85149]/40 transition-colors">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#f85149]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <AlertTriangle size={40} className="text-[#f85149]/20 absolute right-6 top-6" />
-                <p className="text-xs font-bold uppercase tracking-widest text-[#f85149] mb-3 z-10">False Positives</p>
-                <p className="text-6xl font-black text-[#f85149] z-10">{displayResults.falsePositives ?? 0}</p>
+              <div className="card-flat flex flex-col p-6 relative overflow-hidden group hover:border-[var(--danger)]/40 transition-colors">
+                <AlertTriangle size={32} className="text-[var(--danger)]/20 absolute right-4 top-4" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--danger)] mb-1 z-10">False Positives</p>
+                <p className="text-4xl font-black text-[var(--text-primary)] z-10">{displayResults.falsePositives ?? 0}</p>
               </div>
-              <div className="flex flex-col items-center justify-center rounded-[2rem] bg-[#161b22] border border-[#30363d] p-8 relative overflow-hidden group hover:border-[#d29922]/40 transition-colors">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#d29922]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <XCircle size={40} className="text-[#d29922]/20 absolute right-6 top-6" />
-                <p className="text-xs font-bold uppercase tracking-widest text-[#d29922] mb-3 z-10">False Negatives</p>
-                <p className="text-6xl font-black text-[#d29922] z-10">{displayResults.falseNegatives ?? 0}</p>
+              <div className="card-flat flex flex-col p-6 relative overflow-hidden group hover:border-[var(--warning)]/40 transition-colors">
+                <XCircle size={32} className="text-[var(--warning)]/20 absolute right-4 top-4" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--warning)] mb-1 z-10">False Negatives</p>
+                <p className="text-4xl font-black text-[var(--text-primary)] z-10">{displayResults.falseNegatives ?? 0}</p>
               </div>
-              <div className="flex flex-col items-center justify-center rounded-[2rem] bg-[#161b22] border border-[#30363d] p-8 relative overflow-hidden group hover:border-[#58a6ff]/40 transition-colors">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#58a6ff]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <ShieldCheck size={40} className="text-[#58a6ff]/20 absolute right-6 top-6" />
-                <p className="text-xs font-bold uppercase tracking-widest text-[#58a6ff] mb-3 z-10">True Negatives</p>
-                <p className="text-6xl font-black text-[#58a6ff] z-10">{displayResults.trueNegatives ?? 0}</p>
+              <div className="card-flat flex flex-col p-6 relative overflow-hidden group hover:border-[var(--accent)]/40 transition-colors">
+                <ShieldCheck size={32} className="text-[var(--accent)]/20 absolute right-4 top-4" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--accent)] mb-1 z-10">True Negatives</p>
+                <p className="text-4xl font-black text-[var(--text-primary)] z-10">{displayResults.trueNegatives ?? 0}</p>
               </div>
             </div>
           </div>

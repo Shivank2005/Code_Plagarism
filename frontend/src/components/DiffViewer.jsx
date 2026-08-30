@@ -7,7 +7,7 @@ const CODEBERT_BASE = import.meta.env.VITE_CODEBERT_API || 'http://localhost:809
 const CODEBERT_API = `${CODEBERT_BASE}/api/embeddings`;
 
 const rowClass = {
-  same: 'bg-rose-500/20',
+  same: 'bg-[var(--danger)]/10',
   replace: 'bg-transparent opacity-60',
   insert: 'bg-transparent opacity-60',
   delete: 'bg-transparent opacity-60',
@@ -18,7 +18,6 @@ const CodeHighlight = ({ code }) => {
 
   const spacedCode = code.replace(/([;{}])/g, '$1\u200B');
 
-  // Advanced syntax highlighting regex covering Java, Python, JS, C++, Go, Rust, and comments
   const tokenRegex = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\/\/.*|\/\*[\s\S]*?\*\/|\b(?:abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|strictfp|super|switch|synchronized|this|throw|throws|transient|try|void|volatile|while|def|False|True|None|and|as|async|await|del|elif|except|from|global|is|lambda|nonlocal|not|or|pass|raise|with|yield|function|let|var|export|struct|impl|mut|fn|match|loop|pub|use|go|chan|defer|fallthrough|type)\b|\b(?:String|Integer|Double|System|Math|Scanner|List|Map|Set|Dict|Array|Console|Object|Promise|Vector|HashMap|print|println|out|len|range)\b|\b\d+(?:\.\d+)?\b|[+\-*/=<>!&|%^~]+)/g;
   
   const parts = spacedCode.split(tokenRegex);
@@ -27,17 +26,17 @@ const CodeHighlight = ({ code }) => {
     <>
       {parts.map((part, index) => {
         if (!part) return null;
-        if (/^["']/.test(part)) return <span key={index} className="text-[#a5d6ff]">{part}</span>;
-        if (/^\/\/|^\/\*/.test(part)) return <span key={index} className="text-[#8b949e] italic">{part}</span>;
-        if (/^[+\-*/=<>!&|%^~]+$/.test(part)) return <span key={index} className="text-[#ff7b72]">{part}</span>;
+        if (/^["']/.test(part)) return <span key={index} className="text-emerald-600">{part}</span>;
+        if (/^\/\/|^\/\*/.test(part)) return <span key={index} className="text-[var(--text-tertiary)] italic">{part}</span>;
+        if (/^[+\-*/=<>!&|%^~]+$/.test(part)) return <span key={index} className="text-[var(--text-tertiary)]">{part}</span>;
         if (/^(abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|strictfp|super|switch|synchronized|this|throw|throws|transient|try|void|volatile|while|def|False|True|None|and|as|async|await|del|elif|except|from|global|is|lambda|nonlocal|not|or|pass|raise|with|yield|function|let|var|export|struct|impl|mut|fn|match|loop|pub|use|go|chan|defer|fallthrough|type)$/.test(part)) {
-          return <span key={index} className="text-[#ff7b72] font-semibold">{part}</span>;
+          return <span key={index} className="text-pink-600 font-semibold">{part}</span>;
         }
         if (/^(String|Integer|Double|System|Math|Scanner|List|Map|Set|Dict|Array|Console|Object|Promise|Vector|HashMap|print|println|out|len|range)$/.test(part)) {
-          return <span key={index} className="text-[#d2a8ff]">{part}</span>;
+          return <span key={index} className="text-purple-600">{part}</span>;
         }
-        if (/^\d+(?:\.\d+)?$/.test(part)) return <span key={index} className="text-[#79c0ff]">{part}</span>;
-        return <span key={index} className="text-[#e6edf3]">{part}</span>;
+        if (/^\d+(?:\.\d+)?$/.test(part)) return <span key={index} className="text-blue-600">{part}</span>;
+        return <span key={index} className="text-[var(--text-primary)]">{part}</span>;
       })}
     </>
   );
@@ -54,7 +53,6 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
       for (let j = i + 1; j < results.students.length; j += 1) {
         const score = results.matrix[i][j] ?? 0;
         if (score > 0) {
-          // Find the detailed result object
           const detail = (results.detailedResults || []).find(r => 
             (r.submissionA === results.students[i] && r.submissionB === results.students[j]) ||
             (r.submissionA === results.students[j] && r.submissionB === results.students[i])
@@ -120,7 +118,6 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
     }
   };
 
-  // Auto-run diff when selectedPair changes from parent
   useEffect(() => {
     if (selectedPair && selectedPair.student1 && selectedPair.student2) {
       runDiff({
@@ -138,7 +135,6 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
     setDiffData(null);
     setDeepScanResult(null);
 
-    // Automatically trigger Deep Scan
     runDeepScan(pair);
 
     let leftFile = fileById.get(pair.source);
@@ -146,20 +142,13 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
 
     if (!leftFile || !rightFile) {
       const allFiles = Array.from(fileById.values());
-      if (!leftFile) {
-        leftFile = allFiles.find(f => f.id.includes(pair.source) || pair.source.includes(f.id) || (f.name && (f.name.includes(pair.source) || pair.source.includes(f.name))));
-      }
-      if (!rightFile) {
-        rightFile = allFiles.find(f => f.id.includes(pair.target) || pair.target.includes(f.id) || (f.name && (f.name.includes(pair.target) || pair.target.includes(f.name))));
-      }
+      if (!leftFile) leftFile = allFiles.find(f => f.id.includes(pair.source) || pair.source.includes(f.id));
+      if (!rightFile) rightFile = allFiles.find(f => f.id.includes(pair.target) || pair.target.includes(f.id));
     }
 
     if (!leftFile || !rightFile) {
       setLoading(false);
-      const missing = [];
-      if (!leftFile) missing.push(pair.source);
-      if (!rightFile) missing.push(pair.target);
-      setError(`Selected pair code files are not available: ${missing.join(', ')}`);
+      setError(`Selected pair code files are not available.`);
       return;
     }
 
@@ -172,7 +161,7 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
       });
       setDiffData(res.data);
     } catch (err) {
-      setError('Failed to generate diff. Make sure CodeBERT service is running on port 8090.');
+      setError('Failed to generate diff. Service unavailable.');
     } finally {
       setLoading(false);
     }
@@ -180,59 +169,58 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
 
   if (!files || files.length < 2) {
     return (
-      <div className="glass-card rounded-[2rem] border border-dashed border-cyan-100/30 p-10 text-center">
-        <h3 className="font-display text-2xl font-bold text-white">No Files Available For Diff</h3>
-        <p className="mt-2 text-cyan-100/65">Run an analysis and semantic embedding step before opening pairwise diffs.</p>
+      <div className="card p-10 text-center flex flex-col items-center gap-2">
+        <GitCompareArrows className="text-[var(--text-tertiary)]" size={32} />
+        <h3 className="text-lg font-semibold text-[var(--text-primary)]">No Files Available</h3>
+        <p className="text-sm text-[var(--text-secondary)]">Run an analysis to explore pairwise diffs.</p>
       </div>
     );
   }
 
   return (
-    <div className="glass-card rounded-[2rem] p-6 sm:p-8">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="font-display flex items-center gap-3 text-2xl font-bold text-white">
-            <GitCompareArrows className="text-orange-200" /> Pairwise Diff Explorer
-          </h3>
-          <p className="mt-1 text-sm text-cyan-100/70">Inspect high-similarity pairs to verify copied or transformed lines.</p>
-        </div>
+    <div className="card p-6 sm:p-8">
+      <div className="mb-6 flex flex-col gap-2">
+        <h3 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+          <GitCompareArrows className="text-[var(--accent)]" size={20} /> Pairwise Diff Explorer
+        </h3>
+        <p className="text-sm text-[var(--text-secondary)]">Inspect high-similarity pairs to verify copied or transformed lines.</p>
       </div>
 
-      <div className="mb-6 overflow-hidden rounded-2xl border border-[#30363d] shadow-lg">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[1px] bg-[#30363d] max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-track-[#0d1117] scrollbar-thumb-[#484f58] hover:scrollbar-thumb-[#6e7681]">
+      <div className="mb-6 overflow-hidden rounded-xl border border-[var(--border-default)]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[1px] bg-[var(--border-default)] max-h-[300px] overflow-y-auto">
           {candidatePairs.length === 0 && (
-            <div className="col-span-full p-8 text-center text-sm text-[#8b949e] bg-[#0d1117]">
-              No semantic links available yet. Generate embedding graph first.
+            <div className="col-span-full p-8 text-center text-sm text-[var(--text-tertiary)] bg-[var(--bg-primary)]">
+              No matching pairs available.
             </div>
           )}
           {candidatePairs.map((pair) => (
             <button
               key={`${pair.source}-${pair.target}`}
               onClick={() => runDiff(pair)}
-              className={`group flex flex-col p-5 text-left transition-all duration-200 ${
+              className={`group flex flex-col p-4 text-left transition-all ${
                 selectedLocalPair?.source === pair.source && selectedLocalPair?.target === pair.target
-                  ? 'bg-gradient-to-r from-[#58a6ff]/10 to-[#0d1117] shadow-[inset_3px_0_0_#58a6ff]'
-                  : 'bg-[#0d1117] hover:bg-[#161b22]'
+                  ? 'bg-[var(--accent-muted)] shadow-[inset_3px_0_0_var(--accent)]'
+                  : 'bg-[var(--bg-primary)] hover:bg-[var(--bg-elevated)]'
               }`}
             >
-              <div className="mb-4 flex w-full items-center justify-between overflow-hidden">
-                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[9px] font-black tracking-widest uppercase ${
-                    pair.weight > 75 ? 'bg-[#f85149]/10 text-[#f85149] border border-[#f85149]/20 shadow-[0_0_10px_rgba(248,81,73,0.1)]' 
-                    : pair.weight >= 40 ? 'bg-[#d29922]/10 text-[#d29922] border border-[#d29922]/20'
-                    : 'bg-[#238636]/10 text-[#238636] border border-[#238636]/20'
+              <div className="mb-3 flex w-full items-center justify-between">
+                <span className={`badge ${
+                    pair.weight > 75 ? 'badge-danger' 
+                    : pair.weight >= 40 ? 'badge-warning'
+                    : 'badge-success'
                 }`}>
                   {pair.weight}% MATCH
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#58a6ff] opacity-0 transition-all duration-300 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0">
-                  Inspect →
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--accent)] opacity-0 transition-opacity group-hover:opacity-100">
+                  Inspect &rarr;
                 </span>
               </div>
-              <div className="flex w-full items-center justify-between gap-3">
-                <p className="flex-1 truncate text-xs font-semibold text-[#e6edf3] transition-colors group-hover:text-white" title={pair.source.split('/').pop()}>
+              <div className="flex w-full items-center justify-between gap-2">
+                <p className="flex-1 truncate text-xs font-medium text-[var(--text-primary)]" title={pair.source.split('/').pop()}>
                   {pair.source.split('/').pop()}
                 </p>
-                <span className="text-[#8b949e] opacity-30 px-1 font-light">↔</span>
-                <p className="flex-1 truncate text-right text-xs font-semibold text-[#e6edf3] transition-colors group-hover:text-white" title={pair.target.split('/').pop()}>
+                <span className="text-[var(--text-tertiary)] text-[10px] font-light">&harr;</span>
+                <p className="flex-1 truncate text-right text-xs font-medium text-[var(--text-primary)]" title={pair.target.split('/').pop()}>
                   {pair.target.split('/').pop()}
                 </p>
               </div>
@@ -242,125 +230,115 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
       </div>
 
       {loading && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-cyan-100/20 bg-cyan-950/70 px-4 py-3 text-sm text-cyan-100">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--accent)]/30 bg-[var(--accent)]/10 px-4 py-3 text-sm text-[var(--accent)] font-medium">
           <Loader2 className="animate-spin" size={16} /> Building diff view...
         </div>
       )}
 
-      {error && <p className="mb-4 rounded-xl border border-rose-100/35 bg-rose-500/20 px-4 py-3 text-sm text-rose-100">{error}</p>}
+      {error && <p className="mb-4 rounded-lg border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">{error}</p>}
 
       {diffData && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-black/20 shadow-2xl backdrop-blur-md">
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="mb-6 overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] shadow-sm">
             {/* Header Strip */}
-            <div className="flex items-center justify-between border-b border-white/10 bg-black/40 px-6 py-4">
-              <h4 className="font-display text-lg font-bold text-white flex items-center">
-                {selectedLocalPair?.source.split('/').pop()} <span className="mx-3 text-white/20">↔</span> {selectedLocalPair?.target.split('/').pop()}
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--bg-secondary)] px-5 py-3">
+              <h4 className="text-sm font-bold text-[var(--text-primary)] flex items-center">
+                {selectedLocalPair?.source.split('/').pop()} <span className="mx-2 text-[var(--text-tertiary)] text-xs">&harr;</span> {selectedLocalPair?.target.split('/').pop()}
               </h4>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {selectedLocalPair?.details?.featureImportance && Object.keys(selectedLocalPair.details.featureImportance).length > 0 && (
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 border-r border-white/10 pr-3">
-                    Top factor: {Object.entries(selectedLocalPair.details.featureImportance).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))[0][0]}
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] border-r border-[var(--border-default)] pr-2">
+                    Key Factor: {Object.entries(selectedLocalPair.details.featureImportance).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))[0][0]}
                   </span>
                 )}
                 {(selectedLocalPair?.details?.isAnomaly || selectedLocalPair?.details?.anomaly) && (
-                  <span className="rounded-full bg-purple-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-purple-300 border border-purple-500/40">⚠️ ISOLATION ANOMALY</span>
+                  <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' }}>&#9888; ANOMALY</span>
                 )}
-                {selectedLocalPair?.weight >= 75 ? (
-                  <span className="rounded-full bg-rose-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-rose-400 border border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.15)]">High Risk</span>
-                ) : selectedLocalPair?.weight >= 40 ? (
-                  <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-400 border border-amber-500/30">Suspicious</span>
-                ) : (
-                  <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400 border border-emerald-500/30">Safe</span>
-                )}
+                <span className={`badge ${selectedLocalPair?.weight >= 75 ? 'badge-danger' : selectedLocalPair?.weight >= 40 ? 'badge-warning' : 'badge-success'}`}>
+                  {selectedLocalPair?.weight >= 75 ? 'High Risk' : selectedLocalPair?.weight >= 40 ? 'Suspicious' : 'Safe'}
+                </span>
               </div>
             </div>
 
-            {/* AI Deep Scan Module (Always Visible) */}
-            <div className={`border-b border-white/10 px-6 py-4 transition-colors ${deepScanResult ? (deepScanResult.plagiarized ? 'bg-rose-500/10' : 'bg-emerald-500/10') : 'bg-purple-900/10'}`}>
+            {/* AI Deep Scan Module */}
+            <div className={`border-b border-[var(--border-default)] px-5 py-4 ${deepScanResult ? (deepScanResult.plagiarized ? 'bg-[var(--danger)]/5' : 'bg-[var(--success)]/5') : 'bg-[var(--bg-elevated)]'}`}>
               {deepScanResult ? (
                 <div className="flex items-start gap-4">
-                  <div className={`mt-1 rounded-full p-2 ${deepScanResult.plagiarized ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                    {deepScanResult.plagiarized ? <ShieldAlert size={20} /> : <FileText size={20} />}
+                  <div className={`mt-0.5 rounded-lg p-2 ${deepScanResult.plagiarized ? 'bg-[var(--danger)]/10 text-[var(--danger)]' : 'bg-[var(--success)]/10 text-[var(--success)]'}`}>
+                    {deepScanResult.plagiarized ? <ShieldAlert size={18} /> : <FileText size={18} />}
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
-                      <h5 className={`font-display text-lg font-bold ${deepScanResult.plagiarized ? 'text-rose-400' : 'text-emerald-400'}`}>
-                        {deepScanResult.plagiarized ? 'Comparison: Plagiarism Detected' : 'Comparison: Safe'}
+                      <h5 className={`text-sm font-bold ${deepScanResult.plagiarized ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
+                        {deepScanResult.plagiarized ? 'AI Assessment: Plagiarism Detected' : 'AI Assessment: Safe'}
                       </h5>
-                      <button onClick={() => runDeepScan()} disabled={scanning} className="text-[10px] uppercase font-bold text-white/40 hover:text-white/80 transition-colors flex items-center gap-1">
+                      <button onClick={() => runDeepScan()} disabled={scanning} className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-1">
                         {scanning ? <Loader2 className="animate-spin" size={12} /> : <Brain size={12} />}
-                        {scanning ? 'Comparing...' : 'Compare Again'}
+                        {scanning ? 'Scanning...' : 'Rescan'}
                       </button>
                     </div>
                     {deepScanResult.error ? (
-                      <p className="mt-1 text-sm text-rose-200">{deepScanResult.error}</p>
+                      <p className="mt-1 text-xs text-[var(--danger)]">{deepScanResult.error}</p>
                     ) : (
-                      <p className="mt-1 text-sm text-white/80 leading-relaxed whitespace-pre-wrap">{deepScanResult.explanation}</p>
+                      <p className="mt-1 text-xs text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">{deepScanResult.explanation}</p>
                     )}
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="rounded-full bg-purple-500/20 p-2 text-purple-400">
-                      <Brain size={20} />
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-purple-500/10 p-2 text-purple-600">
+                      <Brain size={18} />
                     </div>
                     <div>
-                      <h5 className="font-display text-sm font-bold text-purple-300">Logic Comparison Available</h5>
-                      <p className="mt-0.5 text-xs text-white/60">Analyze algorithmic logic and detect cross-language translations instantly.</p>
+                      <h5 className="text-sm font-bold text-purple-700">AI Deep Scan Available</h5>
+                      <p className="mt-0.5 text-xs text-[var(--text-secondary)]">Analyze algorithmic logic using embedding models.</p>
                     </div>
                   </div>
                   <button 
                     onClick={() => runDeepScan()} 
                     disabled={scanning}
-                    className="flex items-center gap-2 rounded-lg bg-purple-500/20 px-4 py-2 text-xs font-bold uppercase tracking-widest text-purple-300 border border-purple-500/30 hover:bg-purple-500/40 transition-all shadow-[0_0_15px_rgba(168,85,247,0.15)] hover:shadow-[0_0_25px_rgba(168,85,247,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-700 transition-colors disabled:opacity-50"
                   >
                     {scanning ? <Loader2 className="animate-spin" size={14} /> : <Brain size={14} />}
-                    {scanning ? 'Comparing...' : 'Compare Logic'}
+                    {scanning ? 'Scanning...' : 'Deep Scan'}
                   </button>
                 </div>
               )}
             </div>
 
-            {/* 4 Metric Cards */}
+            {/* Metrics Cards */}
             {selectedLocalPair?.details && (
-              <div className="grid grid-cols-2 divide-x divide-y divide-white/10 sm:grid-cols-4 sm:divide-y-0">
-                {/* Token */}
-                <div className="flex flex-col items-center justify-center p-6 transition-colors hover:bg-white/5">
-                  <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-cyan-400">
-                    <FileText size={14} /> Token
+              <div className="grid grid-cols-2 divide-x divide-y divide-[var(--border-default)] sm:grid-cols-4 sm:divide-y-0 bg-[var(--bg-secondary)]">
+                <div className="flex flex-col items-center justify-center p-4">
+                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase text-[var(--text-tertiary)]">
+                    <FileText size={12} /> Token
                   </div>
-                  <span className="font-display text-3xl font-bold text-white">
+                  <span className="text-xl font-bold text-[var(--text-primary)]">
                     {selectedLocalPair.details.tokenScore?.toFixed(1) || 0}%
                   </span>
                 </div>
-                {/* Structural */}
-                <div className="flex flex-col items-center justify-center p-6 transition-colors hover:bg-white/5">
-                  <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-purple-400">
-                    <GitMerge size={14} /> Structural
+                <div className="flex flex-col items-center justify-center p-4">
+                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase text-[var(--text-tertiary)]">
+                    <GitMerge size={12} /> Structural
                   </div>
-                  <span className="font-display text-3xl font-bold text-white">
+                  <span className="text-xl font-bold text-[var(--text-primary)]">
                     {selectedLocalPair.details.structuralScore?.toFixed(1) || 0}%
                   </span>
                 </div>
-                {/* Semantic */}
-                <div className="flex flex-col items-center justify-center p-6 transition-colors hover:bg-white/5">
-                  <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-blue-400">
-                    <Brain size={14} /> Semantic
+                <div className="flex flex-col items-center justify-center p-4">
+                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase text-[var(--text-tertiary)]">
+                    <Brain size={12} /> Semantic
                   </div>
-                  <span className="font-display text-3xl font-bold text-white">
+                  <span className="text-xl font-bold text-[var(--text-primary)]">
                     {selectedLocalPair.details.semanticScore?.toFixed(1) || 0}%
                   </span>
                 </div>
-                {/* Confidence */}
-                <div className="flex flex-col items-center justify-center p-6 transition-colors hover:bg-white/5">
-                  <div className={`mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest ${
-                      (selectedLocalPair.details.confidenceScore || 0) >= 80 ? 'text-emerald-400' : 'text-amber-400'
-                  }`}>
-                    <ShieldAlert size={14} /> Confidence
+                <div className="flex flex-col items-center justify-center p-4">
+                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase text-[var(--text-tertiary)]">
+                    <ShieldAlert size={12} /> Confidence
                   </div>
-                  <span className="font-display text-3xl font-bold text-white">
+                  <span className="text-xl font-bold text-[var(--text-primary)]">
                     {selectedLocalPair.details.confidenceScore?.toFixed(1) || 0}%
                   </span>
                 </div>
@@ -368,25 +346,25 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
             )}
 
             {/* Footer Summary Strip */}
-            <div className="flex flex-wrap items-center justify-between border-t border-white/10 bg-black/40 px-6 py-3 text-xs text-white/70">
+            <div className="flex flex-wrap items-center justify-between border-t border-[var(--border-default)] bg-[var(--bg-elevated)] px-5 py-2.5 text-xs text-[var(--text-secondary)]">
               <div>
-                <span className="font-semibold text-white">Boilerplate ignored:</span> {selectedLocalPair?.details?.boilerplateRemovedCount || 0}
+                <span className="font-semibold text-[var(--text-primary)]">Boilerplate ignored:</span> {selectedLocalPair?.details?.boilerplateRemovedCount || 0}
               </div>
               <div className="flex gap-4">
-                <span><span className="font-semibold text-white">Overlap:</span> {diffData.summary.overlapPercent}%</span>
-                <span><span className="font-semibold text-white">Changed:</span> {diffData.summary.changedLines}</span>
+                <span><span className="font-semibold text-[var(--text-primary)]">Overlap:</span> {diffData.summary.overlapPercent}%</span>
+                <span><span className="font-semibold text-[var(--text-primary)]">Changed:</span> {diffData.summary.changedLines}</span>
               </div>
             </div>
           </div>
 
-          <div className="overflow-auto max-h-[600px] scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent rounded-2xl border border-white/10 bg-black/20 shadow-inner backdrop-blur-sm">
+          <div className="overflow-auto max-h-[600px] scrollbar-thin scrollbar-thumb-[var(--border-default)] scrollbar-track-transparent rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] shadow-inner">
             <table className="w-full border-collapse text-xs table-fixed">
-              <thead className="sticky top-0 z-0 shadow-md">
-                <tr className="bg-black/80 backdrop-blur-md text-white/70">
-                  <th className="w-12 px-2 py-3 text-right font-semibold uppercase tracking-wider text-[10px] select-none border-b border-white/10">L#</th>
-                  <th className="w-[calc(50%-48px)] px-4 py-3 text-left font-semibold uppercase tracking-wider text-[10px] border-b border-white/10">Original Snippet</th>
-                  <th className="w-12 px-2 py-3 text-right font-semibold uppercase tracking-wider text-[10px] border-l border-b border-white/10 select-none">R#</th>
-                  <th className="w-[calc(50%-48px)] px-4 py-3 text-left font-semibold uppercase tracking-wider text-[10px] border-b border-white/10">Compared Snippet</th>
+              <thead className="sticky top-0 z-10 shadow-sm">
+                <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border-default)]">
+                  <th className="w-10 px-2 py-2 text-right font-semibold text-[var(--text-secondary)] select-none border-r border-[var(--border-default)]">#</th>
+                  <th className="w-[calc(50%-40px)] px-4 py-2 text-left font-semibold text-[var(--text-secondary)]">Original Snippet</th>
+                  <th className="w-10 px-2 py-2 text-right font-semibold text-[var(--text-secondary)] select-none border-x border-[var(--border-default)]">#</th>
+                  <th className="w-[calc(50%-40px)] px-4 py-2 text-left font-semibold text-[var(--text-secondary)]">Compared Snippet</th>
                 </tr>
               </thead>
               <tbody className="font-mono text-[11px] leading-relaxed">
@@ -396,16 +374,16 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
                   const isSameText = row.type === 'same' && !isBlankSame;
 
                   return (
-                    <tr key={`row-${idx}`} className={`${rowBg} hover:bg-white/5 transition-colors`}>
-                      <td className="w-12 px-2 py-1 text-right text-white/30 select-none border-r border-white/5">{row.leftNo ?? ''}</td>
-                      <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-6 ${
-                        isSameText ? 'text-rose-200' : 'text-white/80'
-                      } border-r border-white/5`}>
+                    <tr key={`row-${idx}`} className={`${rowBg} hover:bg-[var(--bg-elevated)] transition-colors border-b border-[var(--border-default)]/30`}>
+                      <td className="w-10 px-2 py-1.5 text-right text-[var(--text-tertiary)] select-none border-r border-[var(--border-default)]">{row.leftNo ?? ''}</td>
+                      <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
+                        isSameText ? 'font-medium text-[var(--danger)]' : 'text-[var(--text-primary)]'
+                      } border-r border-[var(--border-default)]`}>
                         <CodeHighlight code={row.left} />
                       </td>
-                      <td className="w-12 px-2 py-1.5 text-right text-white/30 select-none border-r border-white/5">{row.rightNo ?? ''}</td>
-                      <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-6 ${
-                        isSameText ? 'text-rose-200' : 'text-white/80'
+                      <td className="w-10 px-2 py-1.5 text-right text-[var(--text-tertiary)] select-none border-r border-[var(--border-default)]">{row.rightNo ?? ''}</td>
+                      <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
+                        isSameText ? 'font-medium text-[var(--danger)]' : 'text-[var(--text-primary)]'
                       }`}>
                         <CodeHighlight code={row.right} />
                       </td>

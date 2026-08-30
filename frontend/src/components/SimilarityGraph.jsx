@@ -39,12 +39,12 @@ const SimilarityGraph = ({ data }) => {
 
   if (!data || graph.nodes.length === 0) {
     return (
-      <div className="glass-card flex min-h-[600px] flex-col items-center justify-center rounded-[2rem] border border-[#30363d] p-12 text-center">
-        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#30363d] bg-[#161b22]">
-          <Network className="text-[#8b949e]" size={28} />
+      <div className="glass-card flex min-h-[600px] flex-col items-center justify-center rounded-[2rem] border border-[var(--border-default)] p-12 text-center">
+        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--border-default)] bg-[var(--bg-secondary)]">
+          <Network className="text-[var(--text-tertiary)]" size={28} />
         </div>
-        <h3 className="font-display mb-2 text-2xl font-bold text-[#e6edf3]">No Embedding Graph Yet</h3>
-        <p className="max-w-sm text-sm leading-6 text-[#8b949e]">Run an analysis to generate semantic embeddings and graph links.</p>
+        <h3 className="font-display mb-2 text-2xl font-bold text-[var(--text-primary)]">No Embedding Graph Yet</h3>
+        <p className="max-w-sm text-sm leading-6 text-[var(--text-tertiary)]">Run an analysis to generate semantic embeddings and graph links.</p>
       </div>
     );
   }
@@ -74,60 +74,60 @@ const SimilarityGraph = ({ data }) => {
   const isEdgeActive = (edge) => !activeNodeId || edge.source === activeNodeId || edge.target === activeNodeId;
 
   const content = (
-    <div className={`glass-card rounded-[2rem] border border-[#30363d] p-6 shadow-[0_16px_40px_rgba(1,4,9,0.35)] sm:p-8 lg:p-10 transition-all duration-300 ${isFullscreen ? 'fixed inset-4 z-[99999] overflow-y-auto bg-[#0d1117] shadow-2xl' : 'relative h-full w-full'}`}>
+    <div className={`card ${isFullscreen ? 'fixed inset-4 z-[99999] overflow-y-auto bg-[var(--bg-primary)]' : 'relative h-full w-full'} p-6 sm:p-8 lg:p-10 transition-all duration-300`}>
       {isFullscreen && (
         <button 
           onClick={() => setIsFullscreen(false)}
-          className="fixed top-8 right-8 z-[100000] rounded-full bg-[#161b22] p-3 text-white border border-[#30363d] shadow-2xl hover:text-[#58a6ff] hover:border-[#58a6ff]/50 transition-colors"
+          className="fixed top-8 right-8 z-[100000] rounded-full bg-[var(--bg-secondary)] p-3 text-[var(--text-primary)] border border-[var(--border-default)] hover:text-[var(--accent)] hover:border-[var(--border-default)] transition-colors"
         >
           <Minimize2 size={24} />
         </button>
       )}
 
       {!isFullscreen && (
-<div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+      <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
         <div className="max-w-3xl">
           <div className="mb-3 flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#30363d] bg-[#161b22] text-[#58a6ff]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-default)] bg-[var(--bg-secondary)] text-[var(--accent)]">
               <Radar size={18} />
             </span>
             <div>
               <div className="flex items-center gap-4">
-              <h3 className="font-display text-2xl font-bold text-[#e6edf3] sm:text-3xl">Embedding Similarity Graph</h3>
+              <h3 className="font-display text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">Embedding Similarity Graph</h3>
               <button 
                 onClick={() => setIsFullscreen(!isFullscreen)} 
-                className="rounded-full bg-[#161b22] p-2 text-[#8b949e] border border-[#30363d] hover:text-[#58a6ff] hover:border-[#58a6ff]/50 transition-colors"
+                className="rounded-full bg-[var(--bg-secondary)] p-2 text-[var(--text-tertiary)] border border-[var(--border-default)] hover:text-[var(--accent)] hover:border-[var(--border-default)] transition-colors"
                 title="Toggle Fullscreen"
               >
                 <Maximize2 size={16} />
               </button>
             </div>
-              <p className="text-sm text-[#8b949e]">Node size indicates peak similarity. Hover to isolate a node's semantic network.</p>
+              <p className="text-sm text-[var(--text-tertiary)]">Node size indicates peak similarity. Hover to isolate a node's semantic network.</p>
             </div>
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-[#30363d] bg-[#161b22] px-4 py-2 text-xs font-semibold text-[#c9d1d9]">
-            <Link2 size={14} className="text-[#58a6ff]" /> {filteredLinks.length} connections
+          <div className="flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)]">
+            <Link2 size={14} className="text-[var(--accent)]" /> {filteredLinks.length} connections
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-[#30363d] bg-[#161b22] px-4 py-2 text-xs font-semibold text-[#c9d1d9]">
-            <Network size={14} className="text-[#58a6ff]" /> {graph.nodes.length} submissions
+          <div className="flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)]">
+            <Network size={14} className="text-[var(--accent)]" /> {graph.nodes.length} submissions
           </div>
         </div>
       </div>
-
       )}
+
       <div className={`flex flex-col gap-6 ${isFullscreen ? "h-full" : "lg:flex-row"}`}>
         {/* Main Graph Area */}
-        <div className="flex-1 overflow-x-auto rounded-2xl border border-[#30363d] bg-gradient-to-b from-[#0d1117] to-[#161b22] shadow-inner relative">
+        <div className="flex-1 overflow-x-auto rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] relative">
           
           {/* Threshold Filter Overlay */}
-          <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 rounded-xl border border-[#30363d] bg-[#0d1117]/80 p-4 backdrop-blur-md">
+          <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)]/90 p-4 backdrop-blur-md">
             <div className="flex items-center justify-between gap-4">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#8b949e] flex items-center gap-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] flex items-center gap-2">
                 <SlidersHorizontal size={14}/> Noise Filter
               </label>
-              <span className="text-xs font-semibold text-[#58a6ff]">&gt; {minThreshold}% Match</span>
+              <span className="text-xs font-semibold text-[var(--accent)]">&gt; {minThreshold}% Match</span>
             </div>
             <input 
               type="range" 
@@ -136,27 +136,28 @@ const SimilarityGraph = ({ data }) => {
               step="5"
               value={minThreshold}
               onChange={(e) => setMinThreshold(Number(e.target.value))}
-              className="w-48 accent-[#58a6ff] cursor-pointer"
+              className="w-48 accent-[var(--accent)] cursor-pointer"
             />
           </div>
 
           <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="h-[600px] w-full min-w-[800px]">
             <defs>
               <radialGradient id="glowGrad">
-                <stop offset="0%" stopColor="rgba(88, 166, 255, 0.15)" />
+                <stop offset="0%" stopColor="var(--accent-muted)" />
                 <stop offset="100%" stopColor="transparent" />
               </radialGradient>
             </defs>
-
-            {/* Background Glow */}
-            <circle cx={cx} cy={cy} r={radius + 40} fill="url(#glowGrad)" />
-
-            {/* Render edges */}
+            {/* Edges */}
             {filteredLinks.map((edge, idx) => {
-              const source = nodeById.get(edge.source);
-              const target = nodeById.get(edge.target);
+              const source = graph.nodes.find((n) => n.id === edge.source);
+              const target = graph.nodes.find((n) => n.id === edge.target);
               if (!source || !target) return null;
-              
+
+              const dx = target.x - source.x;
+              const dy = target.y - source.y;
+              const cx = source.x + dx * 0.5 + dy * 0.1;
+              const cy = source.y + dy * 0.5 - dx * 0.1;
+
               const isHigh = edge.weight > 75;
               const isSuspicious = edge.weight >= 40 && edge.weight <= 75;
               const active = isEdgeActive(edge);
@@ -169,7 +170,7 @@ const SimilarityGraph = ({ data }) => {
                   key={`edge-${idx}`}
                   d={d}
                   fill="none"
-                  stroke={isHigh ? '#f85149' : isSuspicious ? '#d29922' : '#58a6ff'}
+                  stroke={isHigh ? 'var(--danger)' : isSuspicious ? 'var(--warning)' : 'var(--accent)'}
                   strokeWidth={active ? (isHigh ? 3 : 2) : 1}
                   opacity={dimmed ? 0.05 : active ? (isHigh ? 0.8 : 0.6) : (isHigh ? 0.4 : 0.2)}
                   strokeLinecap="round"
@@ -191,7 +192,7 @@ const SimilarityGraph = ({ data }) => {
               const dimmed = (activeNodeId && !active) || (!activeNodeId && !hasVisibleLinks);
               
               const size = isSelected ? 24 : isHovered ? 22 : 14 + intensity * 10;
-              const fillColor = maxSim > 75 ? '#f85149' : maxSim >= 40 ? '#d29922' : '#58a6ff';
+              const fillColor = maxSim > 75 ? 'var(--danger)' : maxSim >= 40 ? 'var(--warning)' : 'var(--accent)';
               
               const labelRadius = radius + 30;
               const labelX = cx + labelRadius * Math.cos(node.angle);
@@ -216,7 +217,7 @@ const SimilarityGraph = ({ data }) => {
                     cy={node.y}
                     r={size}
                     fill={fillColor}
-                    stroke="#0d1117"
+                    stroke="var(--bg-primary)"
                     strokeWidth="3"
                     className="transition-all duration-300 drop-shadow-md"
                   />
@@ -226,7 +227,7 @@ const SimilarityGraph = ({ data }) => {
                     y={labelY}
                     dy=".3em"
                     textAnchor={isRightSide ? 'start' : 'end'}
-                    fill={isHovered || isSelected ? '#ffffff' : '#c9d1d9'}
+                    fill={isHovered || isSelected ? 'var(--text-primary)' : 'var(--text-secondary)'}
                     fontSize={isHovered || isSelected ? '12px' : '10px'}
                     fontWeight={isHovered || isSelected ? 'bold' : 'normal'}
                     className="transition-all duration-300 select-none pointer-events-none drop-shadow-lg"
@@ -242,43 +243,43 @@ const SimilarityGraph = ({ data }) => {
         {/* Legend Sidebar */}
         {!isFullscreen && (
         <div className="w-full lg:w-72 space-y-4">
-          <div className="rounded-2xl border border-[#30363d] bg-[#0d1117] p-5 shadow-lg">
-            <h4 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#8b949e]">Peak Match Strength</h4>
+          <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-primary)] p-5 shadow-lg">
+            <h4 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Peak Match Strength</h4>
             
             <div className="mb-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-6 w-6 items-center justify-center">
-                  <div className="h-3 w-3 rounded-full bg-[#58a6ff]"></div>
+                  <div className="h-3 w-3 rounded-full bg-[var(--accent)]"></div>
                 </div>
-                <span className="text-sm font-medium text-[#c9d1d9]">Low ({'<'}40%)</span>
+                <span className="text-sm font-medium text-[var(--text-secondary)]">Low ({'<'}40%)</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex h-6 w-6 items-center justify-center">
-                  <div className="h-4 w-4 rounded-full bg-[#d29922]"></div>
+                  <div className="h-4 w-4 rounded-full bg-[var(--warning)]"></div>
                 </div>
-                <span className="text-sm font-medium text-[#c9d1d9]">Suspicious (40-75%)</span>
+                <span className="text-sm font-medium text-[var(--text-secondary)]">Suspicious (40-75%)</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex h-6 w-6 items-center justify-center">
-                  <div className="h-5 w-5 rounded-full bg-[#f85149]"></div>
+                  <div className="h-5 w-5 rounded-full bg-[var(--danger)]"></div>
                 </div>
-                <span className="text-sm font-medium text-[#c9d1d9]">High Risk ({'>'}75%)</span>
+                <span className="text-sm font-medium text-[var(--text-secondary)]">High Risk ({'>'}75%)</span>
               </div>
             </div>
 
-            <h4 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#8b949e]">Link Strength</h4>
+            <h4 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Link Strength</h4>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="h-0.5 w-6 rounded-full bg-[#58a6ff]/60"></div>
-                <span className="text-sm font-medium text-[#c9d1d9]">Weak Link ({'<'}40%)</span>
+                <div className="h-0.5 w-6 rounded-full bg-[var(--accent)]/60"></div>
+                <span className="text-sm font-medium text-[var(--text-secondary)]">Weak Link ({'<'}40%)</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="h-1 w-6 rounded-full bg-[#d29922]/80"></div>
-                <span className="text-sm font-medium text-[#c9d1d9]">Suspicious Link (40-75%)</span>
+                <div className="h-1 w-6 rounded-full bg-[var(--warning)]/80"></div>
+                <span className="text-sm font-medium text-[var(--text-secondary)]">Suspicious Link (40-75%)</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="h-1.5 w-6 rounded-full bg-[#f85149]"></div>
-                <span className="text-sm font-medium text-[#c9d1d9]">Strong Link ({'>'}75%)</span>
+                <div className="h-1.5 w-6 rounded-full bg-[var(--danger)]"></div>
+                <span className="text-sm font-medium text-[var(--text-secondary)]">Strong Link ({'>'}75%)</span>
               </div>
             </div>
           </div>
@@ -293,26 +294,26 @@ const SimilarityGraph = ({ data }) => {
         const totalConnections = nodeEdges.length;
         
         const riskLevel = maxMatch > 75 ? 'CRITICAL RISK' : maxMatch >= 40 ? 'SUSPICIOUS' : 'LOW RISK';
-        const riskColor = maxMatch > 75 ? 'text-[#f85149]' : maxMatch >= 40 ? 'text-[#d29922]' : 'text-[#58a6ff]';
-        const riskBg = maxMatch > 75 ? 'bg-[#f85149]/10 border-[#f85149]/20 shadow-[inset_0_0_20px_rgba(248,81,73,0.05)]' 
-                     : maxMatch >= 40 ? 'bg-[#d29922]/10 border-[#d29922]/20 shadow-[inset_0_0_20px_rgba(210,153,34,0.05)]' 
-                     : 'bg-[#58a6ff]/10 border-[#58a6ff]/20 shadow-[inset_0_0_20px_rgba(88,166,255,0.05)]';
-        const topBorder = maxMatch > 75 ? 'border-t-[#f85149]' : maxMatch >= 40 ? 'border-t-[#d29922]' : 'border-t-[#58a6ff]';
+        const riskColor = maxMatch > 75 ? 'text-[var(--danger)]' : maxMatch >= 40 ? 'text-[var(--warning)]' : 'text-[var(--accent)]';
+        const riskBg = maxMatch > 75 ? 'bg-[var(--danger)]/10 border-[var(--danger)]/20 shadow-sm' 
+                     : maxMatch >= 40 ? 'bg-[var(--warning)]/10 border-[var(--warning)]/20 shadow-sm' 
+                     : 'bg-[var(--accent)]/10 border-[var(--accent)]/20 shadow-sm';
+        const topBorder = maxMatch > 75 ? 'border-t-[var(--danger)]' : maxMatch >= 40 ? 'border-t-[var(--warning)]' : 'border-t-[var(--accent)]';
 
         return (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`mt-6 overflow-hidden rounded-2xl border border-[#30363d] border-t-4 ${topBorder} bg-[#0d1117]/90 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]`}
+            className={`mt-6 overflow-hidden rounded-2xl border border-[var(--border-default)] border-t-4 ${topBorder} bg-[var(--bg-primary)]/90 backdrop-blur-xl shadow-xl`}
           >
-            <div className="flex items-center justify-between border-b border-[#30363d] bg-[#161b22]/70 px-6 py-4">
-              <h4 className="font-display flex items-center gap-3 text-lg font-bold text-[#e6edf3]">
-                <Radar className="text-[#58a6ff]" size={20} />
-                Node Intelligence: <span className="text-[#58a6ff]">{selectedNode.split('/').pop()}</span>
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--bg-secondary)]/70 px-6 py-4">
+              <h4 className="font-display flex items-center gap-3 text-lg font-bold text-[var(--text-primary)]">
+                <Radar className="text-[var(--accent)]" size={20} />
+                Node Intelligence: <span className="text-[var(--accent)]">{selectedNode.split('/').pop()}</span>
               </h4>
               <button 
                 onClick={() => setSelectedNode(null)}
-                className="rounded-lg p-1.5 text-[#8b949e] transition-colors hover:bg-[#30363d] hover:text-white"
+                className="rounded-lg p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--border-default)] hover:text-[var(--text-primary)]"
               >
                 <X size={18} />
               </button>
@@ -329,34 +330,34 @@ const SimilarityGraph = ({ data }) => {
                   <p className={`text-2xl font-black tracking-tight ${riskColor}`}>{riskLevel}</p>
                 </div>
                 
-                <div className="flex flex-col justify-center rounded-xl border border-[#30363d] bg-[#161b22]/50 p-5 shadow-inner">
+                <div className="flex flex-col justify-center rounded-xl border border-[var(--border-default)] bg-[var(--bg-secondary)]/50 p-5 shadow-inner">
                   <div className="mb-1 flex items-center gap-2">
-                    <AlertTriangle size={14} className="text-[#f85149]" />
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#8b949e]">Peak Match Strength</p>
+                    <AlertTriangle size={14} className="text-[var(--danger)]" />
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Peak Match Strength</p>
                   </div>
-                  <p className="text-2xl font-bold text-[#e6edf3]">{maxMatch}%</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{maxMatch}%</p>
                 </div>
 
-                <div className="flex flex-col justify-center rounded-xl border border-[#30363d] bg-[#161b22]/50 p-5 shadow-inner">
+                <div className="flex flex-col justify-center rounded-xl border border-[var(--border-default)] bg-[var(--bg-secondary)]/50 p-5 shadow-inner">
                   <div className="mb-1 flex items-center gap-2">
-                    <Network size={14} className="text-[#8b949e]" />
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#8b949e]">Total Connected Files</p>
+                    <Network size={14} className="text-[var(--text-tertiary)]" />
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Total Connected Files</p>
                   </div>
-                  <p className="text-2xl font-bold text-[#e6edf3]">{totalConnections}</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{totalConnections}</p>
                 </div>
               </div>
 
               {/* Full Width Table */}
-              <div className="overflow-hidden rounded-xl border border-[#30363d] bg-[#0d1117] shadow-lg">
-                <div className="border-b border-[#30363d] bg-[#161b22] px-5 py-3">
-                  <h5 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#e6edf3]">
-                    <TrendingUp size={14} className="text-[#d29922]" /> Highest Risk Pairings
+              <div className="overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] shadow-sm">
+                <div className="border-b border-[var(--border-default)] bg-[var(--bg-secondary)] px-5 py-3">
+                  <h5 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-primary)]">
+                    <TrendingUp size={14} className="text-[var(--warning)]" /> Highest Risk Pairings
                   </h5>
                 </div>
                 
-                <div className="max-h-[250px] overflow-y-auto scrollbar-thin scrollbar-track-[#0d1117] scrollbar-thumb-[#30363d] hover:scrollbar-thumb-[#484f58]">
+                <div className="max-h-[250px] overflow-y-auto scrollbar-thin scrollbar-track-[var(--bg-primary)] scrollbar-thumb-[var(--border-default)] hover:scrollbar-thumb-[var(--border-default)]">
                   {nodeEdges.length === 0 && (
-                    <div className="p-8 text-center text-sm text-[#8b949e]">No connections match the current noise threshold.</div>
+                    <div className="p-8 text-center text-sm text-[var(--text-tertiary)]">No connections match the current noise threshold.</div>
                   )}
                   {nodeEdges
                     .sort((a, b) => b.weight - a.weight)
@@ -366,22 +367,22 @@ const SimilarityGraph = ({ data }) => {
                       const isSuspicious = edge.weight >= 40 && edge.weight <= 75;
                       
                       // Zebra striping
-                      const rowBg = idx % 2 === 0 ? 'bg-transparent' : 'bg-[#161b22]/40';
+                      const rowBg = idx % 2 === 0 ? 'bg-transparent' : 'bg-[var(--bg-secondary)]/40';
 
                       return (
-                        <div key={idx} className={`group flex items-center justify-between border-b border-[#30363d]/30 ${rowBg} px-5 py-3 transition-colors hover:bg-[#1f2937]/60 cursor-pointer`}>
+                        <div key={idx} className={`group flex items-center justify-between border-b border-[var(--border-default)]/30 ${rowBg} px-5 py-3 transition-colors hover:bg-[var(--bg-surface)] cursor-pointer`}>
                           <div className="flex items-center gap-4 truncate">
-                            <span className="text-sm font-semibold text-[#c9d1d9] transition-colors group-hover:text-white truncate">
+                            <span className="text-sm font-semibold text-[var(--text-secondary)] transition-colors group-hover:text-[var(--text-primary)] truncate">
                               {targetNode.split('/').pop()}
                             </span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#58a6ff] opacity-0 transition-all duration-300 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--accent)] opacity-0 transition-all duration-300 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0">
                               Inspect →
                             </span>
                           </div>
                           <span className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-[10px] font-bold tracking-wider ${
-                              isHigh ? 'bg-[#f85149]/10 text-[#f85149] border border-[#f85149]/30 shadow-[0_0_10px_rgba(248,81,73,0.1)]' 
-                              : isSuspicious ? 'bg-[#d29922]/10 text-[#d29922] border border-[#d29922]/30'
-                              : 'bg-[#58a6ff]/10 text-[#58a6ff] border border-[#58a6ff]/30'
+                              isHigh ? 'bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/30 shadow-sm' 
+                              : isSuspicious ? 'bg-[var(--warning)]/10 text-[var(--warning)] border border-[var(--warning)]/30'
+                              : 'bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/30'
                           }`}>
                             {Math.round(edge.weight)}% MATCH
                           </span>

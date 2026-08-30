@@ -50,7 +50,7 @@ const LoginView = () => {
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse 600px 400px at 50% 40%, rgba(99, 102, 241, 0.08), transparent)',
+            'radial-gradient(ellipse 600px 400px at 50% 40%, rgba(79, 70, 229, 0.08), transparent)',
         }}
       />
 
@@ -70,15 +70,15 @@ const LoginView = () => {
             style={{
               background: 'var(--accent-muted)',
               border: '1px solid var(--border-default)',
-              color: 'var(--accent-light)',
+              color: 'var(--accent)',
             }}
           >
             <ShieldCheck size={28} />
           </motion.div>
-          <h1 className="page-title text-[28px] mb-2">
+          <h1 className="page-title text-[28px] mb-2 text-[var(--text-primary)] font-bold">
             PlagShield
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+          <p className="text-[var(--text-secondary)] text-sm">
             {isRegistering
               ? 'Create your account to get started.'
               : 'Sign in to your account.'}
@@ -86,7 +86,7 @@ const LoginView = () => {
         </div>
 
         {/* Form card */}
-        <div className="card p-8">
+        <div className="card p-8 shadow-sm">
           <AnimatePresence mode="wait">
             {error && (
               <motion.div
@@ -96,14 +96,7 @@ const LoginView = () => {
                 transition={{ duration: 0.2 }}
                 className="mb-5"
               >
-                <div
-                  className="flex items-start gap-3 p-3 rounded-lg text-sm"
-                  style={{
-                    background: 'rgba(239, 68, 68, 0.08)',
-                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                    color: '#fca5a5',
-                  }}
-                >
+                <div className="flex items-start gap-3 p-3 rounded-lg text-sm bg-[var(--danger)]/10 border border-[var(--danger)]/20 text-[var(--danger)] font-medium">
                   <Lock size={16} className="mt-0.5 flex-shrink-0" />
                   <p>{error}</p>
                 </div>
@@ -117,8 +110,7 @@ const LoginView = () => {
               <label className="section-label">Username</label>
               <div className="relative">
                 <div
-                  className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                  style={{ color: 'var(--text-tertiary)' }}
+                  className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-tertiary)]"
                 >
                   <User size={16} />
                 </div>
@@ -127,8 +119,7 @@ const LoginView = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  className="input-field"
-                  style={{ paddingLeft: '36px' }}
+                  className="input-field pl-9"
                   placeholder="Enter your username"
                 />
               </div>
@@ -139,8 +130,7 @@ const LoginView = () => {
               <label className="section-label">Password</label>
               <div className="relative">
                 <div
-                  className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                  style={{ color: 'var(--text-tertiary)' }}
+                  className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-tertiary)]"
                 >
                   <KeyRound size={16} />
                 </div>
@@ -149,8 +139,7 @@ const LoginView = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="input-field"
-                  style={{ paddingLeft: '36px' }}
+                  className="input-field pl-9"
                   placeholder="Enter your password"
                 />
               </div>
@@ -162,8 +151,7 @@ const LoginView = () => {
                 <label className="section-label">Confirm Password</label>
                 <div className="relative">
                   <div
-                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                    style={{ color: 'var(--text-tertiary)' }}
+                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-tertiary)]"
                   >
                     <KeyRound size={16} />
                   </div>
@@ -172,8 +160,7 @@ const LoginView = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required={isRegistering}
-                    className="input-field"
-                    style={{ paddingLeft: '36px' }}
+                    className="input-field pl-9"
                     placeholder="Confirm your password"
                   />
                 </div>
@@ -184,12 +171,7 @@ const LoginView = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-primary w-full justify-center"
-              style={{
-                padding: '12px 20px',
-                opacity: isLoading ? 0.6 : 1,
-                pointerEvents: isLoading ? 'none' : 'auto',
-              }}
+              className={`btn-primary w-full justify-center py-3 ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}
             >
               {isLoading ? (
                 <div
@@ -204,7 +186,7 @@ const LoginView = () => {
 
         {/* Toggle mode */}
         <div className="mt-6 text-center">
-          <p style={{ color: 'var(--text-tertiary)', fontSize: '13px' }}>
+          <p className="text-[var(--text-tertiary)] text-[13px]">
             {isRegistering ? 'Already have an account?' : "Don't have an account?"}
           </p>
           <button
@@ -214,13 +196,7 @@ const LoginView = () => {
               setError('');
               setConfirmPassword('');
             }}
-            className="mt-1 inline-flex items-center gap-1 text-sm font-medium transition-colors"
-            style={{
-              color: 'var(--accent-light)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-            }}
+            className="mt-1 inline-flex items-center gap-1 text-sm font-medium transition-colors text-[var(--accent)] hover:text-[#4338ca] bg-transparent border-none cursor-pointer"
           >
             {isRegistering ? 'Sign in instead' : 'Create an account'}
             <ChevronRight size={14} />

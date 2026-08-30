@@ -9,7 +9,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
       <App />
-    <Toaster position='bottom-right' toastOptions={{ style: { background: '#161b22', color: '#c9d1d9', border: '1px solid #30363d' } }} />
+    <Toaster position='bottom-right' toastOptions={{ style: { background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-default)' } }} />
     </AuthProvider>
   </StrictMode>,
 )

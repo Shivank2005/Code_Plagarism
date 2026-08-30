@@ -305,13 +305,13 @@ export function usePlagShieldDashboard() {
 
   const handleUploadSuccess = useCallback(
     async (data) => {
+      setIsAnalyzing(true);
       setActiveBatch(data.batchId);
       if (Array.isArray(data.files) && data.files.length > 0) {
         setBatchFiles(data.files);
         await fetchSemanticEmbeddings(data.files);
       }
       fetchHistory();
-      setIsAnalyzing(true);
       startAnalysis(data.batchId);
     },
     [buildLocalResults, fetchHistory, fetchSemanticEmbeddings, preferences, startAnalysis],
