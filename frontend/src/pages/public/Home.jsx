@@ -104,14 +104,13 @@ const Home = () => {
             <motion.p variants={itemVariants} className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed text-[var(--text-secondary)] mb-10">
               PlagShield leverages <strong>CodeBERT Machine Learning</strong> and <strong>Abstract Syntax Tree (AST)</strong> structural parsing to detect sophisticated code obfuscation that defeats standard text-based plagiarism checkers.
             </motion.p>
-          </div>
 
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button onClick={handlePrimaryAction} className="btn-primary py-4 px-8 text-base shadow-lg shadow-[var(--accent)]/20 hover:shadow-[var(--accent)]/40 transition-all group w-full sm:w-auto flex items-center justify-center gap-2">
                 {token ? 'Launch Dashboard' : 'Start Engine Analysis'}
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -200,7 +199,7 @@ const Home = () => {
                 Multi-method analysis catches far more disguised copying than a plain diff.
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
       </section>
 

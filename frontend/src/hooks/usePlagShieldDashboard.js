@@ -386,19 +386,7 @@ export function usePlagShieldDashboard() {
     [buildLocalResults, fetchHistory, fetchSemanticEmbeddings, preferences, startAnalysis],
   );
 
-    // Refresh history
-    fetchHistory();
 
-    // Start the actual analysis immediately
-    setIsAnalyzing(true);
-    startAnalysis(data.batchId);
-  },
-  [
-    fetchHistory,
-    fetchSemanticEmbeddings,
-    startAnalysis,
-  ]
-);
   const updatePreference = useCallback((key, value) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   }, []);
