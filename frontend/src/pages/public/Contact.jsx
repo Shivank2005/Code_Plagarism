@@ -13,7 +13,7 @@ import {
   Star,
 } from 'lucide-react';
 
-const Contact = () => {
+const Contact = ({ embedded = false }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -56,12 +56,6 @@ const Contact = () => {
       return;
     }
 
-    /*
-     * Currently handled on the frontend.
-     * Later this can be connected to:
-     * POST /api/feedback
-     */
-
     console.log('Feedback submitted:', formData);
 
     setSubmitted(true);
@@ -77,87 +71,61 @@ const Contact = () => {
   };
 
   return (
-    <div
-      className="min-h-screen overflow-x-hidden"
-      style={{
-        background: 'var(--bg-primary)',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <PublicNavbar />
+    <div className="min-h-screen overflow-x-hidden bg-white text-[#0F172A]">
+
+      {!embedded && <PublicNavbar />}
 
       <main className="w-full">
 
-        {/* =====================================================
-            HERO
-        ====================================================== */}
+        {/* HERO */}
 
-        <section className="px-4 sm:px-6 pt-16 sm:pt-20 pb-12">
+        {!embedded && (
+          <section className="relative overflow-hidden px-4 pb-12 pt-16 sm:px-6 sm:pt-20">
+            <div className="pointer-events-none absolute left-1/2 top-[-180px] h-[450px] w-[650px] -translate-x-1/2 rounded-full bg-[#EFF6FF] opacity-70 blur-3xl" />
 
-          <div className="max-w-4xl mx-auto text-center">
+            <div className="relative mx-auto max-w-4xl text-center">
 
-            <div
-              className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-5 sm:mb-6 rounded-2xl flex items-center justify-center"
-              style={{
-                background: 'var(--accent-muted)',
-                color: 'var(--accent-light)',
-              }}
-            >
-              <MessageSquare size={30} />
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EFF6FF] text-[#2563EB] sm:mb-6 sm:h-16 sm:w-16">
+                <MessageSquare size={30} />
+              </div>
+
+              <h1 className="text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">
+                Contact{' '}
+                <span className="text-[#2563EB]">
+                  PlagShield
+                </span>
+              </h1>
+
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#64748B] sm:mt-5 sm:text-lg">
+                Have a question, suggestion, or feedback?
+                We'd love to hear from you.
+              </p>
+
             </div>
-
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-              Contact{' '}
-              <span style={{ color: 'var(--accent-light)' }}>
-                PlagShield
-              </span>
-            </h1>
-
-            <p
-              className="mt-4 sm:mt-5 text-base sm:text-lg max-w-2xl mx-auto leading-7"
-              style={{
-                color: 'var(--text-secondary)',
-              }}
-            >
-              Have a question, suggestion, or feedback?
-              We'd love to hear from you.
-            </p>
-
-          </div>
-
-        </section>
+          </section>
+        )}
 
 
-        {/* =====================================================
-            CONTACT + FEEDBACK
-        ====================================================== */}
+        {/* CONTACT + FEEDBACK */}
 
-        <section className="px-4 sm:px-6 pb-20">
+        <section className={`px-4 pb-20 sm:px-6 ${embedded ? 'pt-12 sm:pt-14' : ''}`}>
+          <div className="mx-auto max-w-6xl">
 
-          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* LEFT INFORMATION */}
 
-              {/* =================================================
-                  LEFT INFORMATION
-              ================================================== */}
-
-              <div className="lg:col-span-1 space-y-5">
+              <div className="space-y-5 lg:col-span-1">
 
                 {/* Contact Information */}
 
-                <div className="card p-6">
+                <div className="rounded-xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
 
-                  <h2 className="text-xl font-bold">
+                  <h2 className="text-2xl font-bold text-[#0F172A]">
                     Get in Touch
                   </h2>
 
-                  <p
-                    className="mt-3 text-sm leading-6"
-                    style={{
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
+                  <p className="mt-3 text-base leading-6 text-[#64748B]">
                     Whether you have a question about PlagShield,
                     found an issue, or have an idea for improvement,
                     feel free to reach out.
@@ -184,18 +152,13 @@ const Contact = () => {
 
                 {/* Project Information */}
 
-                <div className="card p-6">
+                <div className="rounded-xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
 
-                  <h2 className="text-xl font-bold">
+                  <h2 className="text-2xl font-bold text-[#0F172A]">
                     About the Project
                   </h2>
 
-                  <p
-                    className="mt-3 text-sm leading-7"
-                    style={{
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
+                  <p className="mt-3 text-base leading-7 text-[#64748B]">
                     PlagShield is an intelligent source-code
                     plagiarism detection system that analyzes code
                     using token-based, structural, and semantic
@@ -207,9 +170,9 @@ const Contact = () => {
 
                 {/* Team */}
 
-                <div className="card p-6">
+                <div className="rounded-xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
 
-                  <h2 className="text-xl font-bold">
+                  <h2 className="text-2xl font-bold text-[#0F172A]">
                     Development Team
                   </h2>
 
@@ -227,26 +190,19 @@ const Contact = () => {
               </div>
 
 
-              {/* =================================================
-                  RIGHT CONTACT FORM
-              ================================================== */}
+              {/* RIGHT CONTACT FORM */}
 
               <div className="lg:col-span-2">
 
-                <div className="card p-6 sm:p-8">
+                <div className="rounded-xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
 
                   <div className="mb-7">
 
-                    <h2 className="text-2xl font-bold">
+                    <h2 className="text-2xl font-bold text-[#0F172A]">
                       Send us a Message
                     </h2>
 
-                    <p
-                      className="mt-2 text-sm"
-                      style={{
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
+                    <p className="mt-2 text-base text-[#64748B]">
                       Share your questions, feedback, or suggestions
                       with the PlagShield team.
                     </p>
@@ -257,34 +213,20 @@ const Contact = () => {
                   {/* Success Message */}
 
                   {submitted && (
-                    <div
-                      className="mb-6 rounded-xl border p-4 flex items-start gap-3"
-                      style={{
-                        borderColor: 'rgba(34, 197, 94, 0.35)',
-                        background: 'rgba(34, 197, 94, 0.08)',
-                      }}
-                    >
+                    <div className="mb-6 flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4">
 
                       <CheckCircle
                         size={21}
-                        className="flex-shrink-0 mt-0.5"
-                        style={{
-                          color: '#4ade80',
-                        }}
+                        className="mt-0.5 flex-shrink-0 text-green-600"
                       />
 
                       <div>
 
-                        <p className="font-semibold text-sm">
+                        <p className="text-base font-semibold text-[#0F172A]">
                           Message sent successfully!
                         </p>
 
-                        <p
-                          className="text-sm mt-1"
-                          style={{
-                            color: 'var(--text-secondary)',
-                          }}
-                        >
+                        <p className="mt-1 text-base text-[#64748B]">
                           Thank you for your feedback. We appreciate
                           you taking the time to help improve PlagShield.
                         </p>
@@ -302,7 +244,7 @@ const Contact = () => {
 
                     {/* Name + Email */}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
                       <FormInput
                         label="Your Name"
@@ -343,7 +285,7 @@ const Contact = () => {
 
                     <div>
 
-                      <label className="block text-sm font-medium mb-2">
+                      <label className="mb-2 block text-base font-medium text-[#0F172A]">
                         Type of Message
                       </label>
 
@@ -351,34 +293,13 @@ const Contact = () => {
                         name="type"
                         value={formData.type}
                         onChange={handleChange}
-                        className="w-full rounded-lg border px-4 py-3 text-sm outline-none"
-                        style={{
-                          background: 'var(--bg-secondary)',
-                          borderColor: 'var(--border-default)',
-                          color: 'var(--text-primary)',
-                        }}
+                        className="w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-base text-[#0F172A] outline-none transition-all focus:border-[#2563EB] focus:ring-2 focus:ring-[#EFF6FF]"
                       >
-
-                        <option>
-                          General Inquiry
-                        </option>
-
-                        <option>
-                          Feedback
-                        </option>
-
-                        <option>
-                          Bug Report
-                        </option>
-
-                        <option>
-                          Feature Suggestion
-                        </option>
-
-                        <option>
-                          Collaboration
-                        </option>
-
+                        <option>General Inquiry</option>
+                        <option>Feedback</option>
+                        <option>Bug Report</option>
+                        <option>Feature Suggestion</option>
+                        <option>Collaboration</option>
                       </select>
 
                     </div>
@@ -388,9 +309,9 @@ const Contact = () => {
 
                     <div>
 
-                      <label className="block text-sm font-medium mb-2">
+                      <label className="mb-2 block text-base font-medium text-[#0F172A]">
                         Message
-                        <span className="text-red-400 ml-1">
+                        <span className="ml-1 text-red-500">
                           *
                         </span>
                       </label>
@@ -402,12 +323,7 @@ const Contact = () => {
                         rows={6}
                         required
                         placeholder="Write your question, feedback, or suggestion..."
-                        className="w-full rounded-lg border px-4 py-3 text-sm outline-none resize-none"
-                        style={{
-                          background: 'var(--bg-secondary)',
-                          borderColor: 'var(--border-default)',
-                          color: 'var(--text-primary)',
-                        }}
+                        className="w-full resize-none rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-base text-[#0F172A] outline-none transition-all placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#EFF6FF]"
                       />
 
                     </div>
@@ -417,17 +333,15 @@ const Contact = () => {
 
                     <div>
 
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className="mb-3 flex items-center gap-2">
 
-                        <label className="text-sm font-medium">
+                        <label className="text-base font-medium text-[#0F172A]">
                           How would you rate your experience?
                         </label>
 
                         <HelpCircle
                           size={15}
-                          style={{
-                            color: 'var(--text-secondary)',
-                          }}
+                          className="text-[#64748B]"
                         />
 
                       </div>
@@ -435,15 +349,13 @@ const Contact = () => {
                       <div className="flex items-center gap-2">
 
                         {[1, 2, 3, 4, 5].map((rating) => (
-
                           <button
                             key={rating}
                             type="button"
                             onClick={() => handleRating(rating)}
-                            className="transition-transform hover:scale-110"
+                            className="text-[#94A3B8] transition-transform hover:scale-110"
                             aria-label={`Rate ${rating} out of 5`}
                           >
-
                             <Star
                               size={25}
                               fill={
@@ -451,25 +363,17 @@ const Contact = () => {
                                   ? 'currentColor'
                                   : 'none'
                               }
-                              style={{
-                                color:
-                                  formData.rating >= rating
-                                    ? 'var(--accent-light)'
-                                    : 'var(--text-secondary)',
-                              }}
+                              className={
+                                formData.rating >= rating
+                                  ? 'text-[#2563EB]'
+                                  : 'text-[#CBD5E1]'
+                              }
                             />
-
                           </button>
-
                         ))}
 
                         {formData.rating > 0 && (
-                          <span
-                            className="text-sm ml-2"
-                            style={{
-                              color: 'var(--text-secondary)',
-                            }}
-                          >
+                          <span className="ml-2 text-base text-[#64748B]">
                             {formData.rating}/5
                           </span>
                         )}
@@ -483,17 +387,10 @@ const Contact = () => {
 
                     <button
                       type="submit"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-lg font-semibold text-sm transition-all"
-                      style={{
-                        background: 'var(--accent)',
-                        color: 'white',
-                      }}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-7 py-3 text-base font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#1D4ED8] hover:shadow-md sm:w-auto"
                     >
-
                       <Send size={17} />
-
                       Send Message
-
                     </button>
 
                   </form>
@@ -505,19 +402,15 @@ const Contact = () => {
             </div>
 
           </div>
-
         </section>
 
       </main>
-
     </div>
   );
 };
 
 
-/* ============================================================
-   CONTACT ITEM
-============================================================ */
+/* CONTACT ITEM */
 
 const ContactItem = ({
   icon,
@@ -527,33 +420,17 @@ const ContactItem = ({
   return (
     <div className="flex items-start gap-3">
 
-      <div
-        className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{
-          background: 'var(--accent-muted)',
-          color: 'var(--accent-light)',
-        }}
-      >
+      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
         {icon}
       </div>
 
       <div className="min-w-0">
 
-        <p
-          className="text-xs uppercase tracking-wider font-semibold"
-          style={{
-            color: 'var(--text-secondary)',
-          }}
-        >
+        <p className="text-base font-semibold uppercase tracking-wider text-[#64748B]">
           {title}
         </p>
 
-        <p
-          className="text-sm mt-1 break-words"
-          style={{
-            color: 'var(--text-primary)',
-          }}
-        >
+        <p className="mt-1 break-words text-base text-[#0F172A]">
           {value}
         </p>
 
@@ -564,36 +441,23 @@ const ContactItem = ({
 };
 
 
-/* ============================================================
-   TEAM MEMBER
-============================================================ */
+/* TEAM MEMBER */
 
 const TeamMember = ({ name }) => {
   return (
     <div className="flex items-center gap-3">
 
-      <div
-        className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{
-          background: 'var(--accent-muted)',
-          color: 'var(--accent-light)',
-        }}
-      >
+      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#EFF6FF] text-[#2563EB]">
         <User size={17} />
       </div>
 
       <div>
 
-        <p className="text-sm font-medium">
+        <p className="text-base font-medium text-[#0F172A]">
           {name}
         </p>
 
-        <p
-          className="text-xs mt-0.5"
-          style={{
-            color: 'var(--text-secondary)',
-          }}
-        >
+        <p className="mt-0.5 text-base text-[#64748B]">
           Developer
         </p>
 
@@ -604,9 +468,7 @@ const TeamMember = ({ name }) => {
 };
 
 
-/* ============================================================
-   FORM INPUT
-============================================================ */
+/* FORM INPUT */
 
 const FormInput = ({
   label,
@@ -621,27 +483,20 @@ const FormInput = ({
   return (
     <div>
 
-      <label className="block text-sm font-medium mb-2">
-
+      <label className="mb-2 block text-base font-medium text-[#0F172A]">
         {label}
 
         {required && (
-          <span className="text-red-400 ml-1">
+          <span className="ml-1 text-red-500">
             *
           </span>
         )}
-
       </label>
 
       <div className="relative">
 
         {icon && (
-          <div
-            className="absolute left-3 top-1/2 -translate-y-1/2"
-            style={{
-              color: 'var(--text-secondary)',
-            }}
-          >
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]">
             {icon}
           </div>
         )}
@@ -653,14 +508,9 @@ const FormInput = ({
           onChange={onChange}
           placeholder={placeholder}
           required={required}
-          className={`w-full rounded-lg border px-4 py-3 text-sm outline-none ${
+          className={`w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-base text-[#0F172A] outline-none transition-all placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#EFF6FF] ${
             icon ? 'pl-10' : ''
           }`}
-          style={{
-            background: 'var(--bg-secondary)',
-            borderColor: 'var(--border-default)',
-            color: 'var(--text-primary)',
-          }}
         />
 
       </div>
