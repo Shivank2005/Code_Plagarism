@@ -1,93 +1,336 @@
-# 🛡️ PlagShield: Advanced AI Code Plagiarism Detection
+# PlagShield — Multi-Language Code Plagiarism Detection System
 
-![PlagShield Overview](https://img.shields.io/badge/Status-Active-success)
-![React](https://img.shields.io/badge/Frontend-React%20%2B%20Tailwind-61DAFB?logo=react&logoColor=black)
-![Spring Boot](https://img.shields.io/badge/Backend-Java%20Spring%20Boot-6DB33F?logo=spring&logoColor=white)
-![FastAPI](https://img.shields.io/badge/ML%20Service-Python%20FastAPI-009688?logo=fastapi&logoColor=white)
-![CodeBERT](https://img.shields.io/badge/Model-CodeBERT%20(NLP)-FF9D00?logo=huggingface&logoColor=white)
-
-PlagShield is an enterprise-grade, multi-language code plagiarism detection system. It goes beyond simple string matching by utilizing Abstract Syntax Trees (AST) and Deep Learning (CodeBERT) to catch complex cheating techniques like variable renaming, logic obfuscation, and even cross-language translation.
+An AI-powered multi-language code plagiarism detection and visualization platform that combines token-based similarity analysis, AST structural comparison, semantic embeddings, and interactive visual analytics to identify copied, modified, or obfuscated source code submissions.
 
 ---
 
-## ✨ Core Features
+## About The Project
 
-*   **🧠 Deep Learning Embeddings:** Uses Microsoft's **CodeBERT** to understand the semantic intent of code, catching students who rewrite logic entirely.
-*   **🤖 ML Classification & Anomalies:** A trained **Random Forest** scores pairs, while an **Isolation Forest** flags zero-day cheating anomalies. Includes **SHAP** matrix values to explain *why* the AI flagged the code.
-*   **🕵️ DeepScan (LLM Integration):** Compare two snippets side-by-side and click "Compare Logic" to have an AI (Groq Llama 3) explain the cheating in plain English.
-*   **🕸️ Plagiarism Rings:** Uses Graph Theory and density clustering to identify coordinated cheating groups (3+ students sharing code).
-*   **📊 Interactive Dashboards:** Similarity heatmaps, force-directed graphs, and side-by-side diff viewers built in React and Tailwind CSS.
-*   **📑 Automated Dossiers:** Export beautiful, multi-page PDF reports detailing High-Risk matches, Suspicious clusters, and AI Insights.
+**PlagShield** is an intelligent plagiarism detection platform designed to detect source code similarity across multiple programming languages using both traditional and AI-powered approaches.
+
+Traditional plagiarism detection systems primarily rely on token matching techniques and often fail against advanced obfuscation strategies such as:
+
+- Variable renaming
+- Code restructuring
+- Loop and control-flow transformations
+- Cross-language translation
+- Semantic modifications
+
+PlagShield addresses these limitations by integrating:
+
+- **JPlag** token-based similarity analysis
+- **AST (Abstract Syntax Tree)** structural comparison
+- Cross-language normalization
+- **CodeBERT** semantic embeddings
+- Machine learning-based plagiarism risk scoring
+- Interactive visualization dashboards
+
+The platform supports multiple programming languages including:
+
+- Java
+- Python
+- C/C++
+- JavaScript
+
+PlagShield is designed for:
+
+- Academic institutions
+- Competitive programming platforms
+- Technical assessment systems
+- Software quality analysis
+- Research environments
 
 ---
 
-## 🏗️ Microservice Architecture
+# Features
 
-PlagShield operates on a decoupled architecture for maximum performance during heavy batch processing.
+- Multi-language plagiarism detection
+- Token-based similarity analysis
+- AST-based structural comparison
+- Cross-language code normalization
+- AI semantic similarity detection using CodeBERT
+- Machine learning-based risk scoring
+- Anomaly and collusion detection
+- Interactive visualization dashboard
+- Similarity heatmaps and network graphs
+- Side-by-side code diff viewer
+- Exportable PDF and CSV reports
+- Batch processing support
+- Modular multi-service architecture
 
-```mermaid
-graph TD
-    UI[⚛️ React.js Dashboard] -->|REST API / JSON| API[🍃 Spring Boot Backend]
-    
-    API -->|1. Extract & Tokenize| AST[Regex/AST Parser]
-    API -->|2. Graph Clustering| Clustering[Graph Density Engine]
-    API -->|3. Store Results| DB[(MongoDB)]
-    
-    API <-->|Code Strings| ML[🐍 FastAPI CodeBERT Service]
-    
-    ML --> CodeBERT[CodeBERT Embeddings]
-    ML --> RF[Random Forest Classifier]
-    ML --> Iso[Isolation Forest]
-    ML --> Groq[Groq API DeepScan]
+
+---
+
+# System Architecture
+
+```text
+Input Code Files
+        ↓
+Preprocessing Module
+        ↓
+Token-Based Analysis (JPlag)
+        ↓
+AST Structural Analysis
+        ↓
+Cross-Language Normalization
+        ↓
+AI Semantic Embeddings (CodeBERT)
+        ↓
+ML Risk Classification
+        ↓
+Clustering & Anomaly Detection
+        ↓
+Visualization Dashboard & Reports
 ```
 
 ---
 
-## 💻 Tech Stack
+# Modules
 
-### Frontend (User Interface)
-*   **React 18 + Vite:** Lightning-fast rendering.
-*   **Tailwind CSS + Framer Motion:** Dark-mode UI with smooth animations.
-*   **react-force-graph-2d:** Network mapping of cheating rings.
-*   **jsPDF + autoTable:** Client-side PDF generation.
+## 1. Input Module
+Handles batch upload and language identification of source code submissions.
 
-### Backend (Orchestration)
-*   **Java Spring Boot 3:** Robust request handling and file management.
-*   **MongoDB:** NoSQL storage for massive similarity matrices and submission data.
-*   **JGraphT:** Graph algorithms to detect multi-student plagiarism rings.
+## 2. Preprocessing Module
+Performs:
+- Comment removal
+- Whitespace normalization
+- Identifier anonymization
+- Constant normalization
 
-### Machine Learning (AI Service)
-*   **Python + FastAPI:** High-performance async API.
-*   **HuggingFace Transformers:** Microsoft `codebert-base`.
-*   **Scikit-Learn:** Random Forest & Isolation Forest modeling.
-*   **SHAP:** Explainable AI feature importance.
-*   **Groq API:** Llama-3 integration for plain-English code analysis.
+## 3. Token Similarity Module
+Uses JPlag’s Greedy String Tiling (GST) algorithm for token-based similarity detection.
+
+## 4. AST Structural Analysis Module
+Analyzes Abstract Syntax Trees to detect structural similarities and obfuscation techniques.
+
+## 5. Cross-Language Normalization Module
+Maps language-specific constructs into a unified intermediate representation.
+
+## 6. AI Embedding Module
+Uses CodeBERT embeddings for semantic similarity analysis between code fragments.
+
+## 7. ML Classifier & Risk Scoring Module
+Combines all similarity features into a unified plagiarism risk score.
+
+## 8. Clustering Module
+Detects collusion groups and suspicious submission clusters.
+
+## 9. Visualization Dashboard
+Provides:
+- Similarity heatmaps
+- Network graphs
+- Risk-ranked tables
+- Code diff viewers
+
+## 10. Report Generation Module
+Generates:
+- PDF reports
+- CSV exports
+- Statistical summaries
 
 ---
 
-## 🚀 Getting Started
+# Tech Stack
 
-### 1. Prerequisites
-*   Node.js (v18+)
-*   Java 17+ (Maven)
-*   Python 3.9+
-*   MongoDB (Running on `localhost:27017`)
+## Frontend
+- React.js
+- D3.js
+- HTML
+- CSS
+- JavaScript
 
-### 2. Environment Variables
-To enable the **DeepScan LLM** feature, you need a free API key from [Groq](https://console.groq.com/keys).
-Create a `.env` file in the `codebert-service/` folder:
-```env
-GROQ_API_KEY=your_groq_api_key_here
+## Backend
+- Python
+- Flask / FastAPI
+
+## AI & Machine Learning
+- CodeBERT
+- Transformers
+- Scikit-learn
+
+## Database
+- MongoDB / MySQL
+
+## Tools & Frameworks
+- JPlag
+- Git & GitHub
+
+---
+# Installation
+
+## Prerequisites
+
+Make sure the following tools are installed on your system:
+
+- Git
+- Python 3.10 or newer
+- Node.js 20 or newer (npm included)
+- Windows PowerShell
+
+### Optional (Only for Spring Backend)
+
+- Java 17
+- Maven 3.9+
+
+---
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/Shivank2005/Code_Plagarism.git
+cd Code_Plagarism
 ```
 
-### 3. Run the Application
-For Windows users, simply run the master startup script from the root directory. It will automatically install dependencies and boot all 3 servers simultaneously.
+---
+
+## 2. Create and Activate a Python Virtual Environment
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+### If PowerShell Blocks Activation
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+---
+
+## 3. Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+pip install flask flask-cors
+```
+
+---
+
+## 4. Install Frontend Dependencies
+
+```bash
+cd frontend
+npm install
+cd ..
+```
+
+---
+
+## 5. Start the Full Application Stack
+
 ```powershell
 .\start-all.ps1
 ```
 
-Once running, access the dashboard at:
-**http://localhost:5173**
+This starts:
+
+- CodeBERT Service → Port `8090`
+- Backend API → Port `8082`
+- Frontend → Port `5173`
+
+Open in browser:
+
+```text
+http://localhost:5173/
+```
 
 ---
-*Built with ❤️ for Academic Integrity.*
+
+# Manual Start (Alternative)
+
+If you prefer running services separately:
+
+## Terminal 1 — CodeBERT Service
+
+```bash
+cd codebert-service
+python app.py
+```
+
+---
+
+## Terminal 2 — Backend API
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+---
+
+## Terminal 3 — Frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+---
+
+# Quick Health Checks
+
+## Frontend
+
+```text
+http://localhost:5173/
+```
+
+## Backend Health
+
+```text
+http://localhost:8082/health
+```
+
+## CodeBERT Service
+
+```text
+http://localhost:8090/
+```
+---
+
+# Usage
+
+1. Upload source code submissions
+2. Select supported programming languages
+3. Run plagiarism analysis
+4. View similarity scores and visual reports
+5. Export plagiarism reports
+
+---
+
+# Visualization Features
+
+The dashboard includes:
+
+- Similarity Heatmaps
+- Submission Network Graphs
+- Risk-Ranked Submission Lists
+- Cluster Visualization
+- Side-by-Side Code Diff Viewer
+
+---
+
+---
+
+# Contributors
+
+- Shivank
+
+---
+
+# License
+
+This project is developed for academic and research purposes.
+
+---
+
+# References
+
+- JPlag
+- CodeBERT
+- GraphCodeBERT
+- CodeXGLUE
+- AST-based clone detection research papers
+
+---

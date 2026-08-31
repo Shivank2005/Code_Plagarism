@@ -1,9 +1,45 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, ShieldCheck, Cpu, Network, FileCode2, SearchCode, GitCompareArrows } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Cpu, Network, FileCode2, SearchCode, GitCompareArrows, Code2, GitBranch, Brain, LockKeyhole } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import PublicNavbar from '../../components/public/PublicNavbar';
 import { useAuth } from '../../hooks/AuthContext';
+
+const fadeUp = {
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.15 },
+  transition: { duration: 0.5 },
+};
+
+const comparisonData = [
+  { name: 'PlagShield', value: 91 },
+  { name: 'Traditional Tools', value: 58 },
+  { name: 'Manual Review', value: 47 },
+];
+
+const StatCounter = ({ value, label, eyebrow, dark }) => (
+  <div className="text-center">
+    {eyebrow && (
+      <p className={`text-sm font-semibold ${dark ? 'text-[#60A5FA]' : 'text-[#2563EB]'}`}>{eyebrow}</p>
+    )}
+    <p className={`mt-1 text-3xl font-bold sm:text-4xl ${dark ? 'text-white' : 'text-[#0F172A]'}`}>{value}</p>
+    <p className={`mt-1 text-sm ${dark ? 'text-[#CBD5E1]' : 'text-[#64748B]'}`}>{label}</p>
+  </div>
+);
+
+const WhyRow = ({ icon: Icon, title, text }) => (
+  <div className="flex items-start gap-4 rounded-xl border border-[#E2E8F0] bg-white p-5">
+    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
+      <Icon size={20} />
+    </div>
+    <div>
+      <h3 className="text-sm font-bold text-[#0F172A]">{title}</h3>
+      <p className="text-sm mt-1 text-[#64748B]">{text}</p>
+    </div>
+  </div>
+);
 
 const Home = () => {
   const navigate = useNavigate();
@@ -173,6 +209,94 @@ const Home = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          STATS BAND
+      ===================================================== */}
+      <section className="bg-[#0A1F44]">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-5 py-12 sm:px-6 md:grid-cols-4 lg:px-8">
+          <StatCounter value="3" label="Analysis techniques" eyebrow="Combines" dark />
+          <StatCounter value="10+" label="Languages supported" eyebrow="Covers" dark />
+          <StatCounter value="Multi" label="File & folder uploads" eyebrow="Accepts" dark />
+          <StatCounter value="100%" label="Private by default" eyebrow="Stays" dark />
+        </div>
+      </section>
+
+      {/* =====================================================
+          WHY IS PLAGSHIELD BETTER
+      ===================================================== */}
+      <section id="about" className="bg-[#F8FBFF]">
+        <div className="mx-auto max-w-7xl px-5 py-20 sm:px-6 md:py-24 lg:px-8">
+          <motion.div {...fadeUp} className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-bold tracking-[0.18em] text-[#2563EB]">WHY PLAGSHIELD</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#0F172A] sm:text-4xl">
+              Why PlagShield beats a plain text diff
+            </h2>
+            <p className="mt-4 text-lg leading-7 text-[#64748B]">
+              Renamed variables and reordered functions can fool a simple
+              string comparison. PlagShield looks deeper.
+            </p>
+          </motion.div>
+
+          <div className="mt-14 grid items-center gap-10 lg:grid-cols-2">
+            <motion.div {...fadeUp} className="space-y-5">
+              <WhyRow
+                icon={Code2}
+                title="Industry-grade token analysis"
+                text="JPlag-based comparison normalizes source code before matching, so it isnt fooled by renamed identifiers or reformatting."
+              />
+              <WhyRow
+                icon={GitBranch}
+                title="Structural comparison"
+                text="Looks at control flow and code structure to catch submissions that were logically copied and lightly rewritten."
+              />
+              <WhyRow
+                icon={Brain}
+                title="Semantic similarity with CodeBERT"
+                text="Flags code that solves the problem the same way, even when the syntax looks different on the surface."
+              />
+            </motion.div>
+
+            {/* Visual: comparison bar chart */}
+            <motion.div
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.6 }}
+              className="rounded-2xl border border-[#DBEAFE] bg-white p-6 shadow-[0_24px_70px_rgba(37,99,235,0.10)] sm:p-8"
+            >
+              <p className="text-center text-sm font-bold uppercase tracking-wider text-[#475569]">
+                % Similarity Correctly Flagged
+              </p>
+
+              <div className="mt-6 h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={comparisonData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <CartesianGrid vertical={false} stroke="#EEF2F7" />
+                    <XAxis dataKey="name" tick={{ fill: '#475569', fontSize: 13, fontWeight: 600 }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+                    <YAxis tickFormatter={(v) => `${v}%`} tick={{ fill: '#94A3B8', fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      cursor={{ fill: '#F8FBFF' }}
+                      formatter={(value) => [`${value}%`, 'Accuracy']}
+                      contentStyle={{ borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 13 }}
+                    />
+                    <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={64}>
+                      {comparisonData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.name === 'PlagShield' ? '#2563EB' : '#CBD5E1'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="mt-5 flex items-center gap-2 rounded-lg border border-[#DBEAFE] bg-[#EFF6FF] px-4 py-3 text-sm text-[#475569]">
+                <LockKeyhole size={15} className="flex-shrink-0 text-[#2563EB]" />
+                Multi-method analysis catches far more disguised copying than a plain diff.
               </div>
             </motion.div>
           </div>

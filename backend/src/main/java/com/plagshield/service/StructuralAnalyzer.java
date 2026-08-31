@@ -20,10 +20,7 @@ public class StructuralAnalyzer {
         
         List<String> tree1 = getTreeSequence(code1, ext1);
         List<String> tree2 = getTreeSequence(code2, ext2);
-        return calculateStructuralSimilarity(tree1, tree2);
-    }
-
-    public double calculateStructuralSimilarity(List<String> tree1, List<String> tree2) {
+        
         if (tree1.isEmpty() && tree2.isEmpty()) return 100.0;
         
         Set<String> fingerprint1 = new HashSet<>(tree1);
@@ -92,7 +89,7 @@ public class StructuralAnalyzer {
         return clean.toLowerCase(Locale.ROOT);
     }
 
-    public List<String> getTreeSequence(String originalCode, String extension) {
+    private List<String> getTreeSequence(String originalCode, String extension) {
         com.plagshield.model.LanguageRuleConfig rule = languageConfigService.getRuleForExtension(extension);
         List<String> tree = new ArrayList<>();
         String code = stripCommentsAndStrings(originalCode, rule);

@@ -21,10 +21,7 @@ public class JPlagService {
         
         String[] tokens1 = tokenize(code1, ext1);
         String[] tokens2 = tokenize(code2, ext2);
-        return calculateTokenSimilarity(tokens1, tokens2);
-    }
-
-    public double calculateTokenSimilarity(String[] tokens1, String[] tokens2) {
+        
         if (tokens1.length == 0 && tokens2.length == 0) return 100.0;
         if (tokens1.length == 0 || tokens2.length == 0) return 0.0;
 
@@ -72,7 +69,7 @@ public class JPlagService {
         return (2.0 * totalMatches / (tokens1.length + tokens2.length)) * 100.0;
     }
 
-    public String[] tokenize(String code, String extension) {
+    private String[] tokenize(String code, String extension) {
         java.util.List<String> tokens = new java.util.ArrayList<>();
         java.util.Set<String> keywords = languageConfigService.getKeywordsForExtension(extension);
         

@@ -67,34 +67,4 @@ public class AuthController {
 
         return ResponseEntity.ok(new AuthResponse(jwt, userDetails.getUsername()));
     }
-
-    @PutMapping("/update")
-    public ResponseEntity<?> updateUser(java.security.Principal principal, @RequestBody AuthRequest updateRequest) {
-        if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not authenticated");
-        }
-        
-        String currentUsername = principal.getName();
-        User user = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (updateRequest.getUsername() != null && !updateRequest.getUsername().trim().isEmpty() 
-            && !updateRequest.getUsername().equals(currentUsername)) {
-            if (userRepository.findByUsername(updateRequest.getUsername()).isPresent()) {
-                return ResponseEntity.badRequest().body("Username already exists");
-            }
-            user.setUsername(updateRequest.getUsername().trim());
-        }
-
-        if (updateRequest.getPassword() != null && !updateRequest.getPassword().trim().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(updateRequest.getPassword().trim()));
-        }
-
-        userRepository.save(user);
-
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
-        final String newJwt = jwtUtil.generateToken(userDetails);
-
-        return ResponseEntity.ok(new AuthResponse(newJwt, userDetails.getUsername()));
-    }
 }

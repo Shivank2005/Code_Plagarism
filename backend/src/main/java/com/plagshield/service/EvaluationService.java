@@ -24,25 +24,9 @@ public class EvaluationService {
         
         for (PlagiarismResult res : results) {
             boolean isPredictedPositive = res.getSimilarityScore() >= threshold;
-            String subA = res.getSubmissionA();
-            String subB = res.getSubmissionB();
-            
-            if (subA == null || subB == null) continue;
-            
-            boolean isActuallyPositive = false;
-            for (String pair : groundTruthPlagiarizedPairs) {
-                String[] parts = pair.split(",");
-                if (parts.length == 2) {
-                    String g1 = parts[0].trim();
-                    String g2 = parts[1].trim();
-                    if (g1.isEmpty() || g2.isEmpty()) continue;
-                    // Robust check: matches if DB path ends with the user's provided filename
-                    if ((subA.endsWith(g1) && subB.endsWith(g2)) || (subA.endsWith(g2) && subB.endsWith(g1))) {
-                        isActuallyPositive = true;
-                        break;
-                    }
-                }
-            }
+            String pair1 = res.getSubmissionA() + "," + res.getSubmissionB();
+            String pair2 = res.getSubmissionB() + "," + res.getSubmissionA();
+            boolean isActuallyPositive = groundTruthPlagiarizedPairs.contains(pair1) || groundTruthPlagiarizedPairs.contains(pair2);
             
             if (isPredictedPositive) {
                 if (isActuallyPositive) {

@@ -3,9 +3,3 @@ uvicorn==0.34.2
 numpy==2.2.6
 pydantic==2.11.4
 sentence-transformers==4.1.0
-scikit-learn==1.6.1
-joblib==1.4.2
-
-requests
-python-dotenv
-shap==0.45.0

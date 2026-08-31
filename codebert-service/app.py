@@ -139,49 +139,137 @@ def health() -> dict[str, Any]:
     }
 
 
-# ── Machine Learning Classifier & Explainer ──
-_ml_model: Any = None
-_iso_model: Any = None
-_explainer: Any = None
+# ── Machine Learning Classifier ──
+_ml_model: RandomForestClassifier | None = None
 
-def _load_ml_models() -> tuple[Any, Any, Any]:
-    global _ml_model, _iso_model, _explainer
-    if _ml_model is not None and _iso_model is not None:
-        return _ml_model, _iso_model, _explainer
+def _train_ml_model() -> RandomForestClassifier:
+    global _ml_model
+    if _ml_model is not None:
+        return _ml_model
         
-    import os
-    from joblib import load
-    import shap
+    # Generate synthetic training data
+    # X = [tokenScore, structuralScore, semanticScore]
+    # y = [0 (safe), 1 (plagiarism)]
     
-    base_dir = os.path.dirname(__file__)
-    model_path = os.path.join(base_dir, "model.joblib")
-    iso_path = os.path.join(base_dir, "isolation_model.joblib")
+    import random
     
-    if os.path.exists(model_path):
-        _ml_model = load(model_path)
-        # Initialize SHAP explainer on the RandomForest component
-        rf_model = _ml_model.named_steps["classifier"]
-        _explainer = shap.TreeExplainer(rf_model)
-    else:
-        print("Warning: model.joblib not found. Please run train_model.py first.")
-        _ml_model = None
+    # Build a labeled evaluation/training dataset containing real edge cases
+    # Columns: [Token, Struct, Semantic, isCross, LangPair, Label]
+    base_data = [
+        # ===== PLAGIARISM (Label = 1) =====
         
-    if os.path.exists(iso_path):
-        _iso_model = load(iso_path)
-    else:
-        _iso_model = None
-    
-    return _ml_model, _iso_model, _explainer
+        # Exact Copies: all three scores very high
+        [100, 100, 100, 0, "java-java", 1],
+        [95, 98, 99, 0, "java-java", 1],
+        [97, 95, 98, 0, "python-python", 1],
+        
+        # Variable-renamed copies (Obfuscation): token drops, struct/semantic stay high
+        [0, 65, 98, 0, "java-java", 1],
+        [5, 70, 97, 0, "java-java", 1],
+        [0, 60, 96, 0, "python-python", 1],
+        [10, 75, 95, 0, "java-java", 1],
+        
+        # Reformatted copies: token stays high, struct changes slightly
+        [85, 75, 97, 0, "java-java", 1],
+        [90, 80, 98, 0, "python-python", 1],
+        
+        # Logic-preserving rewrites (same algorithm, different style)
+        [30, 50, 95, 0, "java-java", 1],
+        [20, 45, 93, 0, "python-python", 1],
+        
+        # Cross-language translations (Token/Struct low, Semantic high)
+        [0, 30, 85, 1, "java-python", 1],
+        [5, 40, 88, 1, "java-python", 1],
+        [0, 35, 82, 1, "java-python", 1],
+        [10, 50, 90, 1, "java-python", 1],
+        
+        # ===== SAFE (Label = 0) =====
+        
+        # Completely unrelated programs (all scores low)
+        [0, 10, 20, 0, "java-java", 0],
+        [0, 15, 30, 0, "java-java", 0],
+        [5, 5, 15, 0, "python-python", 0],
+        [0, 20, 25, 1, "java-python", 0],
+        
+        # Structural false positive trap: same-language, different purpose
+        # With [0.95, 1.0] cosine mapping, unrelated Java files produce
+        # semantic scores in the 65-80% range, NOT 85-95%.
+        [0, 40, 78, 0, "java-java", 0],
+        [0, 50, 75, 0, "java-java", 0],
+        [0, 70, 80, 0, "java-java", 0],
+        [0, 45, 72, 0, "python-python", 0],
+        [5, 60, 77, 0, "java-java", 0],
+        [0, 35, 68, 0, "java-java", 0],
+        
+        # Template/boilerplate-heavy submissions
+        [40, 60, 50, 0, "java-java", 0],
+        [35, 55, 55, 0, "java-java", 0],
+        [30, 50, 45, 0, "python-python", 0],
+        
+        # Different implementations of the same problem (not plagiarism)
+        # Moderate struct (same problem = similar flow), moderate semantic, low token
+        [0, 50, 70, 0, "java-java", 0],
+        [10, 55, 75, 0, "java-java", 0],
+        [5, 45, 65, 0, "python-python", 0],
+        [0, 50, 72, 0, "js-js", 0],
+        [5, 55, 68, 0, "cpp-cpp", 0],
+        
+        # Unrelated cross-language pairs
+        [0, 10, 30, 1, "java-python", 0],
+        [0, 20, 40, 1, "java-python", 0],
+        [5, 15, 35, 1, "java-python", 0],
+        [0, 15, 25, 1, "cpp-python", 0],
+        [0, 10, 30, 1, "java-js", 0],
+        
+        # Additional language-diverse plagiarism cases
+        [95, 97, 99, 0, "js-js", 1],
+        [90, 95, 98, 0, "cpp-cpp", 1],
+        [0, 60, 96, 0, "js-js", 1],       # Obfuscated JS
+        [0, 55, 94, 0, "cpp-cpp", 1],     # Obfuscated C++
+        [0, 35, 83, 1, "java-js", 1],     # Cross-lang Java->JS
+        [0, 30, 80, 1, "cpp-python", 1],  # Cross-lang C++->Python
+        [5, 40, 85, 1, "go-python", 1],   # Cross-lang Go->Python
+    ]
 
-# Load immediately on startup
-_load_ml_models()
+    # Supplement with synthetic jitter to expand into a continuous model
+    expanded_data = []
+    random.seed(42)
+    for row in base_data:
+        t_base, s_base, c_base, is_cross, pair, label = row
+        for _ in range(150):  # ~5000+ total points
+            t = np.clip(random.gauss(t_base, 8.0), 0, 100)
+            s = np.clip(random.gauss(s_base, 8.0), 0, 100)
+            # Tight semantic jitter to prevent false-positive/plagiarism overlap
+            c = np.clip(random.gauss(c_base, 3.0), 0, 100)
+            expanded_data.append([t, s, c, is_cross, pair, label])
+
+    # Convert to numpy array. dtype=object because we have mixed types (float and str)
+    dataset = np.array(expanded_data, dtype=object)
+    X_train = dataset[:, :-1]
+    y_train = dataset[:, -1].astype(int)
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', 'passthrough', [0, 1, 2, 3]),
+            ('cat', OneHotEncoder(handle_unknown='ignore'), [4])
+        ])
+
+    pipeline = Pipeline([
+        ('preprocessor', preprocessor),
+        ('classifier', RandomForestClassifier(n_estimators=100, max_depth=8, random_state=42))
+    ])
+
+    pipeline.fit(X_train, y_train)
+    _ml_model = pipeline
+    return _ml_model
+
+# Train it immediately on startup
+_train_ml_model()
 
 @app.post("/api/ml/predict")
-def ml_predict(payload: MLPredictRequest) -> dict[str, Any]:
-    clf, iso_clf, explainer = _load_ml_models()
-    if clf is None:
-        return {"riskScore": 0.0, "confidence": 0.0, "isAnomaly": False, "featureImportance": {}}
-        
+def ml_predict(payload: MLPredictRequest) -> dict[str, float]:
+    clf = _train_ml_model()
+    
     X = np.array([[
         payload.tokenScore, 
         payload.structuralScore, 
@@ -192,37 +280,15 @@ def ml_predict(payload: MLPredictRequest) -> dict[str, Any]:
     
     # Get probability of class 1 (plagiarism)
     prob = clf.predict_proba(X)[0][1]
-    confidence = float(abs(prob - 0.5) * 2.0 * 100.0)
-    score = float(prob) * 100.0
     
-    # Get Anomaly Detection
-    is_anomaly = False
-    if iso_clf is not None:
-        iso_pred = iso_clf.predict(X)[0]
-        is_anomaly = bool(iso_pred == -1)
-        
-    # Get Feature Importance Explanations (SHAP)
-    feature_importance = {}
-    if explainer is not None:
-        preprocessor = clf.named_steps["preprocessor"]
-        X_transformed = preprocessor.transform(X)
-        shap_values = explainer.shap_values(X_transformed)
-        
-        # Extract SHAP values for class 1 (plagiarism)
-        if isinstance(shap_values, list):
-            sv = shap_values[1][0]
-        else:
-            sv = shap_values[0] if len(shap_values.shape) == 2 else shap_values[..., 1][0]
-            
-        features = ["Token Score", "Structural Score", "Semantic Score", "Cross-Language"]
-        for i, feature in enumerate(features):
-            feature_importance[feature] = float(sv[i])
-
+    # Confidence is how far the probability is from 0.5
+    confidence = abs(prob - 0.5) * 2.0 * 100.0
+    
+    # Convert to percentage
+    score = float(prob) * 100.0
     return {
         "riskScore": round(score, 2),
-        "confidence": round(confidence, 2),
-        "isAnomaly": is_anomaly,
-        "featureImportance": feature_importance
+        "confidence": round(confidence, 2)
     }
 
 
@@ -372,63 +438,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("app:app", host="0.0.0.0", port=8090, reload=True)
-
-import requests
-import os
-
-class DeepScanRequest(BaseModel):
-    code1: str
-    code2: str
-    filename1: str = "file1"
-    filename2: str = "file2"
-
-from dotenv import load_dotenv
-load_dotenv()
-
-@app.post("/api/embeddings/deepscan")
-def deep_scan(payload: DeepScanRequest) -> dict[str, Any]:
-    api_key = os.environ.get("GROQ_API_KEY", "")
-    if not api_key:
-        return {"error": "GROQ_API_KEY not found in backend environment (.env).", "plagiarized": False, "explanation": "API Key Missing."}
-    
-    prompt = f"""You are an expert Computer Science professor evaluating two student submissions for plagiarism.
-Ignore standard framework boilerplate (like Spring Boot annotations, standard imports, getter/setters).
-Focus on the core algorithmic logic, variable structures, and edge cases. Watch out for cross-language translation (e.g. Java to Python).
-
-File 1 ({payload.filename1}):
-{payload.code1[:2000]}
-
-File 2 ({payload.filename2}):
-{payload.code2[:2000]}
-
-Are these two files plagiarized from each other? 
-Respond with EXACTLY the word YES or NO on the first line. 
-On the next lines, provide a 2-3 sentence explanation of why."""
-
-    try:
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
-        data = {
-            "model": "openai/gpt-oss-20b",
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.1
-        }
-        response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=10)
-        response.raise_for_status()
-        
-        result = response.json()["choices"][0]["message"]["content"].strip()
-        lines = result.split('\n')
-        is_plagiarized = 'YES' in lines[0].upper()
-        explanation = '\n'.join(lines[1:]).strip()
-        
-        if not explanation:
-            explanation = lines[0]
-            
-        return {
-            "plagiarized": is_plagiarized,
-            "explanation": explanation
-        }
-    except Exception as e:
-        return {"error": str(e), "plagiarized": False, "explanation": f"LLM Error: {str(e)}"}

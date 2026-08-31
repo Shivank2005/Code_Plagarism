@@ -8,8 +8,6 @@ import com.plagshield.repository.PlagiarismResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpEntity;
@@ -28,12 +26,6 @@ import java.util.stream.Stream;
 
 @Service
 public class AnalysisService {
-
-    @org.springframework.beans.factory.annotation.Value("${codebert.api.url:http://localhost:8090}")
-    private String codebertApiUrl;
-
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
 
     @Autowired
     private AnalysisBatchRepository batchRepository;
@@ -102,7 +94,7 @@ public class AnalysisService {
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
 
-                ResponseEntity<Map> response = restTemplate.postForEntity(codebertApiUrl + "/api/embeddings/similarity-matrix", request, Map.class);
+                ResponseEntity<Map> response = restTemplate.postForEntity("http://localhost:8090/api/embeddings/similarity-matrix", request, Map.class);
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     matrix = (List<List<Number>>) response.getBody().get("matrix");
                     students = (List<String>) response.getBody().get("students");
@@ -132,20 +124,6 @@ public class AnalysisService {
             }
             java.util.Set<String> globalBoilerplate = preFilterService.calculateBoilerplate(fileWords.values());
             // ----------------------------------------
-            
-            // --- O(N) FINGERPRINT PRECOMPUTATION ---
-            Map<String, List<String>> precomputedAstTrees = new java.util.HashMap<>();
-            Map<String, String[]> precomputedTokens = new java.util.HashMap<>();
-            for (String student : finalStudents) {
-                String code = originalCodes.get(student);
-                String ext = student.contains(".") ? student.substring(student.lastIndexOf(".") + 1).toLowerCase() : "txt";
-                precomputedAstTrees.put(student, structuralAnalyzer.getTreeSequence(code, ext));
-                precomputedTokens.put(student, jPlagService.tokenize(code, ext));
-            }
-            // ----------------------------------------
-            
-            AtomicInteger processedPairs = new AtomicInteger(0);
-            int totalPairs = pairs.size();
 
             List<PlagiarismResult> results = pairs.parallelStream()
                     .map(pair -> {
@@ -153,6 +131,9 @@ public class AnalysisService {
                         int j = pair[1];
                         String studentA = finalStudents.get(i);
                         String studentB = finalStudents.get(j);
+
+                        String codeA = originalCodes.get(studentA);
+                        String codeB = originalCodes.get(studentB);
 
                         PreFilterService.FilterResult filterResult = preFilterService.shouldDeepScan(
                                 fileWords.get(studentA), 
@@ -170,12 +151,6 @@ public class AnalysisService {
                             result.setStructuralScore(0.0);
                             result.setSemanticScore(0.0);
                             result.setBoilerplateRemovedCount(filterResult.boilerplateRemoved);
-                            
-                            int processed = processedPairs.incrementAndGet();
-                            if (totalPairs > 0) {
-                                int progress = (int) ((processed / (double) totalPairs) * 100);
-                                messagingTemplate.convertAndSend("/topic/progress/" + batchId, "{\"progress\": " + progress + "}");
-                            }
                             return result;
                         }
 
@@ -187,14 +162,8 @@ public class AnalysisService {
                         String extA = studentA.contains(".") ? studentA.substring(studentA.lastIndexOf(".") + 1).toLowerCase() : "txt";
                         String extB = studentB.contains(".") ? studentB.substring(studentB.lastIndexOf(".") + 1).toLowerCase() : "txt";
 
-                        double structuralScore = structuralAnalyzer.calculateStructuralSimilarity(
-                            precomputedAstTrees.get(studentA), 
-                            precomputedAstTrees.get(studentB)
-                        );
-                        double tokenScore = jPlagService.calculateTokenSimilarity(
-                            precomputedTokens.get(studentA), 
-                            precomputedTokens.get(studentB)
-                        );
+                        double structuralScore = structuralAnalyzer.calculateStructuralSimilarity(codeA, codeB, extA, extB);
+                        double tokenScore = jPlagService.calculateTokenSimilarity(codeA, codeB, extA, extB);
 
                         boolean isCrossLanguage = !extA.isEmpty() && !extA.equalsIgnoreCase(extB);
                         
@@ -217,15 +186,6 @@ public class AnalysisService {
                         result.setSemanticScore(semanticScore);
                         result.setBoilerplateRemovedCount(filterResult.boilerplateRemoved);
                         result.setConfidenceScore(finalScore.confidence);
-                        result.setAnomaly(finalScore.isAnomaly);
-                        result.setFeatureImportance(finalScore.featureImportance);
-                        
-                        int processed = processedPairs.incrementAndGet();
-                        if (totalPairs > 0) {
-                            int progress = (int) ((processed / (double) totalPairs) * 100);
-                            messagingTemplate.convertAndSend("/topic/progress/" + batchId, "{\"progress\": " + progress + "}");
-                        }
-                        
                         return result;
                 }).collect(Collectors.toList());
 
