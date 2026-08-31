@@ -1,12 +1,5 @@
 @import "tailwindcss";
 
-/* Tailwind v4 theme tokens — generates font-display / font-sans utilities.
-   Fixes previously-undefined `font-display` classes used across the app. */
-@theme {
-  --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
 :root {
   --bg-primary: #ffffff;
   --bg-secondary: #f8f9fa;
@@ -36,18 +29,11 @@ html, body, #root {
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #FFFFFF;
+  background: var(--bg-primary);
   color: var(--text-primary);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Keyboard focus — visible, on-brand, never removed */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 4px;
 }
 
 /* Scrollbar */
@@ -60,9 +46,8 @@ body {
 .card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-default);
-  border-radius: 14px;
-  box-shadow: var(--shadow-xs);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
 }
 .card:hover {
   border-color: #d1d5db;
@@ -71,8 +56,7 @@ body {
 .card-flat {
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  box-shadow: var(--shadow-xs);
+  border-radius: 10px;
 }
 
 .badge {
@@ -94,19 +78,16 @@ body {
 .btn-primary {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
   padding: 10px 20px;
   background: var(--accent);
   color: white;
   font-size: 14px;
   font-weight: 600;
-  letter-spacing: -0.01em;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.15), 0 4px 10px rgba(37, 99, 235, 0.18);
-  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  transition: all 0.15s ease;
 }
 .btn-primary:hover { background: #4338ca; transform: translateY(-1px); }
 .btn-primary:active { transform: translateY(0); }
@@ -114,17 +95,15 @@ body {
 .btn-secondary {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
   padding: 8px 16px;
-  background: var(--bg-elevated);
+  background: transparent;
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
   border: 1px solid var(--border-default);
   border-radius: 8px;
   cursor: pointer;
-  box-shadow: var(--shadow-xs);
   transition: all 0.15s ease;
 }
 .btn-secondary:hover { background: var(--bg-elevated); color: var(--text-primary); border-color: #d1d5db; }
@@ -132,7 +111,7 @@ body {
 .input-field {
   width: 100%;
   padding: 10px 14px;
-  background: #FFFFFF;
+  background: var(--bg-primary);
   border: 1px solid var(--border-default);
   border-radius: 8px;
   color: var(--text-primary);
@@ -142,18 +121,17 @@ body {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .input-field::placeholder { color: var(--text-tertiary); }
-.input-field:focus { border-color: var(--accent); box-shadow: var(--shadow-glow); }
+.input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-muted); }
 
 .section-label {
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--text-tertiary);
 }
 
 .page-title {
-  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
   color: var(--text-primary);
@@ -176,60 +154,4 @@ input[type="range"]::-webkit-slider-thumb {
   background: var(--accent);
   border-radius: 50%;
   cursor: pointer;
-}
-
-/* PlagShield supported-language marquee */
-.language-marquee {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-}
-
-.language-marquee-track {
-  display: flex;
-  width: max-content;
-  align-items: center;
-  gap: 12px;
-  animation: plagshield-marquee-left 55s linear infinite;
-  will-change: transform;
-}
-
-.language-marquee:hover .language-marquee-track {
-  animation-play-state: paused;
-}
-
-.language-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
-  white-space: nowrap;
-  border: 1px solid #D7E3F2;
-  border-radius: 999px;
-  background: #F8FBFF;
-  color: #334E73;
-  padding: 9px 14px;
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.04);
-}
-
-.language-pill-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 25px;
-  height: 25px;
-  border-radius: 999px;
-  background: #EFF6FF;
-  color: #2563EB;
-}
-
-@keyframes plagshield-marquee-left {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .language-marquee-track { animation: none; }
 }

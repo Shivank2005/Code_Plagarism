@@ -253,10 +253,6 @@ const SimilarityGraph = ({ data }) => {
                 </div>
                 <span className="text-sm font-medium text-[var(--text-secondary)]">Low ({'<'}40%)</span>
               </div>
-            </div>
-
-            <h4 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#64748B]">Link Strength</h4>
-            <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-6 w-6 items-center justify-center">
                   <div className="h-4 w-4 rounded-full bg-[var(--warning)]"></div>

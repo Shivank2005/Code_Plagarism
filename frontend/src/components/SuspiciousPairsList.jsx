@@ -47,12 +47,12 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
 
   if (pairs.length === 0) {
     return (
-      <div className="rounded-[2rem] border border-[#BBF7D0] bg-[#F0FDF4] p-6">
+      <div className="glass-card rounded-[2rem] border border-emerald-100/15 bg-emerald-500/8 p-6">
         <div className="mb-2 flex items-center gap-3">
-          <TrendingDown className="text-[#16A34A]" size={20} />
-          <h3 className="font-display text-lg font-bold text-[#0F172A]">All Clear</h3>
+          <TrendingDown className="text-emerald-300" size={20} />
+          <h3 className="font-display text-lg font-bold text-white">All Clear</h3>
         </div>
-        <p className="text-sm text-[#166534]">No suspicious pairs detected in this batch.</p>
+        <p className="text-sm text-emerald-100/70">No suspicious pairs detected in this batch.</p>
       </div>
     );
   }
@@ -63,12 +63,12 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[2rem] border border-[#E2E8F0] bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)]"
+          className="glass-card rounded-[2rem] border border-rose-100/20 bg-[#071f2d]/85 p-6"
         >
           <div className="mb-5 flex items-center gap-3">
-            <AlertTriangle className="text-[#DC2626]" size={20} />
-            <h3 className="font-display text-lg font-bold text-[#0F172A]">High Risk Pairs</h3>
-            <span className="ml-auto rounded-full border border-[#FECACA] bg-[#FEF2F2] px-3 py-1 text-xs font-semibold text-[#B91C1C]">
+            <AlertTriangle className="text-rose-300" size={20} />
+            <h3 className="font-display text-lg font-bold text-white">High Risk Pairs</h3>
+            <span className="ml-auto rounded-full border border-rose-100/15 bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-100">
               {highRiskPairs.length}
             </span>
           </div>
@@ -80,16 +80,16 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
                 onClick={() => onPairClick?.(pair)}
-                className="group flex w-full items-center gap-4 rounded-2xl border border-[#FECACA] bg-[#FEF2F2] px-4 py-4 text-left transition-all duration-200 hover:border-[#FCA5A5] hover:bg-[#FEE2E2]"
+                className="group flex w-full items-center gap-4 rounded-2xl border border-rose-100/10 bg-white/4 px-4 py-4 text-left transition-all duration-200 hover:border-rose-100/25 hover:bg-white/6"
               >
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#B91C1C]/60">Submission Pair</p>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-rose-100/55">Submission Pair</p>
                   <div className="flex min-w-0 items-center gap-2">
-                    <span className="truncate text-sm font-semibold text-[#0F172A]" title={pair.student1}>
+                    <span className="truncate text-sm font-semibold text-rose-50" title={pair.student1}>
                       {pair.student1.substring(0, 24)}
                     </span>
-                    <span className="flex-shrink-0 text-[#B91C1C]/50">vs</span>
-                    <span className="truncate text-sm font-semibold text-[#0F172A]" title={pair.student2}>
+                    <span className="flex-shrink-0 text-rose-100/45">vs</span>
+                    <span className="truncate text-sm font-semibold text-rose-50" title={pair.student2}>
                       {pair.student2.substring(0, 24)}
                     </span>
                   </div>
@@ -105,10 +105,10 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
                   )}
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-2xl font-black text-[#DC2626]">{pair.score.toFixed(1)}%</p>
-                  <p className="text-[11px] text-[#B91C1C]/60">Match</p>
+                  <p className="text-2xl font-black text-rose-300">{pair.score.toFixed(1)}%</p>
+                  <p className="text-[11px] text-rose-100/55">Match</p>
                 </div>
-                <ChevronRight className="text-[#B91C1C]/40 group-hover:text-[#B91C1C] flex-shrink-0" size={18} />
+                <ChevronRight className="text-rose-100/40 group-hover:text-rose-100 flex-shrink-0" size={18} />
               </motion.button>
             ))}
           </div>
@@ -120,12 +120,12 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-[2rem] border border-[#E2E8F0] bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)]"
+          className="glass-card rounded-[2rem] border border-amber-100/20 bg-[#071f2d]/85 p-6"
         >
           <div className="mb-5 flex items-center gap-3">
-            <AlertTriangle className="text-[#D97706]" size={20} />
-            <h3 className="font-display text-lg font-bold text-[#0F172A]">Suspicious Pairs</h3>
-            <span className="ml-auto rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-3 py-1 text-xs font-semibold text-[#B45309]">
+            <AlertTriangle className="text-amber-300" size={20} />
+            <h3 className="font-display text-lg font-bold text-white">Suspicious Pairs</h3>
+            <span className="ml-auto rounded-full border border-amber-100/15 bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-100">
               {suspiciousPairs.length}
             </span>
           </div>
@@ -137,25 +137,25 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 + idx * 0.03 }}
                 onClick={() => onPairClick?.(pair)}
-                className="group flex w-full items-center gap-4 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] px-4 py-4 text-left transition-all duration-200 hover:border-[#FCD34D] hover:bg-[#FEF3C7]"
+                className="group flex w-full items-center gap-4 rounded-2xl border border-amber-100/10 bg-white/4 px-4 py-4 text-left transition-all duration-200 hover:border-amber-100/25 hover:bg-white/6"
               >
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#B45309]/60">Submission Pair</p>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-100/55">Submission Pair</p>
                   <div className="flex min-w-0 items-center gap-2">
-                    <span className="truncate text-sm font-semibold text-[#0F172A]" title={pair.student1}>
+                    <span className="truncate text-sm font-semibold text-amber-50" title={pair.student1}>
                       {pair.student1.substring(0, 24)}
                     </span>
-                    <span className="flex-shrink-0 text-[#B45309]/50">vs</span>
-                    <span className="truncate text-sm font-semibold text-[#0F172A]" title={pair.student2}>
+                    <span className="flex-shrink-0 text-amber-100/45">vs</span>
+                    <span className="truncate text-sm font-semibold text-amber-50" title={pair.student2}>
                       {pair.student2.substring(0, 24)}
                     </span>
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-2xl font-black text-[#D97706]">{pair.score.toFixed(1)}%</p>
-                  <p className="text-[11px] text-[#B45309]/60">Match</p>
+                  <p className="text-2xl font-black text-amber-300">{pair.score.toFixed(1)}%</p>
+                  <p className="text-[11px] text-amber-100/55">Match</p>
                 </div>
-                <ChevronRight className="text-[#B45309]/40 group-hover:text-[#B45309] flex-shrink-0" size={18} />
+                <ChevronRight className="text-amber-100/40 group-hover:text-amber-100 flex-shrink-0" size={18} />
               </motion.button>
             ))}
           </div>

@@ -244,133 +244,64 @@ export function usePlagShieldDashboard() {
   );
 
   const fetchResults = useCallback(
-  async (batchId) => {
-    try {
-      // Get the actual analysis results first
-      const res = await axios.get(`${API_BASE}/analysis/${batchId}/results`);
-
-      if (
-        res.data &&
-        Array.isArray(res.data.students) &&
-        res.data.students.length > 0
-      ) {
-        // Show the results immediately
-        setResults(res.data);
-
-        // Analysis is genuinely complete
+    async (batchId) => {
+      try {
+        const res = await axios.get(`${API_BASE}/analysis/${batchId}/results`);
+        if (res.data && Array.isArray(res.data.students) && res.data.students.length > 0) {
+          setResults(res.data);
+        } else {
+          setResults(null);
+          showToast('No valid results found in the backend response.', 'error');
+        }
+        await fetchBatchFiles(batchId);
         setIsAnalyzing(false);
-
-        // Show completion message immediately
-        showToast('Analysis completed and matrix generated.', 'success');
-
-        // Refresh history
         fetchHistory();
-
-        // Fetch additional file/semantic information in the background.
-        // DO NOT block the results screen.
-        fetchBatchFiles(batchId).catch((err) => {
-          console.error('Background file/semantic loading error:', err);
-        });
-      } else {
+        if (preferences.autoRefreshHistory) {
+          fetchHistory();
+        }
+        showToast('Analysis completed and matrix generated.', 'success');
+      } catch (err) {
+        console.error('Error fetching results:', err);
         setResults(null);
+        showToast('Failed to fetch analysis results. ' + (err.response?.data?.message || err.message), 'error');
         setIsAnalyzing(false);
-
-        showToast(
-          'No valid results found in the backend response.',
-          'error'
-        );
+        fetchHistory();
       }
-    } catch (err) {
-      console.error('Error fetching results:', err);
-
-      setResults(null);
-      setIsAnalyzing(false);
-
-      showToast(
-        'Failed to fetch analysis results. ' +
-          (err.response?.data?.message || err.message),
-        'error'
-      );
-
-      fetchHistory();
-    }
-  },
-  [fetchBatchFiles, fetchHistory, showToast]
-);
+    },
+    [batchFiles, buildLocalResults, fetchBatchFiles, fetchHistory, preferences, showToast],
+  );
 
   const startAnalysis = useCallback(
-  async (batchId) => {
-    try {
-      await axios.post(`${API_BASE}/analysis/${batchId}/start`);
-
-      clearStatusInterval();
-
-      statusIntervalRef.current = window.setInterval(async () => {
-        try {
-          const res = await axios.get(
-            `${API_BASE}/analysis/${batchId}/status`
-          );
-
-          if (res.data.status === 'COMPLETED') {
-            clearStatusInterval();
-
-            // Wait for the actual results to be fetched
-            // before marking analysis as finished.
-            await fetchResults(batchId);
-
-            if (preferences.autoRefreshHistory) {
-              fetchHistory();
+    async (batchId) => {
+      try {
+        await axios.post(`${API_BASE}/analysis/${batchId}/start`);
+        clearStatusInterval();
+        statusIntervalRef.current = window.setInterval(async () => {
+          try {
+            const res = await axios.get(`${API_BASE}/analysis/${batchId}/status`);
+            if (res.data.status === 'COMPLETED') {
+              clearStatusInterval();
+              fetchResults(batchId);
+              if (preferences.autoRefreshHistory) {
+                fetchHistory();
+              }
+            } else if (res.data.status === 'FAILED') {
+              clearStatusInterval();
+              setIsAnalyzing(false);
+              showToast('Analysis failed for this batch.', 'error');
             }
-
-          } else if (res.data.status === 'FAILED') {
+          } catch (err) {
             clearStatusInterval();
-
             setIsAnalyzing(false);
-
-            showToast(
-              'Analysis failed for this batch.',
-              'error'
-            );
           }
-
-        } catch (err) {
-          console.error(
-            'Error checking analysis status:',
-            err
-          );
-
-          clearStatusInterval();
-          setIsAnalyzing(false);
-
-          showToast(
-            'Unable to check analysis status.',
-            'error'
-          );
-        }
-      }, 2000);
-
-    } catch (err) {
-      console.error(
-        'Error starting analysis:',
-        err
-      );
-
-      setIsAnalyzing(false);
-
-      showToast(
-        'Failed to start analysis.',
-        'error'
-      );
-    }
-  },
-  [
-    clearStatusInterval,
-    fetchHistory,
-    fetchResults,
-    preferences.autoRefreshHistory,
-    showToast,
-  ],
-);
+        }, 2000);
+      } catch (err) {
+        console.error('Error starting analysis:', err);
+        setIsAnalyzing(false);
+      }
+    },
+    [clearStatusInterval, fetchHistory, fetchResults, preferences.autoRefreshHistory, showToast],
+  );
 
   const handleUploadSuccess = useCallback(
     async (data) => {
@@ -385,7 +316,6 @@ export function usePlagShieldDashboard() {
     },
     [buildLocalResults, fetchHistory, fetchSemanticEmbeddings, preferences, startAnalysis],
   );
-
 
   const updatePreference = useCallback((key, value) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
