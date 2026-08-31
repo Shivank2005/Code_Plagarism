@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { ShieldCheck, UserCircle2, LogOut, LayoutDashboard, FileUp, Library, FileCheck2, Settings, Network, GitCompareArrows, Users, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShieldCheck, UserCircle2, LogOut, LayoutDashboard, FileUp, Library, FileCheck2, Settings, Network, GitCompareArrows, Users, AlertTriangle, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
 import { useAuth } from '../../hooks/AuthContext';
 import { usePlagShield } from '../../hooks/PlagShieldContext';
 
@@ -65,7 +65,8 @@ export default function AppShell() {
     {
       label: 'Investigation',
       items: [
-        { id: `/analyses/${activeBatch || 'latest'}/results`, icon: Network, label: 'Results Summary', disabled: !activeBatch },
+        { id: `/analyses/${activeBatch || 'latest'}/results`, icon: Activity, label: 'Results Summary', disabled: !activeBatch },
+        { id: `/analyses/${activeBatch || 'latest'}/rings`, icon: Network, label: 'Plagiarism Rings', disabled: !activeBatch },
         { id: `/analyses/${activeBatch || 'latest'}/pairs`, icon: Users, label: 'Pair Explorer', disabled: !activeBatch },
         { id: `/analyses/${activeBatch || 'latest'}/compare`, icon: GitCompareArrows, label: 'Code Comparison', disabled: !activeBatch },
       ],

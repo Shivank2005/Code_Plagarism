@@ -1,10 +1,10 @@
 import React from 'react';
 import { usePlagShield } from '../../hooks/PlagShieldContext';
 import { useNavigate } from 'react-router-dom';
-import { Activity, LayoutGrid, Network, Users, Download } from 'lucide-react';
+import { Activity, LayoutGrid, Network, Users, Download, CheckCircle2, AlertTriangle, ShieldAlert, FileCode2 } from 'lucide-react';
 import SimilarityHeatmap from '../../components/SimilarityHeatmap';
 import GraphView from '../../components/views/GraphView';
-import RingsView from '../../components/views/RingsView';
+import AnalyticsDashboard from '../../components/views/AnalyticsDashboard';
 
 export default function ResultsPage() {
   let ctx;
@@ -26,6 +26,7 @@ export default function ResultsPage() {
     handlePairSelection, 
     preferences = {},
     summaryTiles = [],
+    fileStats = { total: 0, highRisk: 0, suspicious: 0, safe: 0 },
     semanticResults,
     isSemanticLoading,
     normalizedRings = [],
@@ -84,7 +85,7 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      {/* Summary Tiles */}
+      {/* Pair Summary Tiles */}
       {tiles.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print:grid-cols-4 print:gap-4 print:mb-8">
           {tiles.map((tile, idx) => (
@@ -98,6 +99,64 @@ export default function ResultsPage() {
           ))}
         </div>
       )}
+
+      {/* Narrative Bullet Summary */}
+      <div className="card p-6 bg-[var(--bg-secondary)]/50 border border-[var(--border-default)] print:bg-white print:border-gray-300">
+        <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4 uppercase tracking-wider print:text-gray-900">Analysis Breakdown</h3>
+        <ul className="space-y-3">
+          <li className="flex items-start gap-3">
+            <FileCode2 className="text-[var(--text-tertiary)] shrink-0 mt-0.5" size={18} />
+            <span className="text-sm text-[var(--text-secondary)]">
+              <strong className="text-[var(--text-primary)]">Batch Overview:</strong> Successfully processed and fingerprinted <strong className="text-[var(--text-primary)]">{fileStats.total} total files</strong> in this submission folder.
+            </span>
+          </li>
+          {fileStats.highRisk > 0 && (
+            <li className="flex items-start gap-3">
+              <ShieldAlert className="text-[var(--danger)] shrink-0 mt-0.5" size={18} />
+              <span className="text-sm text-[var(--text-secondary)]">
+                <strong className="text-[var(--danger)]">Plagiarism Detected:</strong> <strong className="text-[var(--text-primary)]">{fileStats.highRisk} files</strong> exhibit high-risk structural and semantic overlap exceeding the strict threshold ({riskThreshold}%). Immediate investigation recommended.
+              </span>
+            </li>
+          )}
+          {fileStats.suspicious > 0 && (
+            <li className="flex items-start gap-3">
+              <AlertTriangle className="text-[var(--warning)] shrink-0 mt-0.5" size={18} />
+              <span className="text-sm text-[var(--text-secondary)]">
+                <strong className="text-[var(--warning)]">Potential Overlap:</strong> <strong className="text-[var(--text-primary)]">{fileStats.suspicious} files</strong> show suspicious similarity patterns ({suspiciousThreshold}% - {riskThreshold}%) that may indicate shared boilerplates or unauthorized collaboration.
+              </span>
+            </li>
+          )}
+          <li className="flex items-start gap-3">
+            <CheckCircle2 className="text-[var(--success)] shrink-0 mt-0.5" size={18} />
+            <span className="text-sm text-[var(--text-secondary)]">
+              <strong className="text-[var(--success)]">Safe Submissions:</strong> <strong className="text-[var(--text-primary)]">{fileStats.safe} files</strong> ({Math.round((fileStats.safe / (fileStats.total || 1)) * 100)}%) were found to be completely independent with no significant similarities to peers.
+            </span>
+          </li>
+        </ul>
+      </div>
+
+      {/* File Status Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 print:grid-cols-4 print:gap-4">
+        <div className="card p-5 border-l-4 border-l-gray-400">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1">Total Files</p>
+          <p className="text-3xl font-extrabold text-[var(--text-primary)]">{fileStats.total}</p>
+        </div>
+        <div className="card p-5 border-l-4 border-l-[var(--success)] bg-[var(--success)]/5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--success)] mb-1">Safe Files</p>
+          <p className="text-3xl font-extrabold text-[var(--success)]">{fileStats.safe}</p>
+        </div>
+        <div className="card p-5 border-l-4 border-l-[var(--warning)] bg-[var(--warning)]/5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--warning)] mb-1">Suspicious Files</p>
+          <p className="text-3xl font-extrabold text-[var(--warning)]">{fileStats.suspicious}</p>
+        </div>
+        <div className="card p-5 border-l-4 border-l-[var(--danger)] bg-[var(--danger)]/5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--danger)] mb-1">High Risk Files</p>
+          <p className="text-3xl font-extrabold text-[var(--danger)]">{fileStats.highRisk}</p>
+        </div>
+      </div>
+
+      {/* Visual Analytics Dashboard (Donut, Bar Charts) */}
+      <AnalyticsDashboard results={results} fileStats={fileStats} />
 
       {/* Heatmap */}
       {students.length > 0 && (
@@ -136,17 +195,6 @@ export default function ResultsPage() {
             <GraphView semanticResults={semanticResults} isSemanticLoading={isSemanticLoading} />
           </div>
         </section>
-
-        {/* Rings */}
-        <div className="-mx-4 sm:mx-0 print:break-before-page">
-          <RingsView
-            results={results}
-            normalizedRings={normalizedRings}
-            getPairScore={getPairScore}
-            riskThreshold={riskThreshold}
-            suspiciousThreshold={suspiciousThreshold}
-          />
-        </div>
       </div>
     </div>
   );

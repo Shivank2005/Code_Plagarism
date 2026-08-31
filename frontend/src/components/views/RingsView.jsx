@@ -91,6 +91,33 @@ const RingsView = ({ results }) => {
                 </div>
               </div>
 
+              {/* Evaluator Notes / Bullet Points */}
+              <div className="mb-6 rounded-xl bg-[var(--bg-secondary)]/50 p-4 border border-[var(--border-subtle)]">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Evaluator Insights</p>
+                <ul className="list-disc space-y-1.5 pl-4 text-sm text-[var(--text-secondary)] marker:text-[var(--text-tertiary)]">
+                  <li>
+                    <strong>Classification:</strong> {ring.classification || 'Suspicious Cluster'} detected involving {ring.members.length} submissions.
+                  </li>
+                  <li>
+                    <strong>Network Density ({Math.round(ring.density * 100)}%):</strong>{' '}
+                    {isHighDensity 
+                      ? "High density suggests a highly organized sharing ring where almost all members copied from each other or a single source." 
+                      : isMediumDensity 
+                      ? "Moderate density implies a chained copying pattern where code was passed sequentially between students."
+                      : "Low density suggests loose unauthorized collaboration."}
+                  </li>
+                  <li>
+                    <strong>Peak Match ({Math.round(ring.maxSimilarity)}%):</strong>{' '}
+                    {ring.maxSimilarity >= 95 
+                      ? "Contains near-exact copies. Investigation highly recommended."
+                      : "Shows heavy structural and semantic similarities."}
+                  </li>
+                  <li>
+                    <strong>Average Overlap ({Math.round(ring.averageSimilarity)}%):</strong> Indicates the overall severity of plagiarism across the entire cluster.
+                  </li>
+                </ul>
+              </div>
+
               {/* Members List */}
               <div>
                 <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Involved Files</p>

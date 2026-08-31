@@ -104,7 +104,7 @@ public class AnalysisController {
                     Map<String, Object> response = new HashMap<>();
                     response.put("students", sortedStudents);
                     response.put("matrix", matrix);
-                    response.put("rings", clusteringService.detectPlagiarismRings(results, 70.0));
+                    response.put("rings", clusteringService.detectPlagiarismRings(results, 85.0));
                     response.put("status", batch.getStatus());
                     response.put("detailedResults", results);
                     
@@ -155,10 +155,9 @@ public class AnalysisController {
 
     @DeleteMapping("/history")
     public ResponseEntity<?> clearHistory() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        // Clear all plagiarism results
+        resultRepository.deleteAll();
+        // Clear all analysis batches
         batchRepository.deleteAll();
         return ResponseEntity.ok(Map.of("message", "History cleared"));
     }

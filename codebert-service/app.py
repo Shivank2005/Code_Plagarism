@@ -3,12 +3,17 @@ from __future__ import annotations
 import difflib
 import hashlib
 import math
+import os
 from typing import Any
 
 import numpy as np
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from groq import Groq
 from pydantic import BaseModel, Field
+
+load_dotenv()
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
@@ -45,6 +50,20 @@ class DiffRequest(BaseModel):
     rightId: str
     leftCode: str
     rightCode: str
+
+
+class DeepScanRequest(BaseModel):
+    code1: str
+    code2: str
+    filename1: str
+    filename2: str
+
+
+class LLMAnalyzeRequest(BaseModel):
+    code1: str
+    code2: str
+    filename1: str
+    filename2: str
 
 
 class MLPredictRequest(BaseModel):
@@ -169,6 +188,19 @@ def _train_ml_model() -> RandomForestClassifier:
         [0, 60, 96, 0, "python-python", 1],
         [10, 75, 95, 0, "java-java", 1],
         
+        # Heavy obfuscation on short snippets (LeetCode style): token drops heavily, struct/semantic very high
+        # Duplicated to force the model to weigh Semantic >= 98 as a very strong plagiarism indicator
+        [15, 95, 99, 0, "python-python", 1],
+        [15, 95, 99, 0, "python-python", 1],
+        [20, 92, 98, 0, "python-python", 1],
+        [20, 92, 98, 0, "python-python", 1],
+        [10, 94, 99, 0, "java-java", 1],
+        [10, 94, 99, 0, "java-java", 1],
+        [5, 96, 100, 0, "js-js", 1],
+        [5, 96, 100, 0, "js-js", 1],
+        [25, 90, 100, 0, "python-python", 1],
+        [25, 90, 100, 0, "python-python", 1],
+        
         # Reformatted copies: token stays high, struct changes slightly
         [85, 75, 97, 0, "java-java", 1],
         [90, 80, 98, 0, "python-python", 1],
@@ -200,6 +232,24 @@ def _train_ml_model() -> RandomForestClassifier:
         [0, 45, 72, 0, "python-python", 0],
         [5, 60, 77, 0, "java-java", 0],
         [0, 35, 68, 0, "java-java", 0],
+        
+        # High semantic CodeBERT false positives on short snippets
+        # If Token and Struct are very low, it's just CodeBERT conflating short files
+        [5, 20, 96, 0, "python-python", 0],
+        [0, 15, 98, 0, "python-python", 0],
+        [10, 25, 94, 0, "python-python", 0],
+        [5, 30, 97, 0, "java-java", 0],
+        [0, 10, 99, 0, "js-js", 0],
+        
+        # High structural similarity but different problems (e.g. LeetCode solutions)
+        # Both are short Python files with class->def->loop, so AST edit distance is tiny
+        # but Token overlap is very low. CodeBERT also gives them 95%+
+        [15, 85, 90, 0, "python-python", 0],
+        [10, 90, 88, 0, "python-python", 0],
+        [20, 80, 92, 0, "python-python", 0],
+        [30, 95, 95, 0, "python-python", 0],
+        [5, 88, 93, 0, "java-java", 0],
+        [25, 82, 95, 0, "js-js", 0],
         
         # Template/boilerplate-heavy submissions
         [40, 60, 50, 0, "java-java", 0],
@@ -334,7 +384,7 @@ def similarity_matrix(payload: EmbeddingsRequest) -> dict[str, Any]:
     for i in range(len(ids)):
         for j in range(i + 1, len(ids)):
             score = float(matrix[i][j])
-            if score >= 55.0:
+            if score >= 10.0:
                 links.append({
                     "source": ids[i],
                     "target": ids[j],
@@ -354,17 +404,25 @@ def code_diff(payload: DiffRequest) -> dict[str, Any]:
     left_lines = payload.leftCode.splitlines()
     right_lines = payload.rightCode.splitlines()
 
-    matcher = difflib.SequenceMatcher(None, left_lines, right_lines)
+    def is_junk(line: str) -> bool:
+        cleaned = line.strip()
+        if not cleaned: return True
+        if cleaned in ["{", "}", "};", "();", "return;", "break;", "continue;", "pass"]: return True
+        if cleaned.startswith(("import ", "include ", "using ", "package ", "#include", "from ")): return True
+        return False
+
+    matcher = difflib.SequenceMatcher(is_junk, left_lines, right_lines)
     rows = []
     left_no = 1
     right_no = 1
 
     for opcode, i1, i2, j1, j2 in matcher.get_opcodes():
         if opcode == "equal":
+            is_all_junk = all(is_junk(left_lines[i]) for i in range(i1, i2))
             for i, j in zip(range(i1, i2), range(j1, j2)):
                 rows.append(
                     {
-                        "type": "same",
+                        "type": "same" if not is_all_junk else "replace",
                         "leftNo": left_no,
                         "rightNo": right_no,
                         "left": left_lines[i],
@@ -432,6 +490,81 @@ def code_diff(payload: DiffRequest) -> dict[str, Any]:
             "overlapPercent": max(0.0, overlap),
         },
     }
+
+
+@app.post("/api/embeddings/deepscan")
+def deep_scan(payload: DeepScanRequest) -> dict[str, Any]:
+    try:
+        submissions = [
+            Submission(id="1", code=payload.code1),
+            Submission(id="2", code=payload.code2)
+        ]
+        vectors = _embed_texts(submissions)
+        
+        sim = float(np.dot(vectors[0], vectors[1]))
+        mapped_score = np.clip((sim - 0.95) / 0.05 * 100.0, 0.0, 100.0)
+        
+        is_plagiarized = mapped_score > 65.0
+        
+        if is_plagiarized:
+            explanation = (
+                f"High structural and semantic similarity detected (Score: {mapped_score:.1f}%). "
+                "The logic flow and token embeddings strongly overlap, suggesting heavily modified or directly copied code.\n\n"
+                "Variable names may have been changed, but the underlying neural embeddings represent the same algorithmic approach."
+            )
+        else:
+            explanation = (
+                f"Semantic similarity is within normal thresholds (Score: {mapped_score:.1f}%). "
+                "The embedding models do not detect severe structural plagiarism.\n\n"
+                "The code pieces appear to solve the problem using distinct logic or standard, expected boilerplate."
+            )
+            
+        return {
+            "plagiarized": bool(is_plagiarized),
+            "explanation": explanation
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "plagiarized": False,
+            "explanation": ""
+        }
+
+
+@app.post("/api/llm/analyze-translation")
+def analyze_translation(payload: LLMAnalyzeRequest) -> dict[str, Any]:
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return {"error": "GROQ_API_KEY not configured"}
+    
+    try:
+        client = Groq(api_key=api_key)
+        prompt = f"""
+Analyze the following two pieces of code for cross-language translation plagiarism.
+Identify how the logic and algorithms map between them. Keep it concise but technical (max 3-4 sentences). Focus on structural and logical similarities rather than variable names.
+
+File 1 ({payload.filename1}):
+```
+{payload.code1[:3000]}
+```
+
+File 2 ({payload.filename2}):
+```
+{payload.code2[:3000]}
+```
+"""
+        completion = client.chat.completions.create(
+            model="qwen/qwen3.8-27b",
+            messages=[
+                {"role": "system", "content": "You are a senior code analyst finding translated plagiarism."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+            max_tokens=250,
+        )
+        return {"explanation": completion.choices[0].message.content.strip()}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 if __name__ == "__main__":

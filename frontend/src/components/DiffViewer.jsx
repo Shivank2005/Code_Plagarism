@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { GitCompareArrows, Loader2, FileText, GitMerge, Brain, ShieldAlert } from 'lucide-react';
+import { GitCompareArrows, Loader2, FileText, GitMerge, Brain, ShieldAlert, Maximize, Minimize, AlertTriangle, MessageSquare, Columns, Table, ChevronUp, ChevronDown, ArrowDown } from 'lucide-react';
 
 const CODEBERT_BASE = import.meta.env.VITE_CODEBERT_API || 'http://localhost:8090';
 const CODEBERT_API = `${CODEBERT_BASE}/api/embeddings`;
@@ -13,7 +13,7 @@ const rowClass = {
   delete: 'bg-transparent opacity-60',
 };
 
-const CodeHighlight = ({ code }) => {
+const CodeHighlight = React.memo(({ code }) => {
   if (!code) return null;
 
   const spacedCode = code.replace(/([;{}])/g, '$1\u200B');
@@ -40,7 +40,7 @@ const CodeHighlight = ({ code }) => {
       })}
     </>
   );
-};
+});
 
 const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
   const candidatePairs = useMemo(() => {
@@ -76,10 +76,108 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [llmAnalysis, setLlmAnalysis] = useState(null);
+  const [analyzingLlm, setAnalyzingLlm] = useState(false);
+  const [viewMode, setViewMode] = useState('diff'); // 'diff' or 'split'
+  const [showInsights, setShowInsights] = useState(true);
+
+  const contentAreaRef = useRef(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    // Show button if not at the bottom (with 100px threshold)
+    if (scrollHeight - scrollTop - clientHeight > 100) {
+      setShowScrollButton(true);
+    } else {
+      setShowScrollButton(false);
+    }
+  };
+
+  const isCrossLanguage = useMemo(() => {
+    if (!selectedLocalPair) return false;
+    const ext1 = selectedLocalPair.source.split('.').pop()?.toLowerCase();
+    const ext2 = selectedLocalPair.target.split('.').pop()?.toLowerCase();
+    return ext1 && ext2 && ext1 !== ext2;
+  }, [selectedLocalPair]);
 
   const fileById = useMemo(() => {
     return new Map((files || []).map((item) => [item.id, item]));
   }, [files]);
+
+  const { leftCode, rightCode } = useMemo(() => {
+    if (!selectedLocalPair) return { leftCode: '', rightCode: '' };
+    let lFile = fileById.get(selectedLocalPair.source);
+    let rFile = fileById.get(selectedLocalPair.target);
+    if (!lFile || !rFile) {
+        const allFiles = Array.from(fileById.values());
+        if (!lFile) lFile = allFiles.find(f => f.id.includes(selectedLocalPair.source) || selectedLocalPair.source.includes(f.id));
+        if (!rFile) rFile = allFiles.find(f => f.id.includes(selectedLocalPair.target) || selectedLocalPair.target.includes(f.id));
+    }
+    return { leftCode: lFile?.code || '', rightCode: rFile?.code || '' };
+  }, [selectedLocalPair, fileById]);
+
+  // Performance Optimization: Memoize the heavy code renders so scrolling doesn't lag when showScrollButton updates
+  const leftPaneContent = useMemo(() => {
+    return leftCode.split(/\r?\n/).map((line, i) => (
+      <div key={i} className="flex hover:bg-[var(--bg-elevated)] group transition-colors">
+        <div className="w-12 flex-shrink-0 bg-[var(--bg-secondary)] border-r border-[var(--border-default)] text-right pr-2 py-0.5 select-none text-[11px] font-mono text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)]">
+          {i + 1}
+        </div>
+        <div className="flex-1 px-4 py-0.5 text-[11px] font-mono text-[var(--text-primary)] whitespace-pre-wrap break-words leading-relaxed min-w-0">
+          {line ? <CodeHighlight code={line} /> : ' '}
+        </div>
+      </div>
+    ));
+  }, [leftCode]);
+
+  const rightPaneContent = useMemo(() => {
+    return rightCode.split(/\r?\n/).map((line, i) => (
+      <div key={i} className="flex hover:bg-[var(--bg-elevated)] group transition-colors">
+        <div className="w-12 flex-shrink-0 bg-[var(--bg-secondary)] border-r border-[var(--border-default)] text-right pr-2 py-0.5 select-none text-[11px] font-mono text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)]">
+          {i + 1}
+        </div>
+        <div className="flex-1 px-4 py-0.5 text-[11px] font-mono text-[var(--text-primary)] whitespace-pre-wrap break-words leading-relaxed min-w-0">
+          {line ? <CodeHighlight code={line} /> : ' '}
+        </div>
+      </div>
+    ));
+  }, [rightCode]);
+
+  const diffTableContent = useMemo(() => {
+    if (!diffData || !diffData.rows) return null;
+    return diffData.rows.map((row, idx) => {
+      const isBlankSame = row.type === 'same' && !(row.left || '').trim() && !(row.right || '').trim();
+      const rowBg = isBlankSame ? 'bg-transparent' : (rowClass[row.type] || rowClass.same);
+      const isSameText = row.type === 'same' && !isBlankSame;
+
+      return (
+        <tr key={`row-${idx}`} className={`${rowBg} hover:bg-[var(--bg-elevated)] transition-colors border-b border-[var(--border-default)]/30`}>
+          <td className="w-10 px-2 py-1.5 text-right text-[var(--text-tertiary)] select-none border-r border-[var(--border-default)]">{row.leftNo ?? ''}</td>
+          <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
+            isSameText ? 'font-medium text-[var(--danger)]' : 'text-[var(--text-primary)]'
+          } border-r border-[var(--border-default)]`}>
+            <CodeHighlight code={row.left} />
+          </td>
+          <td className="w-10 px-2 py-1.5 text-right text-[var(--text-tertiary)] select-none border-r border-[var(--border-default)]">{row.rightNo ?? ''}</td>
+          <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
+            isSameText ? 'font-medium text-[var(--danger)]' : 'text-[var(--text-primary)]'
+          }`}>
+            <CodeHighlight code={row.right} />
+          </td>
+        </tr>
+      );
+    });
+  }, [diffData]);
+
+  useEffect(() => {
+    if (isCrossLanguage) {
+      setViewMode('split');
+    } else {
+      setViewMode('diff');
+    }
+  }, [isCrossLanguage, selectedLocalPair]);
 
   const runDeepScan = async (pairOverride = null) => {
     const pairToScan = pairOverride || selectedLocalPair;
@@ -118,6 +216,37 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
     }
   };
 
+  const runLlmAnalysis = async () => {
+    if (!selectedLocalPair) return;
+    setAnalyzingLlm(true);
+    setLlmAnalysis(null);
+    try {
+      let leftFile = fileById.get(selectedLocalPair.source);
+      let rightFile = fileById.get(selectedLocalPair.target);
+      
+      if (!leftFile || !rightFile) {
+        const allFiles = Array.from(fileById.values());
+        if (!leftFile) leftFile = allFiles.find(f => f.id.includes(selectedLocalPair.source));
+        if (!rightFile) rightFile = allFiles.find(f => f.id.includes(selectedLocalPair.target));
+      }
+      
+      const res = await axios.post(`${CODEBERT_BASE}/api/llm/analyze-translation`, {
+        code1: leftFile.code,
+        code2: rightFile.code,
+        filename1: selectedLocalPair.source,
+        filename2: selectedLocalPair.target
+      });
+      setLlmAnalysis(res.data);
+      if (res.data.error) toast.error(res.data.error);
+      else toast.success("Model Analysis complete!");
+    } catch (err) {
+      toast.error("Failed to connect to LLM service.");
+      setLlmAnalysis({ error: "Service unreachable" });
+    } finally {
+      setAnalyzingLlm(false);
+    }
+  };
+
   useEffect(() => {
     if (selectedPair && selectedPair.student1 && selectedPair.student2) {
       runDiff({
@@ -134,6 +263,8 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
     setError('');
     setDiffData(null);
     setDeepScanResult(null);
+    setLlmAnalysis(null);
+    setShowInsights(true);
 
     runDeepScan(pair);
 
@@ -230,7 +361,7 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
       </div>
 
       {/* Right Pane: Main Viewer */}
-      <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
+      <div className={`flex-1 min-w-0 flex flex-col ${isFullscreen ? 'fixed inset-0 z-[100] bg-[var(--bg-primary)] animate-in fade-in duration-200' : 'h-full overflow-hidden'}`}>
         
         {loading && (
           <div className="mb-4 flex flex-shrink-0 items-center gap-2 rounded-lg border border-[var(--accent)]/30 bg-[var(--accent)]/10 px-4 py-3 text-sm text-[var(--accent)] font-medium">
@@ -267,58 +398,166 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
                 <span className={`badge ${selectedLocalPair?.weight >= 75 ? 'badge-danger' : selectedLocalPair?.weight >= 40 ? 'badge-warning' : 'badge-success'}`}>
                   {selectedLocalPair?.weight >= 75 ? 'High Risk' : selectedLocalPair?.weight >= 40 ? 'Suspicious' : 'Safe'}
                 </span>
+                <div className="w-px h-4 bg-[var(--border-default)] mx-1"></div>
+                <div className="flex bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-md overflow-hidden p-0.5 shadow-sm">
+                  <button
+                    onClick={() => setViewMode('diff')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+                      viewMode === 'diff' ? 'bg-[var(--accent)] text-white rounded shadow-sm' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <Table size={13} /> Diff
+                  </button>
+                  <button
+                    onClick={() => setViewMode('split')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+                      viewMode === 'split' ? 'bg-[var(--accent)] text-white rounded shadow-sm' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <Columns size={13} /> Split
+                  </button>
+                </div>
+                <div className="w-px h-4 bg-[var(--border-default)] mx-1 hidden sm:block"></div>
+                <button 
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="p-1.5 rounded-md hover:bg-[var(--border-default)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                  title={isFullscreen ? "Exit Full Screen" : "Full Screen"}
+                >
+                  {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                </button>
               </div>
             </div>
 
-            {/* AI Deep Scan Module */}
-            <div className={`flex-shrink-0 border-b border-[var(--border-default)] px-5 py-4 ${deepScanResult ? (deepScanResult.plagiarized ? 'bg-[var(--danger)]/5' : 'bg-[var(--success)]/5') : 'bg-[var(--bg-elevated)]'}`}>
-              {deepScanResult ? (
-                <div className="flex items-start gap-4">
-                  <div className={`mt-0.5 rounded-lg p-2 ${deepScanResult.plagiarized ? 'bg-[var(--danger)]/10 text-[var(--danger)]' : 'bg-[var(--success)]/10 text-[var(--success)]'}`}>
-                    {deepScanResult.plagiarized ? <ShieldAlert size={18} /> : <FileText size={18} />}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <h5 className={`text-sm font-bold ${deepScanResult.plagiarized ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
-                        {deepScanResult.plagiarized ? 'AI Assessment: Plagiarism Detected' : 'AI Assessment: Safe'}
-                      </h5>
-                      <button onClick={() => runDeepScan()} disabled={scanning} className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-1">
-                        {scanning ? <Loader2 className="animate-spin" size={12} /> : <Brain size={12} />}
-                        {scanning ? 'Scanning...' : 'Rescan'}
-                      </button>
+            {/* MAIN SCROLLING CONTENT AREA (Unified ChatGPT Workspace) */}
+            <div 
+              ref={contentAreaRef}
+              onScroll={handleScroll}
+              className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col bg-[var(--bg-primary)] scrollbar-thin scrollbar-thumb-[var(--border-default)] scrollbar-track-transparent relative"
+            >
+              {/* AI Insights Section (Scrolls naturally with code) */}
+              {(isCrossLanguage || deepScanResult || llmAnalysis) && (
+                <div className="flex-shrink-0 flex flex-col border-b border-[var(--border-default)] shadow-sm">
+                  {showInsights && (
+                    <div className="flex flex-col">
+                      {/* Cross Language Banner & LLM Analysis */}
+                      {isCrossLanguage && (
+                        <div className="bg-[var(--warning)]/10 border-b border-[var(--border-default)] px-5 py-4">
+                          <div className="flex items-start gap-3">
+                            <AlertTriangle className="text-[var(--warning)] shrink-0 mt-0.5" size={18} />
+                            <div className="flex-1 min-w-0">
+                              <h5 className="text-sm font-bold text-[var(--warning)]">Cross-Language Pair Detected</h5>
+                              <p className="text-xs text-[var(--text-secondary)] mt-1">
+                                Lexical text overlap is inherently low for cross-language pairs. Rely on the Deep Scan and Semantic Analysis models to verify logic translations.
+                              </p>
+                              
+                              {/* LLM Output Box */}
+                              {llmAnalysis ? (
+                                <div className="mt-4 p-4 rounded-lg bg-[var(--bg-primary)] border border-blue-500/30 shadow-sm">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <MessageSquare size={16} className="text-blue-500" />
+                                    <span className="text-sm font-bold text-blue-600">Model Translation Analysis</span>
+                                  </div>
+                                  {llmAnalysis.error ? (
+                                    <p className="text-xs text-red-500">{llmAnalysis.error}</p>
+                                  ) : (
+                                    <p className="text-xs text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">{llmAnalysis.explanation}</p>
+                                  )}
+                                </div>
+                              ) : (
+                                <button 
+                                  onClick={runLlmAnalysis}
+                                  disabled={analyzingLlm}
+                                  className="mt-3 flex items-center gap-2 text-xs font-semibold bg-white border border-[var(--border-default)] shadow-sm px-4 py-2 rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors disabled:opacity-50"
+                                >
+                                  {analyzingLlm ? <Loader2 size={14} className="animate-spin text-blue-500" /> : <MessageSquare size={14} className="text-blue-500" />}
+                                  {analyzingLlm ? "Analyzing translation..." : "Analyze Translation with Model"}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* AI Deep Scan Module */}
+                      <div className={`px-5 py-4 ${deepScanResult ? (deepScanResult.plagiarized ? 'bg-[var(--danger)]/5' : 'bg-[var(--success)]/5') : 'bg-[var(--bg-elevated)]'}`}>
+                        {deepScanResult ? (
+                          <div className="flex items-start gap-4">
+                            <div className={`mt-0.5 rounded-lg p-2 ${deepScanResult.plagiarized ? 'bg-[var(--danger)]/10 text-[var(--danger)]' : 'bg-[var(--success)]/10 text-[var(--success)]'}`}>
+                              {deepScanResult.plagiarized ? <ShieldAlert size={18} /> : <FileText size={18} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start">
+                                <h5 className={`text-sm font-bold ${deepScanResult.plagiarized ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
+                                  {deepScanResult.plagiarized ? 'Assessment: Plagiarism Detected' : 'Assessment: Safe'}
+                                </h5>
+                                <button onClick={() => runDeepScan()} disabled={scanning} className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-1">
+                                  {scanning ? <Loader2 className="animate-spin" size={12} /> : <Brain size={12} />}
+                                  {scanning ? 'Scanning...' : 'Rescan'}
+                                </button>
+                              </div>
+                              {deepScanResult.error ? (
+                                <p className="mt-1 text-xs text-[var(--danger)]">{deepScanResult.error}</p>
+                              ) : (
+                                <p className="mt-1 text-xs text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">{deepScanResult.explanation}</p>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="rounded-lg bg-purple-500/10 p-2 text-purple-600">
+                                <Brain size={18} />
+                              </div>
+                              <div>
+                                <h5 className="text-sm font-bold text-purple-700">Deep Scan Available</h5>
+                                <p className="mt-0.5 text-xs text-[var(--text-secondary)] hidden sm:block">Analyze algorithmic logic using embedding models.</p>
+                              </div>
+                            </div>
+                            <button 
+                              onClick={() => runDeepScan()} 
+                              disabled={scanning}
+                              className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-700 transition-colors disabled:opacity-50"
+                            >
+                              {scanning ? <Loader2 className="animate-spin" size={14} /> : <Brain size={14} />}
+                              {scanning ? 'Scanning...' : 'Deep Scan'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    {deepScanResult.error ? (
-                      <p className="mt-1 text-xs text-[var(--danger)]">{deepScanResult.error}</p>
-                    ) : (
-                      <p className="mt-1 text-xs text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">{deepScanResult.explanation}</p>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-purple-500/10 p-2 text-purple-600">
-                      <Brain size={18} />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-purple-700">AI Deep Scan Available</h5>
-                      <p className="mt-0.5 text-xs text-[var(--text-secondary)] hidden sm:block">Analyze algorithmic logic using embedding models.</p>
-                    </div>
-                  </div>
+                  )}
                   <button 
-                    onClick={() => runDeepScan()} 
-                    disabled={scanning}
-                    className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    onClick={() => setShowInsights(!showInsights)}
+                    className="w-full bg-[var(--bg-secondary)] hover:bg-[var(--bg-elevated)] transition-colors py-1.5 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
                   >
-                    {scanning ? <Loader2 className="animate-spin" size={14} /> : <Brain size={14} />}
-                    {scanning ? 'Scanning...' : 'Deep Scan'}
+                    {showInsights ? (
+                      <><ChevronUp size={14} /> Hide Insights</>
+                    ) : (
+                      <><ChevronDown size={14} /> Show Insights</>
+                    )}
                   </button>
                 </div>
               )}
-            </div>
 
-            {/* Scrolling Diff Table */}
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-[var(--bg-primary)] scrollbar-thin scrollbar-thumb-[var(--border-default)] scrollbar-track-transparent">
+            {/* Code View (Diff or Split) */}
+            {viewMode === 'split' ? (
+              <div className="flex-1 flex bg-[var(--bg-primary)] divide-x divide-[var(--border-default)]">
+                {/* Left Pane */}
+                <div className="flex-1 relative min-w-0">
+                  <div className="flex flex-col min-h-full py-4">
+                    {leftPaneContent}
+                  </div>
+                </div>
+
+                {/* Right Pane */}
+                <div className="flex-1 relative min-w-0">
+                  <div className="flex flex-col min-h-full py-4">
+                    {rightPaneContent}
+                  </div>
+                </div>
+              </div>
+            ) : (
+            <div className="flex-1 min-h-0">
               <table className="w-full border-collapse text-xs table-fixed">
                 <thead className="sticky top-0 z-10 shadow-sm bg-[var(--bg-secondary)] border-b border-[var(--border-default)]">
                   <tr>
@@ -329,40 +568,45 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
                   </tr>
                 </thead>
                 <tbody className="font-mono text-[11px] leading-relaxed">
-                  {diffData.rows.map((row, idx) => {
-                    const isBlankSame = row.type === 'same' && !(row.left || '').trim() && !(row.right || '').trim();
-                    const rowBg = isBlankSame ? 'bg-transparent' : (rowClass[row.type] || rowClass.same);
-                    const isSameText = row.type === 'same' && !isBlankSame;
-
-                    return (
-                      <tr key={`row-${idx}`} className={`${rowBg} hover:bg-[var(--bg-elevated)] transition-colors border-b border-[var(--border-default)]/30`}>
-                        <td className="w-10 px-2 py-1.5 text-right text-[var(--text-tertiary)] select-none border-r border-[var(--border-default)]">{row.leftNo ?? ''}</td>
-                        <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
-                          isSameText ? 'font-medium text-[var(--danger)]' : 'text-[var(--text-primary)]'
-                        } border-r border-[var(--border-default)]`}>
-                          <CodeHighlight code={row.left} />
-                        </td>
-                        <td className="w-10 px-2 py-1.5 text-right text-[var(--text-tertiary)] select-none border-r border-[var(--border-default)]">{row.rightNo ?? ''}</td>
-                        <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
-                          isSameText ? 'font-medium text-[var(--danger)]' : 'text-[var(--text-primary)]'
-                        }`}>
-                          <CodeHighlight code={row.right} />
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {diffTableContent}
                 </tbody>
               </table>
             </div>
+            )}
+            
+              {/* Floating Scroll to Bottom Button */}
+              {showScrollButton && (
+                <button 
+                  onClick={() => contentAreaRef.current?.scrollTo({ top: contentAreaRef.current.scrollHeight, behavior: 'smooth' })}
+                  className="fixed bottom-16 right-8 p-2.5 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-default)] shadow-lg hover:bg-[var(--bg-secondary)] transition-all z-50 text-[var(--text-secondary)] hover:text-[var(--text-primary)] animate-in fade-in slide-in-from-bottom-2"
+                  title="Scroll to bottom"
+                >
+                  <ArrowDown size={18} />
+                </button>
+              )}
+            </div>
 
             {/* Footer Summary Strip */}
-            <div className="flex-shrink-0 flex flex-wrap items-center justify-between border-t border-[var(--border-default)] bg-[var(--bg-elevated)] px-5 py-2.5 text-xs text-[var(--text-secondary)]">
-              <div>
-                <span className="font-semibold text-[var(--text-primary)]">Boilerplate ignored:</span> {selectedLocalPair?.details?.boilerplateRemovedCount || 0}
+            <div className="flex-shrink-0 flex items-center justify-between border-t border-[var(--border-default)] bg-gradient-to-r from-[var(--bg-elevated)] to-[var(--bg-secondary)] px-6 py-3 shadow-inner">
+              <div className="flex items-center gap-2 text-[var(--text-secondary)] bg-[var(--bg-primary)] px-3 py-1.5 rounded-lg border border-[var(--border-default)] shadow-sm">
+                <ShieldAlert size={14} className="text-[var(--text-tertiary)]" />
+                <span className="text-xs font-medium">
+                  Boilerplate Ignored: <span className="font-bold text-[var(--text-primary)]">{selectedLocalPair?.details?.boilerplateRemovedCount || 0}</span>
+                </span>
               </div>
-              <div className="flex gap-4">
-                <span><span className="font-semibold text-[var(--text-primary)]">Overlap:</span> {diffData.summary.overlapPercent}%</span>
-                <span><span className="font-semibold text-[var(--text-primary)]">Changed:</span> {diffData.summary.changedLines}</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 shadow-sm transition-all hover:bg-rose-500/20">
+                  <GitMerge size={14} className="text-rose-600 dark:text-rose-400" />
+                  <span className="text-xs font-medium text-rose-600 dark:text-rose-400">
+                    Overlap: <span className="font-bold">{diffData.summary.overlapPercent}%</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20 shadow-sm transition-all hover:bg-amber-500/20">
+                  <FileText size={14} className="text-amber-600 dark:text-amber-400" />
+                  <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                    Changed: <span className="font-bold">{diffData.summary.changedLines}</span>
+                  </span>
+                </div>
               </div>
             </div>
             

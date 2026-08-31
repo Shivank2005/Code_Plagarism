@@ -13,7 +13,7 @@ const SimilarityGraph = ({ data }) => {
   const [hoveredNode, setHoveredNode] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
-  const [minThreshold, setMinThreshold] = useState(40);
+  const [minThreshold, setMinThreshold] = useState(50);
 
   const graph = useMemo(() => {
     if (!data || !Array.isArray(data.nodes) || data.nodes.length === 0) {

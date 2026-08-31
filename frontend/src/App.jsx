@@ -15,6 +15,7 @@ import OverviewPage from './pages/dashboard/OverviewPage';
 import NewAnalysisPage from './pages/dashboard/NewAnalysisPage';
 import AnalysesPage from './pages/dashboard/AnalysesPage';
 import ResultsPage from './pages/dashboard/ResultsPage';
+import RingsPage from './pages/dashboard/RingsPage';
 import PairsPage from './pages/dashboard/PairsPage';
 import ComparePage from './pages/dashboard/ComparePage';
 import EvaluationPage from './pages/dashboard/EvaluationPage';
@@ -58,6 +59,8 @@ function App() {
           <Route path="/analysis/new" element={<NewAnalysisPage />} />
           <Route path="/analyses" element={<AnalysesPage />} />
           <Route path="/analyses/:analysisId/results" element={<ResultsPage />} />
+          
+          <Route path="/analyses/:analysisId/rings" element={<RingsPage />} />
           <Route path="/analyses/:analysisId/pairs" element={<PairsPage />} />
           <Route path="/analyses/:analysisId/compare" element={<ComparePage />} />
           <Route path="/evaluation" element={<EvaluationPage />} />

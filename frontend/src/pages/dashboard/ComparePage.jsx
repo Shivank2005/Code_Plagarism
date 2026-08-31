@@ -7,8 +7,8 @@ export default function ComparePage() {
   const { batchFiles, results, semanticResults, selectedSuspiciousPair } = usePlagShield();
   
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
+    <div className="flex flex-col h-[100dvh] md:h-screen -m-6 md:-m-8 overflow-hidden bg-[var(--bg-primary)] animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0 px-6 py-4 md:px-8 md:py-6 border-b border-[var(--border-default)] bg-[var(--bg-primary)] z-10">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2">
             <GitCompare className="text-[var(--accent)]" size={24} /> Code Comparison

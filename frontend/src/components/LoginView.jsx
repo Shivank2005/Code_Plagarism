@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, User, KeyRound, ChevronRight, ShieldCheck } from 'lucide-react';
+import { Lock, User, KeyRound, ChevronRight, ShieldCheck, ArrowRight } from 'lucide-react';
 
 const LoginView = () => {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -41,63 +41,53 @@ const LoginView = () => {
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col justify-center items-center p-4 relative overflow-hidden"
-      style={{ background: 'var(--bg-primary)' }}
-    >
-      {/* Subtle radial gradient accent */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 600px 400px at 50% 40%, rgba(79, 70, 229, 0.08), transparent)',
-        }}
-      />
+    <div className="min-h-screen flex flex-col justify-center items-center p-4 relative overflow-hidden bg-[#F8FBFF]">
+      
+      {/* Decorative Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[#2563EB]/5 blur-[120px]" />
+        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-[#3B82F6]/5 blur-[100px]" />
+      </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-md z-10"
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-[420px] z-10"
       >
         {/* Branding */}
-        <div className="mb-8 text-center">
+        <div className="mb-8 text-center flex flex-col items-center">
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="inline-flex h-14 w-14 items-center justify-center rounded-xl mb-5"
-            style={{
-              background: 'var(--accent-muted)',
-              border: '1px solid var(--border-default)',
-              color: 'var(--accent)',
-            }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#1D4ED8] shadow-[0_8px_16px_rgba(37,99,235,0.25)] mb-6"
           >
-            <ShieldCheck size={28} />
+            <ShieldCheck size={32} className="text-white" strokeWidth={2.2} />
           </motion.div>
-          <h1 className="page-title text-[28px] mb-2 text-[var(--text-primary)] font-bold">
-            PlagShield
+          <h1 className="text-[28px] tracking-tight text-[#0F172A] font-extrabold mb-2">
+            Welcome to PlagShield
           </h1>
-          <p className="text-[var(--text-secondary)] text-sm">
+          <p className="text-[#64748B] text-[15px]">
             {isRegistering
               ? 'Create your account to get started.'
-              : 'Sign in to your account.'}
+              : 'Sign in to access your dashboard.'}
           </p>
         </div>
 
         {/* Form card */}
-        <div className="card p-8 shadow-sm">
+        <div className="rounded-2xl border border-[#E2E8F0] bg-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.06)] relative">
           <AnimatePresence mode="wait">
             {error && (
               <motion.div
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
+                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginBottom: 20 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                 transition={{ duration: 0.2 }}
-                className="mb-5"
+                className="overflow-hidden"
               >
-                <div className="flex items-start gap-3 p-3 rounded-lg text-sm bg-[var(--danger)]/10 border border-[var(--danger)]/20 text-[var(--danger)] font-medium">
-                  <Lock size={16} className="mt-0.5 flex-shrink-0" />
+                <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-[#FEF2F2] border border-[#FCA5A5] text-[14px] text-[#DC2626] font-medium">
+                  <Lock size={16} className="flex-shrink-0" />
                   <p>{error}</p>
                 </div>
               </motion.div>
@@ -107,19 +97,20 @@ const LoginView = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Username */}
             <div className="space-y-1.5">
-              <label className="section-label">Username</label>
-              <div className="relative">
-                <div
-                  className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-tertiary)]"
-                >
-                  <User size={16} />
+              <label className="text-[12px] font-bold uppercase tracking-wider text-[#64748B] ml-1">
+                Username
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#2563EB] transition-colors">
+                  <User size={18} strokeWidth={2} />
                 </div>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  className="input-field pl-9"
+                  style={{ paddingLeft: '2.5rem' }}
+                  className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] py-3 pr-4 text-[15px] font-medium text-[#0F172A] transition-all hover:bg-white focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#2563EB]/10 placeholder:text-[#94A3B8] placeholder:font-normal"
                   placeholder="Enter your username"
                 />
               </div>
@@ -127,66 +118,80 @@ const LoginView = () => {
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label className="section-label">Password</label>
-              <div className="relative">
-                <div
-                  className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-tertiary)]"
-                >
-                  <KeyRound size={16} />
+              <label className="text-[12px] font-bold uppercase tracking-wider text-[#64748B] ml-1">
+                Password
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#2563EB] transition-colors">
+                  <KeyRound size={18} strokeWidth={2} />
                 </div>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="input-field pl-9"
+                  style={{ paddingLeft: '2.5rem' }}
+                  className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] py-3 pr-4 text-[15px] font-medium text-[#0F172A] transition-all hover:bg-white focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#2563EB]/10 placeholder:text-[#94A3B8] placeholder:font-normal"
                   placeholder="Enter your password"
                 />
               </div>
             </div>
 
             {/* Confirm Password */}
-            {isRegistering && (
-              <div className="space-y-1.5">
-                <label className="section-label">Confirm Password</label>
-                <div className="relative">
-                  <div
-                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-tertiary)]"
-                  >
-                    <KeyRound size={16} />
+            <AnimatePresence>
+              {isRegistering && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                  animate={{ opacity: 1, height: 'auto', marginTop: 20 }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-1.5 pb-1">
+                    <label className="text-[12px] font-bold uppercase tracking-wider text-[#64748B] ml-1">
+                      Confirm Password
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#2563EB] transition-colors">
+                        <KeyRound size={18} strokeWidth={2} />
+                      </div>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required={isRegistering}
+                        style={{ paddingLeft: '2.5rem' }}
+                        className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] py-3 pr-4 text-[15px] font-medium text-[#0F172A] transition-all hover:bg-white focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#2563EB]/10 placeholder:text-[#94A3B8] placeholder:font-normal"
+                        placeholder="Confirm your password"
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required={isRegistering}
-                    className="input-field pl-9"
-                    placeholder="Confirm your password"
-                  />
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}
-              className={`btn-primary w-full justify-center py-3 ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}
+              className={`mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] py-3.5 text-[15px] font-semibold text-white shadow-sm transition-all hover:bg-[#1D4ED8] hover:shadow-md focus:outline-none focus:ring-4 focus:ring-[#2563EB]/20 ${
+                isLoading ? 'opacity-70 pointer-events-none' : ''
+              }`}
             >
               {isLoading ? (
-                <div
-                  className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"
-                />
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
               ) : (
-                <span>{isRegistering ? 'Create Account' : 'Sign In'}</span>
+                <>
+                  <span>{isRegistering ? 'Create Account' : 'Sign In'}</span>
+                  <ArrowRight size={18} />
+                </>
               )}
             </button>
           </form>
         </div>
 
         {/* Toggle mode */}
-        <div className="mt-6 text-center">
-          <p className="text-[var(--text-tertiary)] text-[13px]">
+        <div className="mt-8 text-center">
+          <p className="text-[#64748B] text-[14px] mb-2">
             {isRegistering ? 'Already have an account?' : "Don't have an account?"}
           </p>
           <button
@@ -196,10 +201,10 @@ const LoginView = () => {
               setError('');
               setConfirmPassword('');
             }}
-            className="mt-1 inline-flex items-center gap-1 text-sm font-medium transition-colors text-[var(--accent)] hover:text-[#4338ca] bg-transparent border-none cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-[14px] font-semibold text-[#2563EB] transition-colors hover:bg-[#EFF6FF] hover:text-[#1D4ED8] focus:outline-none"
           >
             {isRegistering ? 'Sign in instead' : 'Create an account'}
-            <ChevronRight size={14} />
+            <ChevronRight size={16} />
           </button>
         </div>
       </motion.div>

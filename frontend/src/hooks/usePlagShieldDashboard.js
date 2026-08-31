@@ -350,7 +350,11 @@ export function usePlagShieldDashboard() {
     if (!results || !Array.isArray(results.rings)) {
       return [];
     }
-    return results.rings.map((ring) => Array.from(ring));
+    return results.rings.map((ring) => {
+      if (ring && Array.isArray(ring.members)) return ring.members;
+      if (ring instanceof Set || Array.isArray(ring)) return Array.from(ring);
+      return [];
+    });
   }, [results]);
 
   const studentsIndex = useMemo(() => {
@@ -437,6 +441,45 @@ export function usePlagShieldDashboard() {
         .filter((score) => score >= suspiciousThreshold && score <= riskThreshold)
         .length / 2,
     );
+  }, [results, riskThreshold, suspiciousThreshold]);
+
+  const fileStats = useMemo(() => {
+    if (!results || !Array.isArray(results.matrix) || !Array.isArray(results.students)) {
+      return { total: 0, highRisk: 0, suspicious: 0, safe: 0 };
+    }
+    const studentsCount = results.students.length;
+    const isHighRisk = new Array(studentsCount).fill(false);
+    const isSuspicious = new Array(studentsCount).fill(false);
+
+    for (let i = 0; i < studentsCount; i++) {
+      for (let j = i + 1; j < studentsCount; j++) {
+        const score = results.matrix[i][j];
+        if (score >= riskThreshold && score < 100) {
+          isHighRisk[i] = true;
+          isHighRisk[j] = true;
+        } else if (score >= suspiciousThreshold && score < 100) {
+          isSuspicious[i] = true;
+          isSuspicious[j] = true;
+        }
+      }
+    }
+
+    let highRiskCount = 0;
+    let suspiciousCount = 0;
+    let safeCount = 0;
+
+    for (let i = 0; i < studentsCount; i++) {
+      if (isHighRisk[i]) highRiskCount++;
+      else if (isSuspicious[i]) suspiciousCount++;
+      else safeCount++;
+    }
+
+    return {
+      total: studentsCount,
+      highRisk: highRiskCount,
+      suspicious: suspiciousCount,
+      safe: safeCount
+    };
   }, [results, riskThreshold, suspiciousThreshold]);
 
   const summaryTiles = useMemo(
@@ -536,6 +579,7 @@ export function usePlagShieldDashboard() {
     highRiskPairs,
     suspiciousPairs,
     summaryTiles,
+    fileStats,
     renderHeaderSubtitle,
     evaluationResults,
     evaluateModel,

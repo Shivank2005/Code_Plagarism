@@ -5,6 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import PublicNavbar from '../../components/public/PublicNavbar';
 import { useAuth } from '../../hooks/AuthContext';
+import HowItWorks from './HowItWorks';
+import Contact from './Contact';
+import FAQ from './faq';
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -302,6 +305,16 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      <HowItWorks embedded={true} />
+      
+      <div id="contact">
+        <Contact embedded={true} />
+      </div>
+
+      <div id="faq">
+        <FAQ embedded={true} />
+      </div>
 
     </div>
   );

@@ -130,12 +130,15 @@ export default function PairsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => onReview({ student1: row.fileA, student2: row.fileB })}
-                        className="flex items-center gap-1 text-[var(--accent)] hover:text-[var(--accent-light)] font-medium text-xs transition-colors"
+                        className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white font-bold text-[10px] uppercase tracking-wider transition-colors shadow-sm"
                       >
-                        Inspect Code <ChevronRight size={14} />
-                      </button>
+                        Inspect Code 
+                        <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                      </motion.button>
                     </td>
                   </tr>
                 ))
