@@ -178,18 +178,18 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
   }
 
   return (
-    <div className="card p-6 sm:p-8">
-      <div className="mb-6 flex flex-col gap-2">
-        <h3 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
-          <GitCompareArrows className="text-[var(--accent)]" size={20} /> Pairwise Diff Explorer
-        </h3>
-        <p className="text-sm text-[var(--text-secondary)]">Inspect high-similarity pairs to verify copied or transformed lines.</p>
-      </div>
-
-      <div className="mb-6 overflow-hidden rounded-xl border border-[var(--border-default)]">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[1px] bg-[var(--border-default)] max-h-[300px] overflow-y-auto">
+    <div className="flex flex-row h-full w-full overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] shadow-md">
+      
+      {/* Left Sidebar: Pairs List */}
+      <div className="w-72 sm:w-80 flex-shrink-0 flex flex-col border-r border-[var(--border-default)] bg-[var(--bg-secondary)]/30 h-full overflow-hidden">
+        <div className="border-b border-[var(--border-default)] bg-[var(--bg-secondary)] px-4 py-3 flex-shrink-0 flex items-center justify-between">
+          <h4 className="font-bold text-[var(--text-primary)] text-sm flex items-center gap-2">
+            <GitCompareArrows size={16} className="text-[var(--accent)]" /> Suspect Pairs
+          </h4>
+        </div>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-1 scrollbar-thin scrollbar-thumb-[var(--border-default)] scrollbar-track-transparent">
           {candidatePairs.length === 0 && (
-            <div className="col-span-full p-8 text-center text-sm text-[var(--text-tertiary)] bg-[var(--bg-primary)]">
+            <div className="p-8 text-center text-sm text-[var(--text-tertiary)]">
               No matching pairs available.
             </div>
           )}
@@ -197,25 +197,25 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
             <button
               key={`${pair.source}-${pair.target}`}
               onClick={() => runDiff(pair)}
-              className={`group flex flex-col p-4 text-left transition-all ${
+              className={`group w-full flex flex-col p-3 text-left transition-all rounded-lg border ${
                 selectedLocalPair?.source === pair.source && selectedLocalPair?.target === pair.target
-                  ? 'bg-[var(--accent-muted)] shadow-[inset_3px_0_0_var(--accent)]'
-                  : 'bg-[var(--bg-primary)] hover:bg-[var(--bg-elevated)]'
+                  ? 'bg-[var(--accent)]/10 border-[var(--accent)]/30 shadow-sm'
+                  : 'bg-transparent border-transparent hover:bg-[var(--bg-elevated)] hover:border-[var(--border-default)]'
               }`}
             >
-              <div className="mb-3 flex w-full items-center justify-between">
+              <div className="mb-2 flex w-full items-center justify-between">
                 <span className={`badge ${
                     pair.weight > 75 ? 'badge-danger' 
                     : pair.weight >= 40 ? 'badge-warning'
                     : 'badge-success'
-                }`}>
+                } scale-90 origin-left`}>
                   {pair.weight}% MATCH
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--accent)] opacity-0 transition-opacity group-hover:opacity-100">
                   Inspect &rarr;
                 </span>
               </div>
-              <div className="flex w-full items-center justify-between gap-2">
+              <div className="flex w-full items-center justify-between gap-1.5">
                 <p className="flex-1 truncate text-xs font-medium text-[var(--text-primary)]" title={pair.source.split('/').pop()}>
                   {pair.source.split('/').pop()}
                 </p>
@@ -229,25 +229,35 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
         </div>
       </div>
 
-      {loading && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--accent)]/30 bg-[var(--accent)]/10 px-4 py-3 text-sm text-[var(--accent)] font-medium">
-          <Loader2 className="animate-spin" size={16} /> Building diff view...
-        </div>
-      )}
+      {/* Right Pane: Main Viewer */}
+      <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
+        
+        {loading && (
+          <div className="mb-4 flex flex-shrink-0 items-center gap-2 rounded-lg border border-[var(--accent)]/30 bg-[var(--accent)]/10 px-4 py-3 text-sm text-[var(--accent)] font-medium">
+            <Loader2 className="animate-spin" size={16} /> Building diff view...
+          </div>
+        )}
 
-      {error && <p className="mb-4 rounded-lg border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">{error}</p>}
+        {error && <p className="mb-4 flex-shrink-0 rounded-lg border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">{error}</p>}
 
-      {diffData && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="mb-6 overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] shadow-sm">
+        {!diffData && !loading && !error && (
+           <div className="flex-1 flex flex-col items-center justify-center rounded-xl border border-[var(--border-default)] border-dashed bg-[var(--bg-primary)]/50 text-center p-8">
+             <GitCompareArrows className="text-[var(--text-tertiary)] mb-4" size={48} />
+             <h3 className="text-lg font-semibold text-[var(--text-primary)]">Select a pair to compare</h3>
+             <p className="text-sm text-[var(--text-secondary)] mt-1">Choose a candidate pair from the sidebar to view semantic differences.</p>
+           </div>
+        )}
+
+        {diffData && (
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-[var(--bg-primary)] animate-in fade-in zoom-in-95 duration-300">
             {/* Header Strip */}
-            <div className="flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--bg-secondary)] px-5 py-3">
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--bg-secondary)] px-5 py-3">
               <h4 className="text-sm font-bold text-[var(--text-primary)] flex items-center">
                 {selectedLocalPair?.source.split('/').pop()} <span className="mx-2 text-[var(--text-tertiary)] text-xs">&harr;</span> {selectedLocalPair?.target.split('/').pop()}
               </h4>
               <div className="flex items-center gap-2">
                 {selectedLocalPair?.details?.featureImportance && Object.keys(selectedLocalPair.details.featureImportance).length > 0 && (
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] border-r border-[var(--border-default)] pr-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] border-r border-[var(--border-default)] pr-2 hidden sm:inline-block">
                     Key Factor: {Object.entries(selectedLocalPair.details.featureImportance).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))[0][0]}
                   </span>
                 )}
@@ -261,7 +271,7 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
             </div>
 
             {/* AI Deep Scan Module */}
-            <div className={`border-b border-[var(--border-default)] px-5 py-4 ${deepScanResult ? (deepScanResult.plagiarized ? 'bg-[var(--danger)]/5' : 'bg-[var(--success)]/5') : 'bg-[var(--bg-elevated)]'}`}>
+            <div className={`flex-shrink-0 border-b border-[var(--border-default)] px-5 py-4 ${deepScanResult ? (deepScanResult.plagiarized ? 'bg-[var(--danger)]/5' : 'bg-[var(--success)]/5') : 'bg-[var(--bg-elevated)]'}`}>
               {deepScanResult ? (
                 <div className="flex items-start gap-4">
                   <div className={`mt-0.5 rounded-lg p-2 ${deepScanResult.plagiarized ? 'bg-[var(--danger)]/10 text-[var(--danger)]' : 'bg-[var(--success)]/10 text-[var(--success)]'}`}>
@@ -292,7 +302,7 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
                     </div>
                     <div>
                       <h5 className="text-sm font-bold text-purple-700">AI Deep Scan Available</h5>
-                      <p className="mt-0.5 text-xs text-[var(--text-secondary)]">Analyze algorithmic logic using embedding models.</p>
+                      <p className="mt-0.5 text-xs text-[var(--text-secondary)] hidden sm:block">Analyze algorithmic logic using embedding models.</p>
                     </div>
                   </div>
                   <button 
@@ -307,46 +317,46 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
               )}
             </div>
 
-            {/* Metrics Cards */}
-            {selectedLocalPair?.details && (
-              <div className="grid grid-cols-2 divide-x divide-y divide-[var(--border-default)] sm:grid-cols-4 sm:divide-y-0 bg-[var(--bg-secondary)]">
-                <div className="flex flex-col items-center justify-center p-4">
-                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase text-[var(--text-tertiary)]">
-                    <FileText size={12} /> Token
-                  </div>
-                  <span className="text-xl font-bold text-[var(--text-primary)]">
-                    {selectedLocalPair.details.tokenScore?.toFixed(1) || 0}%
-                  </span>
-                </div>
-                <div className="flex flex-col items-center justify-center p-4">
-                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase text-[var(--text-tertiary)]">
-                    <GitMerge size={12} /> Structural
-                  </div>
-                  <span className="text-xl font-bold text-[var(--text-primary)]">
-                    {selectedLocalPair.details.structuralScore?.toFixed(1) || 0}%
-                  </span>
-                </div>
-                <div className="flex flex-col items-center justify-center p-4">
-                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase text-[var(--text-tertiary)]">
-                    <Brain size={12} /> Semantic
-                  </div>
-                  <span className="text-xl font-bold text-[var(--text-primary)]">
-                    {selectedLocalPair.details.semanticScore?.toFixed(1) || 0}%
-                  </span>
-                </div>
-                <div className="flex flex-col items-center justify-center p-4">
-                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase text-[var(--text-tertiary)]">
-                    <ShieldAlert size={12} /> Confidence
-                  </div>
-                  <span className="text-xl font-bold text-[var(--text-primary)]">
-                    {selectedLocalPair.details.confidenceScore?.toFixed(1) || 0}%
-                  </span>
-                </div>
-              </div>
-            )}
+            {/* Scrolling Diff Table */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-[var(--bg-primary)] scrollbar-thin scrollbar-thumb-[var(--border-default)] scrollbar-track-transparent">
+              <table className="w-full border-collapse text-xs table-fixed">
+                <thead className="sticky top-0 z-10 shadow-sm bg-[var(--bg-secondary)] border-b border-[var(--border-default)]">
+                  <tr>
+                    <th className="w-10 px-2 py-2 text-right font-semibold text-[var(--text-secondary)] select-none border-r border-[var(--border-default)]">#</th>
+                    <th className="w-[calc(50%-40px)] px-4 py-2 text-left font-semibold text-[var(--text-secondary)]">Original Snippet</th>
+                    <th className="w-10 px-2 py-2 text-right font-semibold text-[var(--text-secondary)] select-none border-x border-[var(--border-default)]">#</th>
+                    <th className="w-[calc(50%-40px)] px-4 py-2 text-left font-semibold text-[var(--text-secondary)]">Compared Snippet</th>
+                  </tr>
+                </thead>
+                <tbody className="font-mono text-[11px] leading-relaxed">
+                  {diffData.rows.map((row, idx) => {
+                    const isBlankSame = row.type === 'same' && !(row.left || '').trim() && !(row.right || '').trim();
+                    const rowBg = isBlankSame ? 'bg-transparent' : (rowClass[row.type] || rowClass.same);
+                    const isSameText = row.type === 'same' && !isBlankSame;
+
+                    return (
+                      <tr key={`row-${idx}`} className={`${rowBg} hover:bg-[var(--bg-elevated)] transition-colors border-b border-[var(--border-default)]/30`}>
+                        <td className="w-10 px-2 py-1.5 text-right text-[var(--text-tertiary)] select-none border-r border-[var(--border-default)]">{row.leftNo ?? ''}</td>
+                        <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
+                          isSameText ? 'font-medium text-[var(--danger)]' : 'text-[var(--text-primary)]'
+                        } border-r border-[var(--border-default)]`}>
+                          <CodeHighlight code={row.left} />
+                        </td>
+                        <td className="w-10 px-2 py-1.5 text-right text-[var(--text-tertiary)] select-none border-r border-[var(--border-default)]">{row.rightNo ?? ''}</td>
+                        <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
+                          isSameText ? 'font-medium text-[var(--danger)]' : 'text-[var(--text-primary)]'
+                        }`}>
+                          <CodeHighlight code={row.right} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
             {/* Footer Summary Strip */}
-            <div className="flex flex-wrap items-center justify-between border-t border-[var(--border-default)] bg-[var(--bg-elevated)] px-5 py-2.5 text-xs text-[var(--text-secondary)]">
+            <div className="flex-shrink-0 flex flex-wrap items-center justify-between border-t border-[var(--border-default)] bg-[var(--bg-elevated)] px-5 py-2.5 text-xs text-[var(--text-secondary)]">
               <div>
                 <span className="font-semibold text-[var(--text-primary)]">Boilerplate ignored:</span> {selectedLocalPair?.details?.boilerplateRemovedCount || 0}
               </div>
@@ -355,46 +365,10 @@ const DiffViewer = ({ files, results, semanticData, selectedPair }) => {
                 <span><span className="font-semibold text-[var(--text-primary)]">Changed:</span> {diffData.summary.changedLines}</span>
               </div>
             </div>
+            
           </div>
-
-          <div className="overflow-auto max-h-[600px] scrollbar-thin scrollbar-thumb-[var(--border-default)] scrollbar-track-transparent rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] shadow-inner">
-            <table className="w-full border-collapse text-xs table-fixed">
-              <thead className="sticky top-0 z-10 shadow-sm">
-                <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border-default)]">
-                  <th className="w-10 px-2 py-2 text-right font-semibold text-[var(--text-secondary)] select-none border-r border-[var(--border-default)]">#</th>
-                  <th className="w-[calc(50%-40px)] px-4 py-2 text-left font-semibold text-[var(--text-secondary)]">Original Snippet</th>
-                  <th className="w-10 px-2 py-2 text-right font-semibold text-[var(--text-secondary)] select-none border-x border-[var(--border-default)]">#</th>
-                  <th className="w-[calc(50%-40px)] px-4 py-2 text-left font-semibold text-[var(--text-secondary)]">Compared Snippet</th>
-                </tr>
-              </thead>
-              <tbody className="font-mono text-[11px] leading-relaxed">
-                {diffData.rows.map((row, idx) => {
-                  const isBlankSame = row.type === 'same' && !(row.left || '').trim() && !(row.right || '').trim();
-                  const rowBg = isBlankSame ? 'bg-transparent' : (rowClass[row.type] || rowClass.same);
-                  const isSameText = row.type === 'same' && !isBlankSame;
-
-                  return (
-                    <tr key={`row-${idx}`} className={`${rowBg} hover:bg-[var(--bg-elevated)] transition-colors border-b border-[var(--border-default)]/30`}>
-                      <td className="w-10 px-2 py-1.5 text-right text-[var(--text-tertiary)] select-none border-r border-[var(--border-default)]">{row.leftNo ?? ''}</td>
-                      <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
-                        isSameText ? 'font-medium text-[var(--danger)]' : 'text-[var(--text-primary)]'
-                      } border-r border-[var(--border-default)]`}>
-                        <CodeHighlight code={row.left} />
-                      </td>
-                      <td className="w-10 px-2 py-1.5 text-right text-[var(--text-tertiary)] select-none border-r border-[var(--border-default)]">{row.rightNo ?? ''}</td>
-                      <td className={`px-4 py-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
-                        isSameText ? 'font-medium text-[var(--danger)]' : 'text-[var(--text-primary)]'
-                      }`}>
-                        <CodeHighlight code={row.right} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

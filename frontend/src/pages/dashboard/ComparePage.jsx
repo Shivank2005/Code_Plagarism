@@ -17,15 +17,13 @@ export default function ComparePage() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 relative">
-        <div className="absolute inset-0 overflow-y-auto pr-2">
-          <DiffViewer
-            files={batchFiles}
-            results={results}
-            semanticData={semanticResults}
-            selectedPair={selectedSuspiciousPair}
-          />
-        </div>
+      <div className="flex-1 min-h-0">
+        <DiffViewer
+          files={batchFiles}
+          results={results}
+          semanticData={semanticResults}
+          selectedPair={selectedSuspiciousPair}
+        />
       </div>
     </div>
   );

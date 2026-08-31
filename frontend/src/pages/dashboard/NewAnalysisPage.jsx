@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePlagShield } from '../../hooks/PlagShieldContext';
 import { useNavigate } from 'react-router-dom';
-import { Upload, FileCode, Loader2, ChevronRight, CheckCircle2, AlertTriangle, ShieldAlert, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Upload, FileCode, Loader2, ChevronRight, CheckCircle2, AlertTriangle, ShieldAlert, ArrowRight, ArrowLeft, FileUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -49,7 +49,7 @@ export default function NewAnalysisPage() {
     }
 
     const processQueue = async () => {
-      const allowedExtensions = ['.java', '.py', '.js', '.jsx', '.ts', '.tsx', '.cpp', '.c', '.h', '.cs', '.rb', '.php', '.kt', '.go', '.rs', '.swift', '.scala', '.txt'];
+      const allowedExtensions = ['.java', '.py', '.js', '.jsx', '.ts', '.tsx', '.cpp', '.c', '.h', '.cs', '.rb', '.php', '.kt', '.go', '.rs', '.swift', '.scala', '.txt', '.zip'];
       while (queue.length > 0) {
         const entry = queue.shift();
         if (entry.name.startsWith('.')) continue;
@@ -58,12 +58,14 @@ export default function NewAnalysisPage() {
           const ext = entry.name.includes('.') ? entry.name.substring(entry.name.lastIndexOf('.')).toLowerCase() : '';
           if (allowedExtensions.includes(ext) || ext === '') {
             const file = await new Promise((resolve) => entry.file(resolve));
-            if (file.size <= 1048576) {
+            if (file.size <= 52428800) { // 50MB Limit
               Object.defineProperty(file, 'webkitRelativePath', {
                 value: entry.fullPath.replace(/^\//, ''),
                 writable: true
               });
               files.push(file);
+            } else {
+              toast.error(`File ${file.name} exceeds 50MB limit.`);
             }
           }
         } else if (entry.isDirectory) {
@@ -152,11 +154,11 @@ export default function NewAnalysisPage() {
       {/* Stepper */}
       <div className="flex items-center justify-between relative mb-12">
         {/* Background track line */}
-        <div className="absolute left-0 top-[16px] -translate-y-1/2 w-full h-0.5 bg-[var(--border-default)] -z-10"></div>
+        <div className="absolute left-0 top-[16px] -translate-y-1/2 w-full h-1 bg-[var(--border-default)] z-0 rounded-full"></div>
         
         {/* Active progress line */}
         <div 
-          className="absolute left-0 top-[16px] -translate-y-1/2 h-0.5 bg-[var(--accent)] -z-10 transition-all duration-500 ease-in-out" 
+          className="absolute left-0 top-[16px] -translate-y-1/2 h-1 bg-[var(--accent)] z-0 transition-all duration-500 ease-in-out rounded-full shadow-[0_0_10px_var(--accent)]/50" 
           style={{ width: `${((step - 1) / 3) * 100}%` }}
         ></div>
 
@@ -166,11 +168,11 @@ export default function NewAnalysisPage() {
           { num: 3, label: 'Analyze' },
           { num: 4, label: 'Results' }
         ].map((s) => (
-          <div key={s.num} className="flex flex-col items-center gap-2 bg-[var(--bg-primary)] px-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-300 ${
-              step > s.num ? 'bg-[var(--accent)] text-white' : 
-              step === s.num ? 'bg-[var(--accent)] text-white ring-4 ring-[var(--accent)]/20' : 
-              'bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-tertiary)]'
+          <div key={s.num} className="flex flex-col items-center gap-2 bg-[var(--bg-primary)] px-4 relative z-10">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+              step > s.num ? 'bg-[var(--accent)] text-white shadow-lg shadow-[var(--accent)]/30' : 
+              step === s.num ? 'bg-[var(--accent)] text-white ring-4 ring-[var(--accent)]/20 shadow-lg shadow-[var(--accent)]/30' : 
+              'bg-[var(--bg-surface)] border-2 border-[var(--border-default)] text-[var(--text-tertiary)]'
             }`}>
               {step > s.num ? <CheckCircle2 size={16} /> : s.num}
             </div>
@@ -185,39 +187,71 @@ export default function NewAnalysisPage() {
       <div className="card p-8">
         
         {step === 1 && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-bold text-[var(--text-primary)]">1. Select Files</h3>
-            <p className="text-[13px] text-[var(--text-secondary)]">
-              Upload individual files or a ZIP archive containing the submissions you want to compare.
-            </p>
+          <div className="flex flex-col items-center max-w-3xl mx-auto text-center space-y-8">
             
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-bold uppercase tracking-wider">
+                <span className="w-4 h-4 rounded-full bg-[var(--accent)] text-white flex items-center justify-center text-[10px]">1</span>
+                Source Code Selection
+              </div>
+              <h3 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">Upload Submissions</h3>
+              <p className="text-[var(--text-secondary)] text-base max-w-xl mx-auto">
+                Drag and drop individual source files or zipped archives. Our parsing system automatically normalizes directory structures before generating ASTs.
+              </p>
+            </div>
+            
+            {/* Full-width High-Contrast Dropzone */}
             <div
               onDragOver={handleDrag}
               onDragLeave={handleDrag}
               onDrop={handleDrop}
-              className={`relative flex min-h-[16rem] cursor-pointer flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
-                isDragging ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border-default)] bg-[var(--bg-secondary)]'
+              className={`relative flex min-h-[22rem] w-full cursor-pointer flex-col items-center justify-center gap-8 rounded-3xl border-2 border-dashed p-10 text-center transition-all duration-300 overflow-hidden group ${
+                isDragging 
+                  ? 'border-[var(--accent)] bg-[var(--accent)]/10 scale-[1.02] shadow-[0_0_40px_var(--accent)]/20' 
+                  : 'border-[var(--accent)]/30 bg-[var(--accent)]/5 hover:border-[var(--accent)]/60 hover:bg-[var(--accent)]/10'
               }`}
             >
               <input
                 type="file"
                 multiple
                 webkitdirectory="true"
-                className="absolute inset-0 opacity-0 cursor-pointer"
+                className="absolute inset-0 opacity-0 cursor-pointer z-50"
                 onChange={handleFileInput}
               />
-              <div className={`flex h-16 w-16 items-center justify-center rounded-2xl ${isDragging ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-tertiary)]'}`}>
-                <Upload size={28} />
+              
+              <div className="relative">
+                {/* Expanding pulse circles on drag */}
+                <div className={`absolute inset-0 rounded-full transition-all duration-500 ease-out ${isDragging ? 'bg-[var(--accent)]/20 scale-[2] blur-xl' : 'bg-[var(--accent)]/10 scale-150 blur-lg group-hover:scale-[1.75]'}`}></div>
+                
+                {/* Prominent Circular Upload Button */}
+                <div className={`relative flex h-24 w-24 items-center justify-center rounded-full transition-all duration-300 z-10 ${
+                  isDragging 
+                    ? 'bg-[var(--accent)] text-white shadow-2xl shadow-[var(--accent)]/40 -translate-y-2 scale-110' 
+                    : 'bg-[var(--bg-primary)] border-2 border-[var(--accent)]/20 text-[var(--accent)] shadow-lg group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-[var(--accent)]/40'
+                }`}>
+                  <Upload size={40} className={`transition-transform duration-300 ${isDragging ? 'animate-bounce' : 'group-hover:scale-110'}`} />
+                </div>
               </div>
-              <div>
-                <p className="text-base font-semibold text-[var(--text-primary)]">
-                  Click or drag files here
+              
+              <div className="relative z-10 space-y-3 bg-[var(--bg-primary)]/40 backdrop-blur-sm p-6 rounded-2xl border border-[var(--accent)]/10">
+                <p className="text-2xl font-bold text-[var(--text-primary)]">
+                  Drag and drop files to analyze
                 </p>
-                <p className="text-sm text-[var(--text-tertiary)] mt-1">
-                  Supports folders, ZIP, Java, Python, C++, JS
+                <p className="text-base text-[var(--text-secondary)]">
+                  or <span className="text-[var(--accent)] font-semibold underline decoration-2 underline-offset-4 cursor-pointer">browse your computer</span>
                 </p>
+                
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-4 mt-2 border-t border-[var(--accent)]/10">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)] text-sm font-semibold">
+                    <FileUp size={16} /> ZIP Archives
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)] text-sm font-semibold">
+                    <FileCode size={16} /> Source Folders
+                  </div>
+                </div>
               </div>
             </div>
+            
           </div>
         )}
 
