@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Activity, Download, Layers, Palette, Users2, X, Maximize2, Minimize2 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }, animateCells = true, onPairSelect }) => {
   const [selectedPair, setSelectedPair] = useState(null);
@@ -9,12 +11,12 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
 
   if (!data) {
     return (
-      <div className="glass-card flex min-h-[600px] h-full flex-col items-center justify-center rounded-[2rem] border border-[#E2E8F0] p-12 text-center">
-        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC]">
-          <Activity className="text-[#64748B]" size={28} />
+      <div className="glass-card flex min-h-[600px] h-full flex-col items-center justify-center rounded-2xl border border-[var(--border-default)] p-12 text-center">
+        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--border-default)] bg-[var(--bg-secondary)]">
+          <Activity className="text-[var(--text-tertiary)]" size={28} />
         </div>
-        <h3 className="font-display mb-2 text-2xl font-bold text-[#0F172A]">No active dataset</h3>
-        <p className="max-w-sm text-sm leading-6 text-[#64748B]">
+        <h3 className="font-display mb-2 text-2xl font-bold text-[var(--text-primary)]">No active dataset</h3>
+        <p className="max-w-sm text-sm leading-6 text-[var(--text-tertiary)]">
           Upload a collection of code submissions to generate a similarity matrix and inspect relationships.
         </p>
       </div>
@@ -26,20 +28,27 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
   const suspiciousThreshold = thresholds.suspicious ?? 40;
   const compactCellSize = students.length <= 6 ? 42 : students.length <= 8 ? 36 : students.length <= 10 ? 30 : 26;
 
-  const exportMatrixCsv = () => {
-    const csvRows = [
-      ['File'].concat(students),
-      ...students.map((student, index) => [student].concat(matrix[index].map((value) => value.toFixed(1)))),
-    ];
+  const exportMatrixPdf = () => {
+    const doc = new jsPDF({ orientation: students.length > 10 ? 'landscape' : 'portrait' });
+    doc.setFontSize(16);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PlagShield — Similarity Matrix', 14, 16);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(`${students.length} files compared · generated ${new Date().toLocaleString()}`, 14, 22);
 
-    const csvContent = csvRows.map((row) => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `plagshield-matrix-${Date.now()}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    autoTable(doc, {
+      startY: 28,
+      head: [['File'].concat(students.map((s) => s.split('/').pop()?.split('.')[0].substring(0, 10) || s))],
+      body: students.map((student, index) => [student].concat(matrix[index].map((value) => `${value.toFixed(1)}%`))),
+      styles: { fontSize: 7, cellPadding: 2 },
+      headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 7 },
+      theme: 'grid',
+    });
+
+    doc.save(`plagshield-matrix-${Date.now()}.pdf`);
   };
 
   const highRiskCount = Math.round(matrix.flat().filter((score) => score > highRiskThreshold && score < 100).length / 2);
@@ -48,11 +57,11 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
   );
 
   const content = (
-    <div className={`glass-card rounded-[2rem] border border-[#E2E8F0] p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)] sm:p-8 lg:p-10 transition-all duration-300 ${isFullscreen ? 'fixed inset-4 z-[99999] overflow-y-auto bg-[#FFFFFF] shadow-2xl' : 'relative h-full w-full'}`}>
+    <div className={`glass-card rounded-2xl border border-[var(--border-default)] p-6 sm:p-8 lg:p-10 transition-all duration-300 ${isFullscreen ? 'fixed inset-4 z-[99999] overflow-y-auto bg-[var(--bg-primary)] shadow-2xl' : 'relative h-full w-full'}`}>
       {isFullscreen && (
         <button 
           onClick={() => setIsFullscreen(false)}
-          className="fixed top-8 right-8 z-[100000] rounded-full bg-[#F8FAFC] p-3 text-white border border-[#E2E8F0] shadow-2xl hover:text-[#2563EB] hover:border-[#2563EB]/50 transition-colors"
+          className="fixed top-8 right-8 z-[100000] rounded-full bg-[var(--bg-secondary)] p-3 text-[var(--text-primary)] border border-[var(--border-default)] shadow-lg hover:text-[var(--accent)] hover:border-[var(--accent)]/50 transition-colors"
         >
           <Minimize2 size={24} />
         </button>
@@ -62,66 +71,66 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
 <div className="mb-6 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
         <div className="max-w-3xl">
           <div className="mb-3 flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] text-[#2563EB]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-default)] bg-[var(--bg-secondary)] text-[var(--accent)]">
               <Layers size={18} />
             </span>
             <div>
               <div className="flex items-center gap-4">
-              <h3 className="font-display text-2xl font-bold text-[#0F172A] sm:text-3xl">Matrix analysis</h3>
+              <h3 className="font-display text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">Matrix analysis</h3>
               <button 
                 onClick={() => setIsFullscreen(!isFullscreen)} 
-                className="rounded-full bg-[#F8FAFC] p-2 text-[#64748B] border border-[#E2E8F0] hover:text-[#2563EB] hover:border-[#2563EB]/50 transition-colors"
+                className="rounded-full bg-[var(--bg-secondary)] p-2 text-[var(--text-tertiary)] border border-[var(--border-default)] hover:text-[var(--accent)] hover:border-[var(--accent)]/50 transition-colors"
                 title="Toggle Fullscreen"
               >
                 <Maximize2 size={16} />
               </button>
             </div>
-              <p className="text-sm text-[#64748B]">Compact similarity map with a sequential palette like your reference heatmap.</p>
+              <p className="text-sm text-[var(--text-tertiary)]">Compact similarity map with a sequential palette like your reference heatmap.</p>
             </div>
           </div>
 
-          <p className="max-w-2xl text-sm leading-6 text-[#64748B]">
+          <p className="max-w-2xl text-sm leading-6 text-[var(--text-tertiary)]">
             Cross-referencing {students.length} submissions. Select a cell to open a detailed pair review, or export the matrix for offline inspection.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-          <div className="rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-xs font-medium text-[#334155]">
+          <div className="rounded-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)]">
             {rings.length} collaboration rings
           </div>
-          <div className="rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-xs font-medium text-[#334155]">
+          <div className="rounded-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)]">
             {highRiskCount} high risk
           </div>
-          <div className="rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-xs font-medium text-[#334155]">
+          <div className="rounded-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)]">
             {suspiciousCount} suspicious
           </div>
           <button
-            onClick={exportMatrixCsv}
-            className="inline-flex items-center gap-2 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-xs font-semibold text-[#334155] transition-colors hover:border-[#2563EB]/50 hover:text-white"
+            onClick={exportMatrixPdf}
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
           >
-            <Download size={14} /> Export CSV
+            <Download size={14} /> Export PDF
           </button>
         </div>
       </div>
 
       )}
       <div className={`grid gap-6 ${isFullscreen ? "h-full" : "2xl:grid-cols-[minmax(0,1fr)_280px]"}`}>
-        <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-[#FFFFFF]">
-          <div className="overflow-x-auto p-3 sm:p-4 scrollbar-thin scrollbar-thumb-[#E2E8F0] scrollbar-track-transparent">
+        <div className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-primary)]">
+          <div className="overflow-x-auto p-3 sm:p-4 scrollbar-thin scrollbar-thumb-[var(--border-default)] scrollbar-track-transparent">
             <table className="w-full min-w-max table-fixed border-separate border-spacing-0">
               <thead>
                 <tr>
-                  <th className="sticky left-0 top-0 z-20 border-b border-r border-[#E2E8F0] bg-[#F8FAFC] px-2 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-[#64748B]" style={{ width: `${Math.max(120, compactCellSize * 3.6)}px` }}>
+                  <th className="sticky left-0 top-0 z-20 border-b border-r border-[var(--border-default)] bg-[var(--bg-secondary)] px-2 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]" style={{ width: `${Math.max(120, compactCellSize * 3.6)}px` }}>
                     Files
                   </th>
                   {students.map((student) => (
                     <th
                       key={student}
-                      className="sticky top-0 z-10 border-b border-[#E2E8F0] bg-[#F8FAFC] px-1 py-2 text-center text-[9px] font-semibold uppercase tracking-[0.12em] text-[#64748B]"
+                      className="sticky top-0 z-10 border-b border-[var(--border-default)] bg-[var(--bg-secondary)] px-1 py-2 text-center text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]"
                       style={{ width: `${compactCellSize}px` }}
                       title={student}
                     >
-                      <div className="mx-auto flex h-12 items-center justify-center whitespace-nowrap text-[9px] leading-none text-[#334155] [-webkit-transform:rotate(-45deg)] [transform:rotate(-45deg)]">
+                      <div className="mx-auto flex h-12 items-center justify-center whitespace-nowrap text-[9px] leading-none text-[var(--text-secondary)] [-webkit-transform:rotate(-45deg)] [transform:rotate(-45deg)]">
                         {student.split('/').pop()?.split('.')[0].substring(0, 8)}
                       </div>
                     </th>
@@ -132,7 +141,7 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
               <tbody>
                 {matrix.map((row, rowIndex) => (
                   <tr key={students[rowIndex]}>
-                    <td className="sticky left-0 z-10 whitespace-nowrap border-b border-r border-[#E2E8F0] bg-[#F8FAFC] px-2 py-2 text-left text-xs font-medium text-[#334155]" style={{ width: `${Math.max(120, compactCellSize * 3.6)}px` }}>
+                    <td className="sticky left-0 z-10 whitespace-nowrap border-b border-r border-[var(--border-default)] bg-[var(--bg-secondary)] px-2 py-2 text-left text-xs font-medium text-[var(--text-secondary)]" style={{ width: `${Math.max(120, compactCellSize * 3.6)}px` }}>
                       <div className="max-w-[7rem] truncate sm:max-w-[10rem]" title={students[rowIndex]}>
                         {students[rowIndex]}
                       </div>
@@ -149,7 +158,7 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
                         : 'hsl(219 76% 36%)';
 
                       return (
-                        <td key={`${rowIndex}-${colIndex}`} className="border-b border-[#E2E8F0] p-0" style={{ width: `${compactCellSize}px` }}>
+                        <td key={`${rowIndex}-${colIndex}`} className="border-b border-[var(--border-default)] p-0" style={{ width: `${compactCellSize}px` }}>
                           <motion.button
                             initial={animateCells ? { opacity: 0, scale: 0.85 } : { opacity: 1, scale: 1 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -183,7 +192,7 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
             </table>
           </div>
 
-          <div className="border-t border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-xs text-[#64748B]">
+          <div className="border-t border-[var(--border-default)] bg-[var(--bg-secondary)] px-4 py-3 text-xs text-[var(--text-tertiary)]">
             Select a colored cell to open the pair review modal. Muted cells are self-comparisons or low-signal matches.
           </div>
         </div>
@@ -191,13 +200,12 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
         {!isFullscreen && (
         <div className="space-y-5">
           {/* SCALE PANEL */}
-          <div className="group relative overflow-hidden rounded-2xl border border-[#E2E8F0] bg-gradient-to-b from-[#F8FAFC] to-[#FFFFFF] p-5 shadow-lg transition-all hover:border-[#2563EB]/30">
-            <div className="absolute inset-0 bg-white opacity-[0.03]"></div>
+          <div className="group relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-gradient-to-b from-[var(--bg-secondary)] to-[var(--bg-primary)] p-5 shadow-lg transition-all hover:border-[var(--accent)]/30">
             <div className="relative z-10 mb-5 flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#2563EB]/10">
-                <Palette size={13} className="text-[#2563EB]" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--accent)]/10">
+                <Palette size={13} className="text-[var(--accent)]" />
               </div>
-              <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#0F172A]">Risk Scale</h4>
+              <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-primary)]">Risk Scale</h4>
             </div>
             
             {/* Gradient Bar */}
@@ -211,35 +219,34 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
           </div>
 
           {/* CLUSTERS PANEL */}
-          <div className="group relative overflow-hidden rounded-2xl border border-[#E2E8F0] bg-gradient-to-b from-[#F8FAFC] to-[#FFFFFF] p-5 shadow-lg transition-all hover:border-[#2563EB]/30">
-            <div className="absolute inset-0 bg-white opacity-[0.03]"></div>
+          <div className="group relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-gradient-to-b from-[var(--bg-secondary)] to-[var(--bg-primary)] p-5 shadow-lg transition-all hover:border-[var(--accent)]/30">
             
             <div className="relative z-10 mb-5 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#2563EB]/10">
-                  <Users2 size={13} className="text-[#2563EB]" />
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--accent)]/10">
+                  <Users2 size={13} className="text-[var(--accent)]" />
                 </div>
-                <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#0F172A]">Ring Clusters</h4>
+                <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-primary)]">Ring Clusters</h4>
               </div>
               {rings.length > 0 && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#16A34A]/20 text-[10px] font-bold text-[#16A34A]">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--success)]/20 text-[10px] font-bold text-[var(--success)]">
                   {rings.length}
                 </span>
               )}
             </div>
 
-            <div className="relative z-10 max-h-80 space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#E2E8F0]">
+            <div className="relative z-10 max-h-80 space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[var(--border-default)]">
               {rings.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#E2E8F0] py-6 text-center">
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border-default)] py-6 text-center">
                   <span className="text-xl opacity-50">🛡️</span>
-                  <p className="mt-2 text-xs text-[#64748B]">No collaborative networks<br/>found in this batch.</p>
+                  <p className="mt-2 text-xs text-[var(--text-tertiary)]">No collaborative networks<br/>found in this batch.</p>
                 </div>
               ) : (
                 rings.map((ring, index) => {
                   const isHighDensity = ring.density >= 0.8;
                   const isMediumDensity = ring.density >= 0.5 && ring.density < 0.8;
-                  const glowColor = isHighDensity ? 'bg-[#DC2626]' : isMediumDensity ? 'bg-[#F59E0B]' : 'bg-[#2563EB]';
-                  const textColor = isHighDensity ? 'text-[#DC2626]' : isMediumDensity ? 'text-[#F59E0B]' : 'text-[#2563EB]';
+                  const glowColor = isHighDensity ? 'bg-[var(--danger)]' : isMediumDensity ? 'bg-[var(--warning)]' : 'bg-[var(--accent)]';
+                  const textColor = isHighDensity ? 'text-[var(--danger)]' : isMediumDensity ? 'text-[var(--warning)]' : 'text-[var(--accent)]';
                   
                   return (
                   <motion.div 
@@ -247,7 +254,7 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                     key={index} 
-                    className="relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#FFFFFF]/50 p-3 transition-colors hover:border-[#2563EB]/50 hover:bg-[#F8FAFC]"
+                    className="relative overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)]/50 p-3 transition-colors hover:border-[var(--accent)]/50 hover:bg-[var(--bg-secondary)]"
                   >
                     {/* Subtle glow based on classification */}
                     <div className={`absolute -right-4 -top-4 h-16 w-16 rounded-full ${glowColor} opacity-10 blur-xl`}></div>
@@ -255,19 +262,19 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
                     <div className="mb-2">
                       <div className="flex items-center justify-between mb-1.5 gap-2">
                         <p className={`text-[10px] font-bold uppercase tracking-widest truncate ${textColor}`}>{ring.classification}</p>
-                        <span className="shrink-0 whitespace-nowrap rounded-md bg-[#E2E8F0]/50 px-2 py-0.5 text-[10px] font-semibold text-[#334155]">{ring.members.length} files</span>
+                        <span className="shrink-0 whitespace-nowrap rounded-md bg-[var(--border-default)]/50 px-2 py-0.5 text-[10px] font-semibold text-[var(--text-secondary)]">{ring.members.length} files</span>
                       </div>
                       
                       {/* Cluster Stats */}
-                      <div className="flex items-center justify-between text-[10px] text-[#64748B] border-y border-[#E2E8F0]/30 py-1.5 mb-1.5">
+                      <div className="flex items-center justify-between text-[10px] text-[var(--text-tertiary)] border-y border-[var(--border-default)]/30 py-1.5 mb-1.5">
                         <div title="Average similarity across all valid edges">
-                          <span className="font-semibold text-[#334155]">{Math.round(ring.averageSimilarity)}%</span> Avg
+                          <span className="font-semibold text-[var(--text-secondary)]">{Math.round(ring.averageSimilarity)}%</span> Avg
                         </div>
                         <div title="Highest similarity connection in the cluster">
-                          <span className="font-semibold text-[#334155]">{Math.round(ring.maxSimilarity)}%</span> Peak
+                          <span className="font-semibold text-[var(--text-secondary)]">{Math.round(ring.maxSimilarity)}%</span> Peak
                         </div>
                         <div title={`Density: ${ring.connections} out of ${ring.possibleConnections} possible connections`}>
-                          <span className="font-semibold text-[#334155]">{Math.round(ring.density * 100)}%</span> Density
+                          <span className="font-semibold text-[var(--text-secondary)]">{Math.round(ring.density * 100)}%</span> Density
                         </div>
                       </div>
                     </div>
@@ -276,7 +283,7 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
                       {ring.members.map((student) => (
                         <div
                           key={student}
-                          className="flex max-w-[120px] items-center gap-1.5 truncate rounded-md border border-[#E2E8F0]/50 bg-[#FFFFFF] px-2 py-1 text-[10px] font-medium text-[#334155] transition-colors hover:border-[#64748B]"
+                          className="flex max-w-[120px] items-center gap-1.5 truncate rounded-md border border-[var(--border-default)]/50 bg-[var(--bg-primary)] px-2 py-1 text-[10px] font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--text-tertiary)]"
                           title={student}
                         >
                           <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${glowColor}`}></div>
@@ -307,38 +314,38 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.97, y: 12 }}
               onClick={(event) => event.stopPropagation()}
-              className="w-full max-w-md rounded-3xl border border-[#E2E8F0] bg-[#F8FAFC] p-6 shadow-[0_20px_60px_rgba(15,23,42,0.10)]"
+              className="w-full max-w-md rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-xl"
             >
               <div className="mb-5 flex items-center justify-between gap-3">
                 <div>
-                  <h3 className="font-display text-xl font-bold text-[#0F172A]">Pair review</h3>
-                  <p className="text-sm text-[#64748B]">Inspect the selected comparison before opening the diff view.</p>
+                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)]">Pair review</h3>
+                  <p className="text-sm text-[var(--text-secondary)]">Inspect the selected comparison before opening the diff view.</p>
                 </div>
-                <button onClick={() => setSelectedPair(null)} className="text-[#64748B] transition-colors hover:text-white">
+                <button onClick={() => setSelectedPair(null)} className="text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]">
                   <X size={18} />
                 </button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#64748B]">Files</p>
-                  <div className="rounded-xl border border-[#E2E8F0] bg-[#FFFFFF] p-3 font-mono text-sm text-[#334155]">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Files</p>
+                  <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] p-3 font-mono text-sm text-[var(--text-secondary)]">
                     <div className="truncate" title={selectedPair.students[0]}>{selectedPair.students[0]}</div>
-                    <div className="my-2 text-center text-[#64748B]">vs</div>
+                    <div className="my-2 text-center text-[var(--text-tertiary)]">vs</div>
                     <div className="truncate" title={selectedPair.students[1]}>{selectedPair.students[1]}</div>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-[#E2E8F0] bg-[#FFFFFF] p-4">
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#64748B]">Similarity score</p>
+                <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-secondary)] p-4">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Similarity score</p>
                   <div className="flex items-center gap-3">
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#E2E8F0]">
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--border-default)]">
                       <div
-                        className={`h-full ${selectedPair.score > 75 ? 'bg-[#16A34A]' : selectedPair.score > 40 ? 'bg-[#0F766E]' : 'bg-[#2563EB]'}`}
+                        className={`h-full ${selectedPair.score > highRiskThreshold ? 'bg-[var(--danger)]' : selectedPair.score > suspiciousThreshold ? 'bg-[var(--warning)]' : 'bg-[var(--accent)]'}`}
                         style={{ width: `${Math.min(selectedPair.score, 100)}%` }}
                       />
                     </div>
-                    <span className="whitespace-nowrap font-display text-2xl font-bold text-[#0F172A]">{selectedPair.score.toFixed(1)}%</span>
+                    <span className="whitespace-nowrap font-display text-2xl font-bold text-[var(--text-primary)]">{selectedPair.score.toFixed(1)}%</span>
                   </div>
                 </div>
 
@@ -347,7 +354,7 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
                     setSelectedPair(null);
                     onPairSelect?.({ student1: selectedPair.students[0], student2: selectedPair.students[1] });
                   }}
-                  className="inline-flex w-full items-center justify-center rounded-xl border border-[#E2E8F0] bg-[#F1F5F9] px-4 py-2.5 text-sm font-semibold text-[#0F172A] transition-colors hover:border-[#2563EB]/50 hover:bg-[#E2E8F0]"
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338ca]"
                 >
                   Open detailed diff
                 </button>
@@ -363,12 +370,12 @@ const SimilarityHeatmap = ({ data, thresholds = { highRisk: 75, suspicious: 40 }
 };
 
 const LegendItem = ({ color, label, range }) => (
-  <div className="flex items-center justify-between gap-4 rounded-lg bg-[#FFFFFF]/50 px-3 py-2">
+  <div className="flex items-center justify-between gap-4 rounded-lg bg-[var(--bg-primary)]/50 px-3 py-2">
     <div className="flex items-center gap-3">
       <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
-      <span className="text-[13px] font-medium text-[#334155]">{label}</span>
+      <span className="text-[13px] font-medium text-[var(--text-secondary)]">{label}</span>
     </div>
-    <span className="text-[11px] font-mono font-medium text-[#64748B]">{range}</span>
+    <span className="text-[11px] font-mono font-medium text-[var(--text-tertiary)]">{range}</span>
   </div>
 );
 

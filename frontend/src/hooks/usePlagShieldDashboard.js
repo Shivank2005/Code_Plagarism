@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { useAuth } from './AuthContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:8082';
@@ -459,24 +461,37 @@ export function usePlagShieldDashboard() {
     [results, studentsIndex],
   );
 
-  const exportHistoryCsv = useCallback(() => {
+  const exportHistoryPdf = useCallback(() => {
     if (filteredHistory.length === 0) {
       showToast('No history rows to export.', 'error');
       return;
     }
 
-    const csvRows = [
-      'batchId,status,createdAt',
-      ...filteredHistory.map((batch) => `${batch.id},${batch.status},${new Date(batch.createdAt).toISOString()}`),
-    ];
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `plagshield-history-${Date.now()}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
-    showToast('History exported as CSV.', 'success');
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PlagShield — Analysis Library', 14, 16);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(`${filteredHistory.length} batches · generated ${new Date().toLocaleString()}`, 14, 22);
+
+    autoTable(doc, {
+      startY: 28,
+      head: [['Batch ID', 'Status', 'Created At']],
+      body: filteredHistory.map((batch) => [
+        batch.id,
+        batch.status,
+        new Date(batch.createdAt).toLocaleString(),
+      ]),
+      headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+      styles: { fontSize: 9, cellPadding: 3 },
+      theme: 'striped',
+    });
+
+    doc.save(`plagshield-history-${Date.now()}.pdf`);
+    showToast('History exported as PDF.', 'success');
   }, [filteredHistory, showToast]);
 
   const clearHistory = useCallback(async () => {
@@ -607,7 +622,7 @@ export function usePlagShieldDashboard() {
     fetchResults,
     handleUploadSuccess,
     handlePairSelection,
-    exportHistoryCsv,
+    exportHistoryPdf,
     clearHistory,
     updatePreference,
     resetPreferences,

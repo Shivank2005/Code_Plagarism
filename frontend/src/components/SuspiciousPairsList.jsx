@@ -47,12 +47,12 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
 
   if (pairs.length === 0) {
     return (
-      <div className="rounded-[2rem] border border-[#BBF7D0] bg-[#F0FDF4] p-6">
+      <div className="glass-card rounded-2xl border-[var(--success)]/25 bg-[var(--success)]/5 p-6">
         <div className="mb-2 flex items-center gap-3">
-          <TrendingDown className="text-[#16A34A]" size={20} />
-          <h3 className="font-display text-lg font-bold text-[#0F172A]">All Clear</h3>
+          <TrendingDown className="text-[var(--success)]" size={20} />
+          <h3 className="font-display text-lg font-bold text-[var(--text-primary)]">All Clear</h3>
         </div>
-        <p className="text-sm text-[#166534]">No suspicious pairs detected in this batch.</p>
+        <p className="text-sm text-[var(--text-secondary)]">No suspicious pairs detected in this batch.</p>
       </div>
     );
   }
@@ -63,12 +63,12 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[2rem] border border-[#E2E8F0] bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)]"
+          className="glass-card rounded-2xl border-[var(--danger)]/25 bg-[var(--danger)]/5 p-6"
         >
           <div className="mb-5 flex items-center gap-3">
-            <AlertTriangle className="text-[#DC2626]" size={20} />
-            <h3 className="font-display text-lg font-bold text-[#0F172A]">High Risk Pairs</h3>
-            <span className="ml-auto rounded-full border border-[#FECACA] bg-[#FEF2F2] px-3 py-1 text-xs font-semibold text-[#B91C1C]">
+            <AlertTriangle className="text-[var(--danger)]" size={20} />
+            <h3 className="font-display text-lg font-bold text-[var(--text-primary)]">High Risk Pairs</h3>
+            <span className="ml-auto rounded-full border border-[var(--danger)]/20 bg-[var(--danger)]/10 px-3 py-1 text-xs font-semibold text-[var(--danger)]">
               {highRiskPairs.length}
             </span>
           </div>
@@ -80,35 +80,35 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
                 onClick={() => onPairClick?.(pair)}
-                className="group flex w-full items-center gap-4 rounded-2xl border border-[#FECACA] bg-[#FEF2F2] px-4 py-4 text-left transition-all duration-200 hover:border-[#FCA5A5] hover:bg-[#FEE2E2]"
+                className="group flex w-full items-center gap-4 rounded-xl border border-[var(--danger)]/15 bg-[var(--bg-primary)] px-4 py-4 text-left shadow-sm transition-all duration-200 hover:border-[var(--danger)]/40 hover:bg-[var(--danger)]/5"
               >
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#B91C1C]/60">Submission Pair</p>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Submission Pair</p>
                   <div className="flex min-w-0 items-center gap-2">
-                    <span className="truncate text-sm font-semibold text-[#0F172A]" title={pair.student1}>
+                    <span className="truncate text-sm font-semibold text-[var(--text-primary)]" title={pair.student1}>
                       {pair.student1.substring(0, 24)}
                     </span>
-                    <span className="flex-shrink-0 text-[#B91C1C]/50">vs</span>
-                    <span className="truncate text-sm font-semibold text-[#0F172A]" title={pair.student2}>
+                    <span className="flex-shrink-0 text-[var(--text-tertiary)]">vs</span>
+                    <span className="truncate text-sm font-semibold text-[var(--text-primary)]" title={pair.student2}>
                       {pair.student2.substring(0, 24)}
                     </span>
                   </div>
                   {pair.isAnomaly && (
-                    <div className="mt-2 inline-block rounded-md border border-[#BFDBFE] bg-[#EFF6FF] px-2 py-0.5 text-[10px] font-bold text-[#2563EB]">
+                    <div className="mt-2 inline-block rounded-md border border-purple-300 bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700">
                       ⚠️ ISOLATION ANOMALY
                     </div>
                   )}
                   {pair.featureImportance && Object.keys(pair.featureImportance).length > 0 && (
-                     <div className="mt-1 text-[10px] text-[#B91C1C]/50">
+                     <div className="mt-1 text-[10px] text-[var(--text-tertiary)]">
                        Top factor: {Object.entries(pair.featureImportance).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))[0][0]}
                      </div>
                   )}
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-2xl font-black text-[#DC2626]">{pair.score.toFixed(1)}%</p>
-                  <p className="text-[11px] text-[#B91C1C]/60">Match</p>
+                  <p className="text-2xl font-black text-[var(--danger)]">{pair.score.toFixed(1)}%</p>
+                  <p className="text-[11px] text-[var(--text-tertiary)]">Match</p>
                 </div>
-                <ChevronRight className="text-[#B91C1C]/40 group-hover:text-[#B91C1C] flex-shrink-0" size={18} />
+                <ChevronRight className="text-[var(--text-tertiary)] group-hover:text-[var(--danger)] flex-shrink-0" size={18} />
               </motion.button>
             ))}
           </div>
@@ -120,12 +120,12 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-[2rem] border border-[#E2E8F0] bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)]"
+          className="glass-card rounded-2xl border-[var(--warning)]/25 bg-[var(--warning)]/5 p-6"
         >
           <div className="mb-5 flex items-center gap-3">
-            <AlertTriangle className="text-[#D97706]" size={20} />
-            <h3 className="font-display text-lg font-bold text-[#0F172A]">Suspicious Pairs</h3>
-            <span className="ml-auto rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-3 py-1 text-xs font-semibold text-[#B45309]">
+            <AlertTriangle className="text-[var(--warning)]" size={20} />
+            <h3 className="font-display text-lg font-bold text-[var(--text-primary)]">Suspicious Pairs</h3>
+            <span className="ml-auto rounded-full border border-[var(--warning)]/20 bg-[var(--warning)]/10 px-3 py-1 text-xs font-semibold text-[var(--warning)]">
               {suspiciousPairs.length}
             </span>
           </div>
@@ -137,25 +137,25 @@ const SuspiciousPairsList = ({ data, thresholds = { highRisk: 75, suspicious: 40
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 + idx * 0.03 }}
                 onClick={() => onPairClick?.(pair)}
-                className="group flex w-full items-center gap-4 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] px-4 py-4 text-left transition-all duration-200 hover:border-[#FCD34D] hover:bg-[#FEF3C7]"
+                className="group flex w-full items-center gap-4 rounded-xl border border-[var(--warning)]/15 bg-[var(--bg-primary)] px-4 py-4 text-left shadow-sm transition-all duration-200 hover:border-[var(--warning)]/40 hover:bg-[var(--warning)]/5"
               >
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#B45309]/60">Submission Pair</p>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Submission Pair</p>
                   <div className="flex min-w-0 items-center gap-2">
-                    <span className="truncate text-sm font-semibold text-[#0F172A]" title={pair.student1}>
+                    <span className="truncate text-sm font-semibold text-[var(--text-primary)]" title={pair.student1}>
                       {pair.student1.substring(0, 24)}
                     </span>
-                    <span className="flex-shrink-0 text-[#B45309]/50">vs</span>
-                    <span className="truncate text-sm font-semibold text-[#0F172A]" title={pair.student2}>
+                    <span className="flex-shrink-0 text-[var(--text-tertiary)]">vs</span>
+                    <span className="truncate text-sm font-semibold text-[var(--text-primary)]" title={pair.student2}>
                       {pair.student2.substring(0, 24)}
                     </span>
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-2xl font-black text-[#D97706]">{pair.score.toFixed(1)}%</p>
-                  <p className="text-[11px] text-[#B45309]/60">Match</p>
+                  <p className="text-2xl font-black text-[var(--warning)]">{pair.score.toFixed(1)}%</p>
+                  <p className="text-[11px] text-[var(--text-tertiary)]">Match</p>
                 </div>
-                <ChevronRight className="text-[#B45309]/40 group-hover:text-[#B45309] flex-shrink-0" size={18} />
+                <ChevronRight className="text-[var(--text-tertiary)] group-hover:text-[var(--warning)] flex-shrink-0" size={18} />
               </motion.button>
             ))}
           </div>
